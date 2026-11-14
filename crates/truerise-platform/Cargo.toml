@@ -8,5 +8,20 @@ authors.workspace = true
 description = "The only platform boundary: file locks, monotonic clocks, process trees."
 publish = false
 
-[lints]
-workspace = true
+# Platform boundary: the ONLY crate allowed `unsafe` (OS file-lock calls).
+# Lints are written out in full (workspace inheritance + a sub-table would be
+# invalid TOML): identical to the workspace set, except unsafe_code is
+# `allow` here - every unsafe block carries a `// SAFETY:` rationale and
+# undocumented blocks are denied (inherited via clippy::all group... set
+# explicitly below).
+[lints.rust]
+unsafe_code = "allow"
+missing_docs = "deny"
+non_ascii_idents = "deny"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+unwrap_used = "deny"
+expect_used = "deny"
+undocumented_unsafe_blocks = "deny"
+

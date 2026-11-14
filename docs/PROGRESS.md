@@ -63,3 +63,26 @@ The history door caught this document's own first draft: 4 hits (3 in commit tex
 11. [vico, no clock] External-review probe channel: the review harness jail root is hardcoded to the parent repository; interim channel = the evidence-bundle directory on the parent side (path recorded in the external governance task log). Durable fix (vico decision): harness repo-root override (1-line change, separate dispatch) or formalized evidence-bundle convention. Authoring rule (learned twice this session): never write parent-side directory names or internal role names into this repository — they contain banned tokens; refer to them descriptively.
 12. [supply-chain, due first remote push (vico decision), no clock] `actions/checkout@v4` is tag-pinned, not SHA-pinned; pin to full commit SHAs when the remote exists (third-party tags can be re-pointed upstream).
 13. [M1, due 2026-11-28] schema-gate coverage: M0 asserts exactly one wire contract (audit_event.v2 — the single chain contract defined at spec level). The full schema roster is defined at the M1 wire freeze; the gate's INDEX.json grows with it.
+
+---
+
+## M1 — wire + platform + core (2026-11-14)
+
+HEAD: see `git log -1` (wave commit follows this entry). All gates below re-verified at the wave commit.
+
+| Gate | Command | Result | Measured at |
+|---|---|---|---|
+| platform tests | `cargo test -p truerise-platform` | 7 passed (monotonic / file lock via guard-writes / process) | wave commit |
+| wire tests | `cargo test -p truerise-wire` | 5 passed (v1/v2 dual edition round-trip, extra-field rejection, hash format check, schema file alignment) | wave commit |
+| core tests | `cargo test -p truerise-core` | 18 passed (error tree / four modes / timecore / state machine table coverage) | wave commit |
+| LeakGuard suite | `cargo test -p truerise-core --test leakguard` | 4 passed incl. 2 proptest (four vectors; proptest found and fixed TWO real defects: sweep endpoint ordering for half-open semantics, FoldWindow accepting overlap when purge=0) | wave commit |
+| terminal absorption | `cargo test -p truerise-core --test terminal_absorb` (trybuild) | 1 passed - terminal transition does not compile (spec §6.7.1 judgement 2) | wave commit |
+| clippy / fmt | `cargo clippy --workspace --all-targets -- -D warnings` / `cargo fmt --all -- --check` | zero warnings / clean | wave commit |
+
+Spec deviations / decisions (M1):
+- `unsafe` is allowed ONLY in truerise-platform (OS file-lock calls), with per-block `// SAFETY:` rationales and `undocumented_unsafe_blocks` denied; the workspace-wide forbid stays for every other crate. Lints written out in full for that crate (workspace inheritance + sub-table is invalid TOML).
+- process TREE collection is reduced to the spawn/wait/kill surface + current pid at M1 (the full tree walk needs a platform dependency; recorded as an extension point, not silently dropped).
+- The wire crate validates hash FORMAT on the wire (64 lowercase hex); canonical-serialization equality is the ledger's job (M2).
+- Proptest-found defects fixed during M1 are recorded above (they are the LeakGuard suite working as designed).
+
+Not doing (M1): benches (criterion baselines land with M2+ hot paths); state machine wire contract export (state_transitions schema rides with M2 governance events).

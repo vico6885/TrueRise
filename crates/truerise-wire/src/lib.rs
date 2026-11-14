@@ -1,5 +1,9 @@
-//! truerise-wire: Versioned wire contracts (serde): legacy v1 and tightened v2 kept explicit at the type level.
+//! truerise-wire: versioned wire contracts (serde).
 //!
-//! M0 skeleton: this crate intentionally declares no public items yet.
-//! Behaviour lands wave by wave (M1-M5) under the spec-mapping gate; see
-//! `docs/PROGRESS.md` for wave status and gates.
+//! Spec (§6 wire row): the legacy v1 and tightened v2 editions are BOTH kept
+//! explicit at the type level - merging them into one type is forbidden
+//! ("禁抹平"). v1 stays readable but is marked deprecated and never
+//! participates in governance decisions (mirrors the ledger's `governs()`).
+
+pub mod audit_event;
+pub use audit_event::{AuditEventV1, AuditEventV2, Severity};

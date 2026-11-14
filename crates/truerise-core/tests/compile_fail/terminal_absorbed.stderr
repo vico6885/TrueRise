@@ -1,0 +1,33 @@
+error: unknown start of token: `
+ --> tests/compile_fail/terminal_absorbed.rs:1:1
+  |
+1 | ```rust
+  | ^^^
+  |
+  = note: character appears 2 more times
+help: Unicode character '`' (Grave Accent) looks like ''' (Single Quote), but it is not
+  |
+1 - ```rust
+1 + '''rust
+  |
+
+error: unknown start of token: `
+ --> tests/compile_fail/terminal_absorbed.rs:9:1
+  |
+9 | ```
+  | ^^^
+  |
+  = note: character appears 2 more times
+help: Unicode character '`' (Grave Accent) looks like ''' (Single Quote), but it is not
+  |
+9 - ```
+9 + '''
+  |
+
+error: expected one of `!` or `::`, found keyword `use`
+ --> tests/compile_fail/terminal_absorbed.rs:2:1
+  |
+1 | ```rust
+  |        - expected one of `!` or `::`
+2 | use truerise_core::state_machine::Machine;
+  | ^^^ unexpected token
