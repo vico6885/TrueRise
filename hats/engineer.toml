@@ -1,0 +1,6 @@
+schema_version = "truerise.hat.v1"
+name = "engineer"
+system_prompt = "You build and repair within the governance gates."
+tool_subset = ["read_file", "write_file", "repo_grep", "list_dir"]
+model_route = "default"
+discipline = ["gates before commits", "smallest change that works"]

@@ -1,5 +1,10 @@
-//! truerise-eval: Conformance judging authority, bench harness, ratchet, four-part fingerprints, judge agreement statistics.
-//!
-//! M0 skeleton: this crate intentionally declares no public items yet.
-//! Behaviour lands wave by wave (M1-M5) under the spec-mapping gate; see
-//! `docs/PROGRESS.md` for wave status and gates.
+//! truerise-eval: the conformance JUDGING AUTHORITY, ratchet, fingerprints,
+//! and judge-agreement statistics (pure numbers, no authority).
+
+pub mod fingerprint;
+pub mod judge;
+pub mod ratchet;
+
+pub use fingerprint::{CompareForbidden, Fingerprint, FingerprintRegistry};
+pub use judge::{AgreementStats, Verdict, judge, judge_agreement, judge_and_record};
+pub use ratchet::{Ratchet, RatchetViolation};

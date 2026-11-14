@@ -125,3 +125,23 @@ Spec decisions (M3):
 - Deterministic jitter in tests (roll derived from attempt) - production injects entropy at the call site.
 
 Not doing (M3): wall-clock-based recency decay (recency is writer-assigned in [0,1]; the decay policy is external); cross-backend recall federation (one backend per session).
+
+---
+
+## M4 — eval + rsi + hats (2026-11-14)
+
+| Gate | Command | Result |
+|---|---|---|
+| ratchet (exit-grade) | `cargo test -p truerise-eval` | 9 passed: score regression -> RatchetViolation::Regression (callers map to non-zero exit); loosening refused + ratchet unchanged on refusal; fingerprints part-sensitive; cross-environment comparison FORBIDDEN even self-vs-self |
+| budget reconciliation | `cargo test -p truerise-rsi` | 6 passed: two handles one ledger (reconcile diff == 0), per-hat quota, global denominator not sharded; singleton is process-global -> consuming tests serialised (delta arithmetic requires it - itself proof of the shared ledger) |
+| evolve never auto-merges | `cargo test -p truerise-rsi` | proposals + MR reports ONLY; report states HUMAN REVIEW REQUIRED / NOT merged; no merge/apply function on the surface |
+| hats + audit alignment | `cargo test -p truerise-hats` | TOML loads, schema-version enforced, content_hash (64 hex) lands on the chain as hat.registered; any content change -> new hash |
+| workspace | `cargo test --workspace` + clippy -D + fmt | **89 passed 0 failed**; clean |
+
+Spec decisions (M4):
+- judge_agreement is PURE statistics (raw agreement + Cohen's kappa); it grants nothing.
+- judge_and_record: a verdict that cannot be recorded is an error (unrecorded verdicts break auditability).
+- Budget singleton is process-global via OnceLock: reconciling delta assertions REQUIRE serialised consuming tests - documented in the test itself.
+- Preset hat packs (researcher/critic/engineer/evaluator) land as DATA in hats/*.toml (hats are data, not traits).
+
+Not doing (M4): bench harness over live models (port + scripted tests only); skill entry resolution (host-side concern).

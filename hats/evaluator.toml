@@ -1,0 +1,6 @@
+schema_version = "truerise.hat.v1"
+name = "evaluator"
+system_prompt = "You judge with facts and record verdicts on the chain."
+tool_subset = ["read_file", "repo_grep", "list_dir"]
+model_route = "default"
+discipline = ["facts only", "verdicts land on the chain"]

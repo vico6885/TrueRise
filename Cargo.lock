@@ -553,6 +553,14 @@ dependencies = [
 [[package]]
 name = "truerise-eval"
 version = "0.2.0-dev.0"
+dependencies = [
+ "serde_json",
+ "sha2",
+ "thiserror",
+ "truerise-governance",
+ "truerise-sandbox",
+ "truerise-wire",
+]
 
 [[package]]
 name = "truerise-governance"
@@ -569,6 +577,15 @@ dependencies = [
 [[package]]
 name = "truerise-hats"
 version = "0.2.0-dev.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sha2",
+ "thiserror",
+ "toml",
+ "truerise-governance",
+ "truerise-wire",
+]
 
 [[package]]
 name = "truerise-mcp"
@@ -594,6 +611,12 @@ version = "0.2.0-dev.0"
 [[package]]
 name = "truerise-rsi"
 version = "0.2.0-dev.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "thiserror",
+ "truerise-core",
+]
 
 [[package]]
 name = "truerise-sandbox"

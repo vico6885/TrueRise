@@ -252,14 +252,17 @@ mod tests {
     #[test]
     fn bm25_ranks_matching_record_first() {
         let b = backend();
-        let scores = bm25_scores("audit chain", &b.all().unwrap());
-        let max_idx = scores
+        let records = b.all().unwrap();
+        let scores = bm25_scores("audit chain", &records);
+        // Pair by id (HashMap order is not stable across runs):
+        let mut by_id: Vec<(String, f32)> = records
             .iter()
-            .enumerate()
-            .max_by(|x, y| x.1.total_cmp(y.1))
-            .unwrap()
-            .0;
-        assert_eq!(max_idx, 0, "record a matches both query terms");
+            .cloned()
+            .zip(scores)
+            .map(|(r, s)| (r.id, s))
+            .collect();
+        by_id.sort_by(|a, b| b.1.total_cmp(&a.1));
+        assert_eq!(by_id[0].0, "a", "record a matches both query terms");
     }
 
     #[test]
