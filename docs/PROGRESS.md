@@ -4,7 +4,7 @@ Format per wave: ID | files | reproducible command | output (<= 10 lines) | HEAD
 
 ## M0 — repository scaffold (2026-11-14)
 
-HEAD: `4e58fa6` (2026-11-14T15:59:40+08:00), branch `main`, DCO signed.
+HEAD: see `git log -1` (branch `main`, all commits DCO-signed). Wave M0 scaffold commit: `4e58fa6` (2026-11-14T15:59:40+08:00). This file is refreshed at every wave commit; the stale-HEAD line was removed after the review caught it conflicting with the evidence bundle.
 
 Files: root `Cargo.toml` / `rust-toolchain.toml` / `deny.toml` / `Makefile` / `.gitignore` / `.gitattributes`; `crates/truerise-{core,wire,platform,governance,sandbox,eval,memory,rsi,hats,mcp,observe,cli}/` (skeletons, `publish = false`, doc-only `lib.rs`); `tools/` (9 gate scripts + `banned_words.hex`); `.github/workflows/ci.yml` + ISSUE_TEMPLATE; `schemas/` (`audit_event.v2.schema.json` + `INDEX.json`, spec-level alignment gate); `tests/timesafety/` (four-vector contract skeleton); `README` / `CONTRIBUTING` / `SECURITY` / `GOVERNANCE` / `CODE_OF_CONDUCT` / `CHANGELOG` / `LICENSE-APACHE` / `LICENSE-MIT`.
 
@@ -20,7 +20,7 @@ Files: root `Cargo.toml` / `rust-toolchain.toml` / `deny.toml` / `Makefile` / `.
 | file length | `python tools/lint_file_length.py` | `all 20 code files <= 600 lines (exit 0)` |
 | license isolation | `python tools/lint_deny_isolation.py` | `allow list clean, dual core licenses present (exit 0)` |
 | schemas | `python tools/lint_schemas.py` | `1 schema(s) aligned at spec level (fields/required/enums) (exit 0)` |
-| SBOM format | `cargo cyclonedx --format json` + `python tools/check_sbom.py` | `24 report(s) (>= 12 members), 12 parsed with specVersion (exit 0)` |
+| SBOM format | `cargo cyclonedx --format json` + `python tools/check_sbom.py` | `SBOM gate: 12/12 member reports parsed with specVersion (exit 0)` — one report per member crate dir, parse failures listed, build-tree residue excluded |
 | cargo deny | `cargo deny check` | `advisories ok, bans ok, licenses ok, sources ok` (exit 0) |
 | timesafety placeholder | `python tools/check_leakguard_skeleton.py` | `4 vectors declared planned (exit 0)` |
 | DCO | `python tools/lint_dco.py` | `all 1 commit(s) signed (exit 0)` |
