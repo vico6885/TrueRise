@@ -537,6 +537,13 @@ checksum = "009dbb7700f11c55ef83aebbe4c0e9cf1f1ac0844bd8d6f00dc38f302026e13a"
 [[package]]
 name = "truerise-cli"
 version = "0.2.0-dev.0"
+dependencies = [
+ "serde_json",
+ "sha2",
+ "truerise-core",
+ "truerise-governance",
+ "truerise-wire",
+]
 
 [[package]]
 name = "truerise-core"
@@ -590,6 +597,11 @@ dependencies = [
 [[package]]
 name = "truerise-mcp"
 version = "0.2.0-dev.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "thiserror",
+]
 
 [[package]]
 name = "truerise-memory"
@@ -603,6 +615,12 @@ dependencies = [
 [[package]]
 name = "truerise-observe"
 version = "0.2.0-dev.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sha2",
+ "truerise-governance",
+]
 
 [[package]]
 name = "truerise-platform"

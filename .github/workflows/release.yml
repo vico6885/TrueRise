@@ -1,0 +1,17 @@
+# cargo-dist release pipeline (placeholder until the first public release;
+# the six-platform matrix + SHA256 + installer scripts land with that release,
+# per spec §6.5). Kept in-repo so the release surface is reviewable from M5.
+name: release
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  dist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo install cargo-dist --locked
+      - run: cargo dist build --output-format=json > dist.json
+      - name: assert artifacts exist
+        run: python3 -c "import json,sys; d=json.load(open('dist.json')); assert d.get('artifacts'), 'no artifacts'"

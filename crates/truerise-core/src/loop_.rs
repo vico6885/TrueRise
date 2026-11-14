@@ -8,8 +8,8 @@
 
 use std::sync::Mutex;
 
-use crate::compaction::{Entry, total_tokens};
-use crate::errors::{CoreError, ModeViolation};
+use crate::compaction::Entry;
+use crate::errors::CoreError;
 use crate::router::{ModelRouter, RetryPolicy, RouterError, TurnRequest, backoff_ms, check_pinned};
 use crate::state_machine::{Event, Machine, State, TransitionLog};
 
@@ -236,6 +236,7 @@ use serde_json as _serde_json;
 mod tests {
     #![allow(clippy::unwrap_used, clippy::expect_used)]
     use super::*;
+    use crate::errors::ModeViolation;
     use crate::router::TurnResponse;
     use std::sync::atomic::{AtomicUsize, Ordering};
 

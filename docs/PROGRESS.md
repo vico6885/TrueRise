@@ -145,3 +145,23 @@ Spec decisions (M4):
 - Preset hat packs (researcher/critic/engineer/evaluator) land as DATA in hats/*.toml (hats are data, not traits).
 
 Not doing (M4): bench harness over live models (port + scripted tests only); skill entry resolution (host-side concern).
+
+---
+
+## M5 — mcp + observe + cli + release surface (2026-11-14)
+
+| Gate | Command | Result |
+|---|---|---|
+| MCP | `cargo test -p truerise-mcp` | 5 passed: JSON-RPC 2.0 strict frames, zero-exposure server (empty allowlist), allow-gated tool calls, client HARD-DENIES write-class (audited), toy e2e client->server |
+| observe | `cargo test -p truerise-observe` | 2 passed: jsonl export one-span-per-row with sensitive-key redaction (<redacted>), chain digest unchanged before/after export (ONE-WAY); otel feature placeholder compiles |
+| CLI (live) | `cargo run -p truerise-cli -- demo` / `--honest` / `run --goal` | demo FAIL (3 reasons) -> --honest PASS; run completes with three books (3 transcript / 6 transitions / 6 audit rows) |
+| workspace | `cargo test --workspace` + clippy -D + fmt | **96 passed 0 failed**; clean |
+
+Spec decisions (M5):
+- MCP server zero exposure: the allow-list starts EMPTY; initialize/tools/list work, tools/call on a non-allowed tool returns a JSON-RPC error frame.
+- Client write-class hard-denial happens BEFORE any server interaction and the denial itself is audited.
+- REPL is an IO adapter only: free text reuses the same run path (no bare-face entry, spec §6.5 external-review ruling 3).
+- Onboarding writes a config skeleton with NO secrets (env/keyring only, fail-closed wording).
+- cargo-dist release.yml is an in-repo placeholder: the six-platform matrix + SHA256 + installer scripts land with the first public tag (spec §6.5); the workflow shape is reviewable now.
+
+Not doing (M5): authenticode/notarization signing (needs certificates); npm/pip shim distribution (needs published artifacts); OTLP SDK exporter behind the otel feature (feature placeholder compiles, SDK wiring deferred to first release); REPL golden transcript test (requires the chat-reference parity harness, M5+ post-release).

@@ -18,7 +18,7 @@ pub mod timecore;
 
 pub use compaction::{CompactionError, Entry, Level, PreCompactEvent, compact, total_tokens};
 pub use errors::{CoreError, DataConsistency, ModeViolation, RiskGate, StaleFence, TimeLeak};
-pub use loop_::{Loop, LoopConfig, LoopError, RunBooks};
+pub use loop_::{AuditSink, Loop, LoopConfig, LoopError, RunBooks};
 pub use mode::{ExecutionGrant, Mode, ModeSet};
 pub use router::{
     ModelRouter, RetryPolicy, RouterError, TurnRequest, TurnResponse, backoff_ms, check_pinned,
