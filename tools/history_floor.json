@@ -1,0 +1,7 @@
+{
+  "floor_blobs": 70,
+  "recorded_at": "2026-11-14T16:43:23+08:00",
+  "recorded_in": "dd4bc51",
+  "rule": "The blob count of this repository must never decrease. A decrease proves a prune/rewrite destroyed history objects (evidence destruction) and fails the history door. Raising the floor requires the deletion three-gate protocol (risk analysis + itemized list + maintainer approval) executed in the same reviewed commit.",
+  "context": "Initial floor set at the M0 remediation batch. One approved amend+prune occurred BEFORE this floor existed (see docs/PROGRESS.md history-door incident record); the floor prevents any recurrence without a reviewed, approved floor bump."
+}

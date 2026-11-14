@@ -10,6 +10,7 @@ Exit codes: 0 = zero hits, 1 = leak (object id listed), 2 = config error.
 """
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -17,11 +18,39 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lint_banned_words import REPO, build_pattern, load_config  # noqa: E402
 
+FLOOR_FILE = Path(__file__).resolve().parent / "history_floor.json"
+
 
 def run_git(*args: str) -> str:
     """Run a git command inside the repo and return decoded stdout."""
     out = subprocess.run(["git", *args], cwd=REPO, capture_output=True, check=True)
     return out.stdout.decode("utf-8", errors="replace")
+
+
+def check_history_floor(blobs: int) -> int:
+    """History-floor technical gate: blob count must never DECREASE.
+
+    A drop proves a prune/rewrite destroyed history objects (evidence
+    destruction). Legitimate amend+prune flows must raise the floor in the
+    same reviewed commit that justifies them (deletion three-gate protocol).
+    """
+    if not FLOOR_FILE.exists():
+        return 0
+    try:
+        floor_doc = json.loads(FLOOR_FILE.read_text(encoding="utf-8"))
+        floor = int(floor_doc["floor_blobs"])
+    except (OSError, ValueError, KeyError) as exc:
+        print(f"history floor file unreadable: {exc}", file=sys.stderr)
+        return 2
+    if blobs < floor:
+        print(
+            f"HISTORY FLOOR VIOLATION: {blobs} blobs < recorded floor {floor} "
+            "- history objects were destroyed (prune). "
+            "Raising the floor requires the deletion three-gate protocol."
+        )
+        return 1
+    print(f"history floor: {blobs} blobs >= recorded floor {floor} (no evidence destruction)")
+    return 0
 
 
 def main() -> int:
@@ -60,7 +89,7 @@ def main() -> int:
             print(f"  {h}")
         return 1
     print(f"history door: 0 hits across {len(blobs)} blobs + full ref log (exit 0)")
-    return 0
+    return check_history_floor(len(blobs))
 
 
 if __name__ == "__main__":
