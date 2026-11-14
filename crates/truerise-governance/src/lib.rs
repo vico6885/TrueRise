@@ -1,5 +1,21 @@
-//! truerise-governance: Audit hash chain (process singleton), three-state policy, approval queue, resource policy port.
+//! truerise-governance: audit hash chain (singleton semantics), three-state
+//! policy, fenced approval queue, and the resource-policy port.
 //!
-//! M0 skeleton: this crate intentionally declares no public items yet.
-//! Behaviour lands wave by wave (M1-M5) under the spec-mapping gate; see
-//! `docs/PROGRESS.md` for wave status and gates.
+//! Spec (§6): the chain is the single authority with zero exemptions;
+//! approvals never expire into consent; deletion flow is generic (three
+//! gates), policy pluggable.
+
+pub mod approval;
+pub mod chain;
+pub mod policy;
+pub mod resource_policy;
+
+pub use approval::{ApprovalQueue, RequestState};
+pub use chain::{ChainError, GENESIS, HashChain, Row};
+pub use policy::{Decision, PolicyState, PolicyTable};
+pub use resource_policy::{
+    DeletionDecision, DeletionGate, DeletionTarget, ResourcePolicy, StrictPolicy,
+};
+
+// Governance errors re-exported from the core taxonomy (chain adds its own).
+pub use truerise_core::{CoreError, RiskGate, StaleFence};

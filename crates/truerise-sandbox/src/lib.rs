@@ -1,5 +1,13 @@
-//! truerise-sandbox: Sandbox provider port, lifecycle core, capability bits, conformance self-check (judging authority lives in truerise-eval).
-//!
-//! M0 skeleton: this crate intentionally declares no public items yet.
-//! Behaviour lands wave by wave (M1-M5) under the spec-mapping gate; see
-//! `docs/PROGRESS.md` for wave status and gates.
+//! truerise-sandbox: the SandboxProvider port, lifecycle, capability bits,
+//! and the conformance self-check (facts only - the judging authority is
+//! truerise-eval, and self-check output is forbidden as eval input).
+
+pub mod conformance;
+pub mod inprocess;
+pub mod provider;
+
+pub use conformance::{ConformanceReport, ProbeFact, self_check};
+pub use inprocess::{InProcessProvider, declared_capabilities, next_id};
+pub use provider::{
+    CapabilityBits, CapabilityLevel, ExecutionOutput, SandboxError, SandboxHandle, SandboxProvider,
+};

@@ -86,3 +86,22 @@ Spec deviations / decisions (M1):
 - Proptest-found defects fixed during M1 are recorded above (they are the LeakGuard suite working as designed).
 
 Not doing (M1): benches (criterion baselines land with M2+ hot paths); state machine wire contract export (state_transitions schema rides with M2 governance events).
+
+---
+
+## M2 — governance + sandbox (2026-11-14)
+
+| Gate | Command | Result |
+|---|---|---|
+| chain gate tests | `cargo test -p truerise-governance --test chain_gate` | 6 passed: **dual-writer competition (2 handles, 1000 appends, 0 lost updates, seq+hash intact)**; tamper drill (content-hash tamper located at row 2; prev-hash tamper at row 3; unparsable row carries its number); idempotent replay; persistence reload; legacy rows stored-but-not-governing |
+| governance lib | `cargo test -p truerise-governance` | 11 passed (policy three-state + deny short-circuit + approval-never-times-into-consent + three-gate deletion flow) |
+| sandbox | `cargo test -p truerise-sandbox` | conformance self-check: three must-fail regions (escape / oversell / residue) PASS for the in-process provider |
+| workspace | `cargo test --workspace` + clippy `-D warnings` + fmt | 53 passed 0 failed; clean |
+
+Spec decisions / findings (M2):
+- The conformance ESCAPE probe caught a real escape on first run: `Path::starts_with` is lexical and does not resolve `..` - the fence is now component-level (ParentDir/RootDir/Prefix refused). The self-check works on its own provider.
+- Windows byte-range locks are process-wide: the chain's in-lock IO goes exclusively through the locked handle (a second handle for reading collided with our own lock - error 33). Platform-lock tests cover the guard-owned write pattern.
+- Ledger key binds fingerprint AND evaluation parameters in the python demo; the Rust chain keeps the same rule via replay keys (parameter change = new key).
+- deny.toml warn-severity fields (multiple-versions, unknown sources) remain warn at M2; machine assertion of those fields is deferred to M5 release hardening (recorded, not silently dropped).
+
+Not doing (M2): conformance VERDICTS (judging authority lands with truerise-eval in M4 - self-check stays facts-only); capability-bit probing beyond declared-none (docker/microVM providers are external projects).
