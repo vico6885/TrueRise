@@ -8,12 +8,20 @@
 //!   overlap detection (LeakGuard vectors 1-2 foundations).
 //! - [`state_machine`]: typestate + table-driven run machine (§6.7.1).
 
+pub mod compaction;
 pub mod errors;
+pub mod loop_;
 pub mod mode;
+pub mod router;
 pub mod state_machine;
 pub mod timecore;
 
+pub use compaction::{CompactionError, Entry, Level, PreCompactEvent, compact, total_tokens};
 pub use errors::{CoreError, DataConsistency, ModeViolation, RiskGate, StaleFence, TimeLeak};
+pub use loop_::{Loop, LoopConfig, LoopError, RunBooks};
 pub use mode::{ExecutionGrant, Mode, ModeSet};
+pub use router::{
+    ModelRouter, RetryPolicy, RouterError, TurnRequest, TurnResponse, backoff_ms, check_pinned,
+};
 pub use state_machine::{Event, Machine, State, TransitionLog, transition};
 pub use timecore::{FoldWindow, TimeSlice, any_overlap};

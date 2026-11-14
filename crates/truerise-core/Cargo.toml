@@ -12,8 +12,11 @@ publish = false
 workspace = true
 
 [dependencies]
+serde_json = "1.0.154"
 thiserror = "2.0.21"
 
 [dev-dependencies]
+truerise-governance = { path = "../truerise-governance" }
+truerise-wire = { path = "../truerise-wire" }
 proptest = "1.11.0"
 trybuild = "1.0.119"

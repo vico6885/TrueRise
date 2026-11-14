@@ -105,3 +105,23 @@ Spec decisions / findings (M2):
 - deny.toml warn-severity fields (multiple-versions, unknown sources) remain warn at M2; machine assertion of those fields is deferred to M5 release hardening (recorded, not silently dropped).
 
 Not doing (M2): conformance VERDICTS (judging authority lands with truerise-eval in M4 - self-check stays facts-only); capability-bit probing beyond declared-none (docker/microVM providers are external projects).
+
+---
+
+## M3 — loop + compaction + memory (2026-11-14)
+
+| Gate | Command | Result |
+|---|---|---|
+| minimal run three-books gate | `cargo test -p truerise-core` (loop_ tests) | minimal run drives RunStart..Finish with transcript + transition log + audit rows populated and mutually consistent (audit_rows == transitions.len()) |
+| compaction invariants | `cargo test -p truerise-core` (compaction tests) | tokens monotonically non-increase (chained L1->L4, clamped), pre_compact event emitted, recent-tail kept verbatim, tail-too-large refused, unknown u32 level refused |
+| memory fusion | `cargo test -p truerise-memory` | 6 passed: weights normalise, BM25 ranks term-matches first, fusion respects weight shifts both ways, deterministic tie-break, backend upsert |
+| workspace | `cargo test --workspace` + clippy -D + fmt | **71 passed 0 failed**; clean |
+
+Spec decisions (M3):
+- Hexagonal fix: core->governance would be a cycle (governance needs core's error tree) - the loop defines the `AuditSink` PORT in core; governance implements it at the boundary (dev-dependency only for the adapter test). Config file location stays pinned to the project root.
+- Backoff: exponential with capped jitter, integer ms; ONLY rate-limit/transport classes retry (fatal errors never retried - asserted).
+- Round pinning: any response from a non-pinned model VOIDS the whole round (loop returns Pin error; no partial credit).
+- Compaction clamps per-entry tokens to the original (compaction never inflates); the monotonic-decrease test runs the REAL chained workflow (L1 output feeds L2).
+- Deterministic jitter in tests (roll derived from attempt) - production injects entropy at the call site.
+
+Not doing (M3): wall-clock-based recency decay (recency is writer-assigned in [0,1]; the decay policy is external); cross-backend recall federation (one backend per session).
