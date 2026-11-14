@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: cargo install cargo-deny --locked
+      - run: cargo install cargo-deny@0.20.2 --locked
       - run: cargo deny check
       - run: python3 tools/lint_deny_isolation.py
 
@@ -68,6 +68,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: cargo install cargo-cyclonedx --locked
+      - run: cargo install cargo-cyclonedx@0.5.10 --locked
       - run: cargo cyclonedx --format json
       - run: python3 tools/check_sbom.py

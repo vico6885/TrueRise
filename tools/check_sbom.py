@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 """SBOM existence + format assertion (after ``cargo cyclonedx --format json``).
 
-cargo-cyclonedx (default --describe crate) writes one SBOM per workspace
-crate next to the crate manifest. Format assertions (spec M0 gate):
-- at least one report per workspace member (report count >= members);
-- every report parses and declares a specVersion.
+cargo-cyclonedx (default ``--describe crate``) writes exactly one SBOM next
+to each crate manifest. Strict assertions (spec M0 gate):
+- EVERY workspace member directory contains exactly one ``*.cdx.json``;
+- every report MUST parse (a parse failure is a listed problem, never
+  silently skipped);
+- every report declares a ``specVersion``.
 
-The stricter release-wave assertions (specVersion == 1.5, component count
->= full declared dependency closure) land with M5.
+Only ``crates/<member>/`` reports count - build-tree residue cannot pad the
+count. The stricter release-wave assertions (specVersion == 1.5, component
+count >= full declared dependency closure) land with M5.
 
-Exit 0 = SBOM set present and format-valid; 1 = missing/invalid.
+Exit 0 = all member reports present, parsed, specVersion-declared;
+1 = any problem; 2 = manifest unparsable.
 """
 from __future__ import annotations
 
@@ -21,47 +25,44 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 
 
-def workspace_member_count() -> int:
-    """Count workspace member crates from the root manifest."""
+def workspace_members() -> list[str]:
+    """Return workspace member crate directory names from the root manifest."""
     text = (REPO / "Cargo.toml").read_text(encoding="utf-8")
     block = re.search(r"members\s*=\s*\[(.*?)\]", text, re.DOTALL)
     if not block:
-        return 0
-    return len(re.findall(r'"crates/[^"]+"', block.group(1)))
+        return []
+    return re.findall(r'"crates/([^"]+)"', block.group(1))
 
 
 def main() -> int:
-    reports: list[Path] = []
-    for pattern in ("crates/*/*.cdx.json", "crates/*/*.cdx.xml", "target/**/*.cdx.json"):
-        reports.extend(REPO.glob(pattern))
-    reports = sorted(set(reports))
-    if not reports:
-        print(
-            "FAIL: no CycloneDX SBOM found (run: cargo cyclonedx --format json)",
-            file=sys.stderr,
-        )
-        return 1
-    members = workspace_member_count()
+    members = workspace_members()
+    if not members:
+        print("FAIL: root manifest has no workspace members", file=sys.stderr)
+        return 2
     problems: list[str] = []
     parsed = 0
-    for report in reports:
+    for member in members:
+        crate_dir = REPO / "crates" / member
+        reports = sorted(crate_dir.glob("*.cdx.json"))
+        if len(reports) != 1:
+            problems.append(f"{member}: expected exactly 1 SBOM report, found {len(reports)}")
+            continue
+        report = reports[0]
         try:
             doc = json.loads(report.read_text(encoding="utf-8"))
-        except ValueError:
-            continue  # xml reports are counted for presence, asserted when json
-        parsed += 1
+        except ValueError as exc:
+            problems.append(f"{member}: SBOM unparsable: {exc}")
+            continue
         if not doc.get("specVersion"):
-            problems.append(f"no specVersion: {report.name}")
-    if parsed < members:
-        problems.append(f"parsable reports {parsed} < workspace members {members}")
+            problems.append(f"{member}: SBOM has no specVersion")
+            continue
+        parsed += 1
     if problems:
+        print("SBOM gate violations:")
         for p in problems:
             print(f"  {p}")
         return 1
-    print(
-        f"SBOM gate: {len(reports)} report(s) (>= {members} members), "
-        f"{parsed} parsed with specVersion (exit 0)"
-    )
+    print(f"SBOM gate: {parsed}/{len(members)} member reports parsed with specVersion (exit 0)")
     return 0
 
 
