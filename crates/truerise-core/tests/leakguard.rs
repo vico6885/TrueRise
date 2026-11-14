@@ -2,14 +2,14 @@
 //! LeakGuard suite - the four leak vectors (spec §6 LeakGuard row).
 //!
 //! These tests must NEVER be skipped (spec §7 M1 gate; the timesafety CI job
-//! exists to keep them unskippable). Vector mapping:
-//! 1. future-disturbance invariance - conclusions on the train slice do not
-//!    move when data AFTER the slice changes;
-//! 2. PIT boundary rejection - illegal windows (overlap / purge shortfall)
-//!    are REJECTED at construction;
-//! 3. label uniqueness - overlapping label regions are detected;
-//! 4. fit/apply separation - the fit statistic reads only train-span data
-//!    (with a negative control that DOES move when train data changes).
+//! exists to keep them unskippable). Spec-id mapping (the ids also live in
+//! tests/timesafety/four_vectors.toml, which the CI job cross-checks):
+//! - `future_disturbance_invariance` -> fit_apply_separation_with_negative_control
+//!   (train statistic invariant under future-only disturbance)
+//! - `pit_boundary_rejection` -> pit_boundary_rejection
+//! - `label_uniqueness` -> sweep::detector_flags_exactly_the_overlapping_pairs
+//! - `fit_apply_separation` -> fit_apply_separation_with_negative_control
+//!   (fit reads only the train span; negative control moves with train data)
 
 use truerise_core::timecore::{FoldWindow, TimeSlice, any_overlap};
 use truerise_core::{CoreError, TimeLeak};

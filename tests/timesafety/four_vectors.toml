@@ -1,21 +1,22 @@
-# LeakGuard contract skeleton - existence assertion target for the
-# timesafety-placeholder CI job. Declared at M0, enforced from M1.
+# LeakGuard contract - enforced since M1 (the property tests live in
+# crates/truerise-core/tests/leakguard.rs; the timesafety CI job asserts
+# BOTH this declaration AND the enforcing test file's presence).
 schema = "truerise.timesafety.v1"
 
 [[vector]]
 id = "future_disturbance_invariance"
-status = "planned"
+status = "enforced"
 
 [[vector]]
 id = "pit_boundary_rejection"
-status = "planned"
+status = "enforced"
 
 [[vector]]
 id = "label_uniqueness"
-status = "planned"
+status = "enforced"
 
 [[vector]]
 id = "fit_apply_separation"
-status = "planned"
+status = "enforced"
 
 # Negative controls for the separation vector are part of its M1 test plan.

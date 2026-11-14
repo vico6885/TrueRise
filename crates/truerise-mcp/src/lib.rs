@@ -67,11 +67,14 @@ impl RequestFrame {
     }
 }
 
+/// Tool handler signature: arguments -> output (plain function, no state).
+pub type ToolHandler = fn(&HashMap<String, String>) -> String;
+
 /// Tool descriptors the server exposes (zero exposure by default: the allow
 /// list starts EMPTY; governance must allow each tool explicitly).
 #[derive(Debug, Default)]
 pub struct Server {
-    allowed_tools: Mutex<HashMap<String, fn(&HashMap<String, String>) -> String>>,
+    allowed_tools: Mutex<HashMap<String, ToolHandler>>,
 }
 
 impl Server {

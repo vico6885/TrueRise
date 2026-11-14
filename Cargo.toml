@@ -36,3 +36,12 @@ expect_used = "deny"
 strip = true
 lto = true
 codegen-units = 1
+
+# cargo-dist configuration (spec §6.5): the six-platform matrix ships with the
+# first public tag (release.yml invokes `cargo dist build`); CI job runs on PRs
+# to keep the config exercised.
+[workspace.metadata.dist]
+cargo-dist-version = "0.28.0"
+targets = ["x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "x86_64-apple-darwin", "aarch64-apple-darwin", "x86_64-pc-windows-msvc"]
+installers = ["shell", "powershell"]
+ci = ["github"]

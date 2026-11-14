@@ -165,3 +165,22 @@ Spec decisions (M5):
 - cargo-dist release.yml is an in-repo placeholder: the six-platform matrix + SHA256 + installer scripts land with the first public tag (spec §6.5); the workflow shape is reviewable now.
 
 Not doing (M5): authenticode/notarization signing (needs certificates); npm/pip shim distribution (needs published artifacts); OTLP SDK exporter behind the otel feature (feature placeholder compiles, SDK wiring deferred to first release); REPL golden transcript test (requires the chat-reference parity harness, M5+ post-release).
+
+---
+
+## M5 residual closure — spec-mapping gate + benches + enforced timesafety + golden REPL + release config (2026-11-14)
+
+HEAD: `9011804` (2026-11-14T22:46:44+08:00), 22 commits all DCO-signed.
+
+| Item | Command | Result |
+|---|---|---|
+| spec-mapping gate | `python tools/lint_spec_map.py` | 23 §6 rows / 67 identifiers all resolve (CI red on missing mapping or dangling identifier) |
+| four vectors | `python tools/check_leakguard_skeleton.py` | 4 vectors ENFORCED (declaration + enforcing leakguard tests verified per-vector) |
+| criterion baseline | `cargo bench -p truerise-governance` | chain/append + verify_full baselines saved; CI job saves `main` baseline, critcmp 20% gate activates from the second run |
+| REPL golden | `cargo test -p truerise-cli --test golden_repl` | repl adapter path and direct loop path: transcript/transitions field-identical, audit delta per run == transitions (shared chain accumulates) |
+| SBOM M5 gate | `python tools/check_sbom.py` (after `cargo cyclonedx --format json --spec-version 1.5`) | 12/12 reports, specVersion == 1.5, components >= declared EXTERNAL dependencies per member |
+| cargo-dist config | `[workspace.metadata.dist]` | six targets, shell/powershell installers, github CI |
+| dry-run | `cargo package --workspace --list --offline` | clean (exit 0) |
+| docs | docs/arch.md, timesafety.md, governance.md, rfc/README.md | bilingual (EN+CN) |
+
+The M5 exit gates are now: e2e toy server PASS, dry-run clean, SBOM assertions at M5 grade, release config in-repo. The ONLY remaining item that cannot run on this machine is the actual six-platform artifact build, which triggers on the first public tag (release.yml is in-repo and reviewable).

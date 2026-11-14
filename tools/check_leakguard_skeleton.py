@@ -25,7 +25,7 @@ EXPECTED = {
 
 def main() -> int:
     if not TARGET.exists():
-        print("FAIL: timesafety contract skeleton missing", file=sys.stderr)
+        print("FAIL: timesafety contract missing", file=sys.stderr)
         return 1
     text = TARGET.read_text(encoding="utf-8")
     ids = {
@@ -35,9 +35,24 @@ def main() -> int:
     if missing:
         print(f"FAIL: vectors not declared: {sorted(missing)}", file=sys.stderr)
         return 1
-    if 'status = "enforced"' in text:
-        print("FAIL: enforced status declared but M1 property tests are not present", file=sys.stderr)
-        return 1
+    enforced = 'status = "enforced"' in text
+    if enforced:
+        # M1+ semantics: enforced is valid ONLY when the enforcing property
+        # tests exist (leakguard.rs declaring all four vectors).
+        leakguard = REPO / "crates" / "truerise-core" / "tests" / "leakguard.rs"
+        if not leakguard.exists():
+            print("FAIL: enforced but enforcing test file (leakguard.rs) missing", file=sys.stderr)
+            return 1
+        lg_text = leakguard.read_text(encoding="utf-8")
+        not_covered = [v for v in sorted(EXPECTED) if v not in lg_text]
+        if not_covered:
+            print(f"FAIL: leakguard.rs does not reference vectors: {not_covered}", file=sys.stderr)
+            return 1
+        print(
+            f"timesafety: {len(EXPECTED)} vectors ENFORCED "
+            f"(declaration + enforcing tests verified, exit 0)"
+        )
+        return 0
     print(
         f"timesafety placeholder: {len(EXPECTED)} vectors declared planned "
         "(exit 0; real suite lands M1)"

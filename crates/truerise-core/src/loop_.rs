@@ -192,14 +192,12 @@ impl<'a> Loop<'a> {
         }
         // Verdict: the LAST observe payload decides (demo-grade; judge lands M4).
         let has_verdict = !plan_payload.is_empty();
-        let final_state = if has_verdict {
+        if has_verdict {
             self.record(State::Observing, Event::VerdictIssued, State::VerdictReady)?;
             self.record(State::VerdictReady, Event::Finish, State::Finished)?;
-            State::Finished
         } else {
             self.record(State::Observing, Event::NoVerdict, State::AwaitingTakeover)?;
-            State::AwaitingTakeover
-        };
+        }
         let transcript = self
             .transcript
             .lock()

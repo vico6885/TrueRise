@@ -1,0 +1,118 @@
+{
+  "_note": "Spec-mapping gate: every behaviour row of the construction spec's §6 table maps to named test identifiers (function or module paths). tools/lint_spec_map.py verifies each identifier EXISTS in the tree - a row without a mapping, or a mapping pointing at a non-existent test, fails CI.",
+  "rows": {
+    "状态机": [
+      "full_table_coverage_defined_and_undefined",
+      "runtime_table_terminal_absorbs_every_event",
+      "declared_log_agrees_with_final_state",
+      "terminal_states_absorb_at_compile_time",
+      "state_machine"
+    ],
+    "审计链": [
+      "append_verify_and_persistence_reload",
+      "idempotent_replay_skips_duplicate_key",
+      "legacy_rows_stored_but_do_not_govern",
+      "tamper_drill_fails_closed_and_locates_the_row",
+      "prev_hash_tampering_located"
+    ],
+    "四态": [
+      "research_never_grants_execution",
+      "backtest_never_grants_execution",
+      "sim_grants_with_optin_only",
+      "live_requires_affirmation_even_when_in_set"
+    ],
+    "TimeSlice/FoldWindow": [
+      "half_open_touching_endpoints_do_not_overlap",
+      "fold_window_enforces_purge",
+      "accepted_windows_are_always_leak_free"
+    ],
+    "泄漏四向量": [
+      "fit_apply_separation_with_negative_control",
+      "pit_boundary_rejection",
+      "detector_flags_exactly_the_overlapping_pairs"
+    ],
+    "沙箱契约": [
+      "self_check_three_regions_pass_for_inprocess"
+    ],
+    "conformance": [
+      "all_regions_pass_yields_pass",
+      "any_region_fail_yields_fail",
+      "verdict_is_recorded_and_reproducible"
+    ],
+    "帽": [
+      "toml_hat_loads_and_aligns_to_chain",
+      "content_hash_binds_content"
+    ],
+    "预算账本": [
+      "singleton_reconciliation_quota_and_denominator"
+    ],
+    "MCP": [
+      "zero_exposure_by_default",
+      "allowlist_gates_tool_calls",
+      "client_hard_denies_write_class",
+      "toy_e2e_client_to_server"
+    ],
+    "可观测": [
+      "export_produces_one_span_per_row_and_redacts",
+      "redact_walks_nested_structures"
+    ],
+    "wire 版本化": [
+      "v2_roundtrip",
+      "v2_rejects_unknown_fields",
+      "v1_preserves_extra_fields_and_never_governs",
+      "schema_file_alignment"
+    ],
+    "policy 三态": [
+      "default_deny",
+      "deny_short_circuits_even_with_approval",
+      "ask_requires_approval_on_file_and_then_caches"
+    ],
+    "ResourcePolicy": [
+      "three_gates_in_order",
+      "unknown_policy_refused"
+    ],
+    "T×W 谓词": [
+      "policy 三态 tests implement the conjunction semantics (allow = verdict in auto AND face allowed AND approval on file); the typed-capability half lives in the mode row"
+    ],
+    "审批队列": [
+      "stale_epoch_writes_rejected",
+      "timeout_never_approves",
+      "revoked_then_approve_refused"
+    ],
+    "RSI skill": [
+      "valid_package_loads",
+      "wrong_schema_version_refused",
+      "extra_fields_refused"
+    ],
+    "evolve": [
+      "evolve_writes_proposal_and_report_never_merges",
+      "no_merge_path_exists"
+    ],
+    "ratchet/指纹": [
+      "ratchet_only_tightens",
+      "score_regression_is_exit_grade",
+      "cross_environment_comparison_always_fails"
+    ],
+    "loop 退避+pinner": [
+      "backoff_is_exponential_with_jitter_cap",
+      "only_rate_limit_class_is_retryable",
+      "foreign_model_voids_the_round"
+    ],
+    "compaction": [
+      "tokens_monotonically_decrease_across_levels",
+      "pre_compact_event_emitted",
+      "recent_tail_kept_verbatim"
+    ],
+    "memory 融合": [
+      "fusion_respects_weights",
+      "weights_normalise_to_one",
+      "ties_break_by_id_for_determinism"
+    ],
+    "platform": [
+      "monotonic_ordering_holds",
+      "expiry_uses_monotonic_domain",
+      "lock_write_via_guard_roundtrip",
+      "wait_ms_returns_none_for_sleeping_child"
+    ]
+  }
+}

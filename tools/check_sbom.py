@@ -34,6 +34,28 @@ def workspace_members() -> list[str]:
     return re.findall(r'"crates/([^"]+)"', block.group(1))
 
 
+def declared_external_deps(crate_dir: str) -> int:
+    """Count the member's DECLARED EXTERNAL dependencies (path deps excluded;
+    M5 gate baseline: components >= declared dependencies)."""
+    manifest = REPO / "crates" / crate_dir / "Cargo.toml"
+    try:
+        text = manifest.read_text(encoding="utf-8")
+    except OSError:
+        return 0
+    block = re.search(r"\[dependencies\](.*?)(\n\[|$)", text, re.DOTALL)
+    if not block:
+        return 0
+    count = 0
+    for line in block.group(1).splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if "path =" in line:
+            continue  # internal workspace dependency, not an external component
+        count += 1
+    return count
+
+
 def main() -> int:
     members = workspace_members()
     if not members:
@@ -53,8 +75,16 @@ def main() -> int:
         except ValueError as exc:
             problems.append(f"{member}: SBOM unparsable: {exc}")
             continue
-        if not doc.get("specVersion"):
-            problems.append(f"{member}: SBOM has no specVersion")
+        spec = str(doc.get("specVersion", ""))
+        if spec != "1.5":
+            problems.append(f"{member}: specVersion {spec!r} != 1.5 (M5 gate)")
+            continue
+        want = declared_external_deps(member)
+        got = len(doc.get("components", []))
+        if got < want:
+            problems.append(
+                f"{member}: components {got} < declared external dependencies {want} (M5 gate)"
+            )
             continue
         parsed += 1
     if problems:
@@ -62,7 +92,10 @@ def main() -> int:
         for p in problems:
             print(f"  {p}")
         return 1
-    print(f"SBOM gate: {parsed}/{len(members)} member reports parsed with specVersion (exit 0)")
+    print(
+        f"SBOM gate: {parsed}/{len(members)} member reports, specVersion 1.5, "
+        f"components >= declared external dependencies (exit 0)"
+    )
     return 0
 
 

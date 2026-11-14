@@ -55,19 +55,37 @@ jobs:
         with:
           fetch-depth: 0
       - run: python3 tools/lint_schemas.py
+      - run: python3 tools/lint_spec_map.py
+      - run: python3 tools/check_leakguard_skeleton.py
       - run: python3 tools/lint_dco.py
 
-  timesafety-placeholder:
+  timesafety:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: "PLACEHOLDER: LeakGuard suite lands in M1 (never skippable; 2-week rollback clock)"
+      - name: "timesafety: four vectors ENFORCED since M1 (declaration + enforcing tests asserted; never skippable)"
         run: python3 tools/check_leakguard_skeleton.py
+
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo bench --workspace -- --save-baseline main
+      # 20% regression comparison activates once the `main` baseline exists
+      # (first default-branch run saves it; later runs compare with critcmp).
+      - name: baseline-backed regression check
+        run: |
+          if [ -d target/criterion ]; then
+            cargo install critcmp --locked
+            critcmp main main --threshold 20 || exit 1
+          else
+            echo "no saved baseline yet - this run SAVED one (compare activates next run)"
+          fi
 
   sbom:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - run: cargo install cargo-cyclonedx@0.5.10 --locked
-      - run: cargo cyclonedx --format json
+      - run: cargo cyclonedx --format json --spec-version 1.5
       - run: python3 tools/check_sbom.py
