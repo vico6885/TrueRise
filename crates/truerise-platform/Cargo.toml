@@ -1,0 +1,12 @@
+[package]
+name = "truerise-platform"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "The only platform boundary: file locks, monotonic clocks, process trees."
+publish = false
+
+[lints]
+workspace = true

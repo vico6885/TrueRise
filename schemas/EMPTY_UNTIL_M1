@@ -1,0 +1,2 @@
+Empty until M1 (wire crate). Explicit-SKIP marker for tools/lint_schemas.py;
+coexisting with any *.json schema file is an error (fail-closed).

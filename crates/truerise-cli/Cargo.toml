@@ -1,0 +1,12 @@
+[package]
+name = "truerise-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Single-binary entry: REPL / run / demo / onboarding wizard (binary target lands in M5)."
+publish = false
+
+[lints]
+workspace = true

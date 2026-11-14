@@ -1,0 +1,12 @@
+[package]
+name = "truerise-observe"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Audit events to spans: jsonl (default) and OTLP exporter behind the otel feature; one-way, no re-ingestion."
+publish = false
+
+[lints]
+workspace = true

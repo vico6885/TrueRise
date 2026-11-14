@@ -1,0 +1,38 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/truerise-core",
+    "crates/truerise-wire",
+    "crates/truerise-platform",
+    "crates/truerise-governance",
+    "crates/truerise-sandbox",
+    "crates/truerise-eval",
+    "crates/truerise-memory",
+    "crates/truerise-rsi",
+    "crates/truerise-hats",
+    "crates/truerise-mcp",
+    "crates/truerise-observe",
+    "crates/truerise-cli",
+]
+
+[workspace.package]
+version = "0.2.0-dev.0"
+edition = "2024"
+rust-version = "1.85"
+license = "Apache-2.0 OR MIT"
+authors = ["The TrueRise Authors"]
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_docs = "deny"
+non_ascii_idents = "deny"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+unwrap_used = "deny"
+expect_used = "deny"
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1

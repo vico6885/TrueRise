@@ -1,0 +1,35 @@
+# cargo-deny configuration - supply-chain and license isolation.
+
+[graph]
+all-features = true
+
+[licenses]
+version = 2
+confidence-threshold = 0.93
+allow = [
+    "Apache-2.0",
+    "MIT",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-3.0",
+    "Unicode-DFS-2016",
+    "Zlib",
+    "CC0-1.0",
+]
+# Isolation assertion: the legacy Python-edition license BSL-1.1 is
+# deliberately NOT in the allow list above (and never may be), together with
+# GPL/AGPL copyleft. A comment is not a check - this invariant is
+# machine-asserted in CI by tools/lint_deny_isolation.py.
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+
+[advisories]
+version = 2
+yanked = "warn"
+
+[sources]
+unknown-registry = "warn"
+unknown-git = "warn"

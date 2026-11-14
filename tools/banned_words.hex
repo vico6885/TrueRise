@@ -1,0 +1,15 @@
+# TrueRise banned-token list (leak-prevention double door + naming gate).
+# Encoded as hex so no token literal ever exists inside this repository.
+# W:<hex> = banned token (ASCII tokens match on word boundaries; CJK tokens match as substrings).
+# X:<hex> = exempt path prefix (spec-recognised industry plugin crates; none in-repo at M0).
+W:717261
+W:7175616e74
+W:616c706861
+W:616c7068615f73797374656d
+W:616c7068612d73797374656d
+W:41e882a1
+W:686f6c646f7574
+W:e98791e6a087
+W:e9878fe58c96
+W:69636972
+W:736861727065

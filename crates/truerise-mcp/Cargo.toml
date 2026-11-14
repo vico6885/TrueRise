@@ -1,0 +1,12 @@
+[package]
+name = "truerise-mcp"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "MCP server (zero exposure by default) and client (disclosure governance, write actions hard-denied)."
+publish = false
+
+[lints]
+workspace = true

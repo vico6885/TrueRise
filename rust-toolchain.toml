@@ -1,0 +1,5 @@
+# Pinned toolchain for reproducible local + CI builds.
+# Upgrade flow: a dedicated PR bumping this file, recorded in docs/PROGRESS.md.
+# MSRV floor is 1.85 (edition 2024), verified by the dedicated msrv CI job.
+[toolchain]
+channel = "1.100.0"

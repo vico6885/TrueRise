@@ -1,0 +1,12 @@
+[package]
+name = "truerise-rsi"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Recursive self-improvement: evolve (never auto-merge), skill schema + loader, single budget ledger."
+publish = false
+
+[lints]
+workspace = true
