@@ -20,7 +20,8 @@ Files: root `Cargo.toml` / `rust-toolchain.toml` / `deny.toml` / `Makefile` / `.
 | file length | `python tools/lint_file_length.py` | `all 20 code files <= 600 lines (exit 0)` |
 | license isolation | `python tools/lint_deny_isolation.py` | `allow list clean, dual core licenses present (exit 0)` |
 | schemas | `python tools/lint_schemas.py` | `1 schema(s) aligned at spec level (fields/required/enums) (exit 0)` |
-| SBOM format | `python tools/check_sbom.py` (CI, after `cargo cyclonedx --all`) | asserts report present + specVersion declared + components >= workspace members |
+| SBOM format | `cargo cyclonedx --format json` + `python tools/check_sbom.py` | `24 report(s) (>= 12 members), 12 parsed with specVersion (exit 0)` |
+| cargo deny | `cargo deny check` | `advisories ok, bans ok, licenses ok, sources ok` (exit 0) |
 | timesafety placeholder | `python tools/check_leakguard_skeleton.py` | `4 vectors declared planned (exit 0)` |
 | DCO | `python tools/lint_dco.py` | `all 1 commit(s) signed (exit 0)` |
 | naming check | crates.io API + GitHub search | crates.io `truerise`: 404 = not taken; GitHub: one unrelated personal repo (`dev-abdullah-shahid/truerise`) |

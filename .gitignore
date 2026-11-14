@@ -1,4 +1,6 @@
 /target
+*.cdx.json
+*.cdx.xml
 *.swp
 .DS_Store
 Thumbs.db
