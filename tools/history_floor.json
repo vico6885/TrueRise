@@ -2,7 +2,7 @@
   "floor_blobs": 88,
   "recorded_at": "2026-11-14T18:39:21+08:00",
   "recorded_in": "1a5d3bc",
-  "authorization": "external governance task log, section 3 (deletion three-gate record, maintainer-approved); the log path is recorded out-of-repo only — reviewers cross-check the log directly (in-repo floor bumps are not self-authorizable)",
+  "authorization": "external governance task log (2026-11-14), section 3 = the deletion three-gate record, maintainer-approved; a reviewer-locatable pointer lives in the M0 evidence bundle file artifacts/EXTERNAL_LOG_REFERENCE.txt (the bundle lives beside the external log, outside this repo — in-repo token gates forbid the literal path here; in-repo floor bumps are not self-authorizable)",
   "rule": "The blob count of this repository must never decrease. A decrease proves a prune/rewrite destroyed history objects (evidence destruction) and fails the history door. Raising the floor requires the deletion three-gate protocol with an authorization reference to the external governance log (readable by reviewers); a missing or empty authorization field is exit 2 (fail-closed).",
   "context": "Floor raised from 70 to 88 at generation 1a5d3bc covering all M0 commits. One approved amend+prune occurred BEFORE this floor mechanism existed (see docs/PROGRESS.md history-door incident record); the floor prevents any recurrence without an externally witnessed, approved bump."
 }
