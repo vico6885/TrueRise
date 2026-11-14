@@ -4,7 +4,7 @@ Format per wave: ID | files | reproducible command | output (<= 10 lines) | HEAD
 
 ## M0 — repository scaffold (2026-11-14)
 
-HEAD: `158c4bd` (2026-11-14T19:45+08:00) — the commit whose gate transcriptions this file's live-anchor rows cite (11 commits all DCO-signed; external-review rounds 8-11 verified against it). Branch `main`; commits after `158c4bd` are documentation-alignment commits whose live counts live in the evidence bundle (era-anchored rows below + bundle = live authority). Wave M0 scaffold commit: `4e58fa6` (2026-11-14T15:59:40+08:00) — a different event, not to be conflated.
+HEAD: `158c4bd` (2026-11-14T18:29:24+08:00) — the commit whose gate transcriptions this file's live-anchor rows cite (11 commits all DCO-signed; external-review rounds 8-11 verified against it). Branch `main`; commits after `158c4bd` are documentation-alignment commits whose live counts live in the evidence bundle (era-anchored rows below + bundle = live authority). Wave M0 scaffold commit: `4e58fa6` (2026-11-14T15:59:40+08:00) — a different event, not to be conflated.
 
 Files: root `Cargo.toml` / `rust-toolchain.toml` / `deny.toml` / `Makefile` / `.gitignore` / `.gitattributes`; `crates/truerise-{core,wire,platform,governance,sandbox,eval,memory,rsi,hats,mcp,observe,cli}/` (skeletons, `publish = false`, doc-only `lib.rs`); `tools/` (9 gate scripts + `banned_words.hex`); `.github/workflows/ci.yml` + ISSUE_TEMPLATE; `schemas/` (`audit_event.v2.schema.json` + `INDEX.json`, spec-level alignment gate); `tests/timesafety/` (four-vector contract skeleton); `README` / `CONTRIBUTING` / `SECURITY` / `GOVERNANCE` / `CODE_OF_CONDUCT` / `CHANGELOG` / `LICENSE-APACHE` / `LICENSE-MIT`.
 
