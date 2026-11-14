@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TrueRise audit event, v2 (tightened)",
+  "description": "One record of the append-only audit hash chain. Clean-room contract derived from the behaviour spec: the record carries {seq, ts, kind, severity, detail, prev_hash, hash}; hash = SHA256 over the canonical serialization of all fields except hash; extra fields are forbidden (tightened edition). The legacy v1 edition stays valid for reading but is excluded from governance decisions (handled at the wire type level in M1).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["seq", "prev_hash", "hash"],
+  "properties": {
+    "seq": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Monotonic sequence number, contiguous within one chain."
+    },
+    "ts": {
+      "type": "string",
+      "description": "Event timestamp, UTC ISO-8601."
+    },
+    "kind": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Event kind discriminator."
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["debug", "info", "warn", "error"],
+      "description": "Event severity."
+    },
+    "detail": {
+      "type": "object",
+      "description": "Structured event payload."
+    },
+    "prev_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "SHA-256 hash of the previous record (genesis: 64 zeros)."
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "SHA-256 over the canonical serialization of all fields except hash."
+    }
+  }
+}

@@ -1,9 +1,13 @@
 # schemas
 
-Wire-schema JSON files (single authoritative source). Intentionally empty
-at M0: schemas land with the wire crate in M1. The marker file
-`EMPTY_UNTIL_M1` keeps the schema gate fail-closed-but-explicit (it emits
-a SKIP line that must be recorded in `docs/PROGRESS.md`).
+Wire-schema JSON files (single authoritative source for the JSON surface;
+the wire crate keeps the same contracts explicit at the Rust type level from
+M1).
 
-M1 contract: `INDEX.json` lists every schema; each entry is verified by
-field-level assertions (fields / required / enum), never by file references.
+Current content: `audit_event.v2.schema.json` — the tightened audit-chain
+record contract (7 fields, 3 chain-critical required keys, no extra
+fields), asserted by `tools/lint_schemas.py` against `INDEX.json` at spec
+level (fields / required / enums / additionalProperties — never mere file
+references). The legacy v1 edition lands alongside in M1 (double-version
+rule, explicit at the type level; legacy reads stay valid but are excluded
+from governance).

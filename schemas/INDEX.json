@@ -1,0 +1,11 @@
+{
+  "_description": "Alignment index: each entry (any key except those starting with '_') is a spec-level expectation set keyed by schema file stem. The gate compares the schema FILE CONTENT against these expectations (fields / required / enums / additionalProperties) - never mere file existence.",
+  "audit_event.v2.schema": {
+    "fields": ["seq", "ts", "kind", "severity", "detail", "prev_hash", "hash"],
+    "required": ["seq", "prev_hash", "hash"],
+    "enums": {
+      "severity": ["debug", "info", "warn", "error"]
+    },
+    "additionalProperties": false
+  }
+}

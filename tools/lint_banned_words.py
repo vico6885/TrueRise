@@ -13,13 +13,14 @@ Excluded surfaces (rationale recorded in docs/PROGRESS.md):
 - ``.git/``: VCS internals - the history door (lint_git_history.py) owns
   this surface exclusively.
 - ``target/``: build artifacts.
-- ``Cargo.lock``: generated file; dependency version strings may legitimately
-  contain pre-release suffixes.
-- exempt path prefixes from the encoded ``X:`` section: reserved for the
-  spec-recognised industry plugin crates, which live OUT OF REPO per the
-  workspace layout (this repo hosts port traits + conformance only), so the
-  section is empty at M0. If a plugin crate ever lands in-repo, its path is
-  added to the encoded config - a single-source governance change.
+- ``Cargo.lock``: scanned, but version-assignment lines are filtered -
+  dependency version strings may legitimately contain pre-release suffixes
+  (package NAMES on those lines stay fully covered).
+
+Exempt paths: the plaintext ``EXEMPT_PATHS`` list below. It exists for the
+spec-recognised industry plugin crates (which per the workspace layout live
+OUT OF REPO, so it is empty at M0); entries are auditable plain paths, and
+any change goes through normal PR review.
 """
 from __future__ import annotations
 
@@ -30,18 +31,20 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 WORDLIST = Path(__file__).resolve().parent / "banned_words.hex"
 SKIP_DIRS = {".git", "target", "node_modules"}
-SKIP_FILES = {"Cargo.lock"}
+VERSION_LINE = re.compile(r"^\s*version\s*=")
+# Spec-recognised industry plugin crates live out of repo; keep empty here.
+# Plaintext on purpose: auditable, PR-reviewed, and scan-safe (paths, not tokens).
+EXEMPT_PATHS: list[str] = []
 
 
-def load_config() -> tuple[list[str], list[str]]:
+def load_config() -> list[str]:
     """Decode the encoded token list.
 
     Returns:
-        (banned tokens, exempt path prefixes). Raises SystemExit(2) when the
-        list is empty or corrupt - an empty gate must be red, never green.
+        Banned tokens. Raises SystemExit(2) when the list is empty or
+        corrupt - an empty gate must be red, never green.
     """
     words: list[str] = []
-    exempt: list[str] = []
     try:
         raw_lines = WORDLIST.read_text(encoding="ascii").splitlines()
     except OSError as exc:
@@ -52,7 +55,7 @@ def load_config() -> tuple[list[str], list[str]]:
         if not line or line.startswith("#"):
             continue
         kind, sep, hexpart = line.partition(":")
-        if sep == "" or kind not in ("W", "X"):
+        if sep == "" or kind != "W":
             print(f"corrupt wordlist line: {line[:20]!r}", file=sys.stderr)
             raise SystemExit(2)
         try:
@@ -60,11 +63,11 @@ def load_config() -> tuple[list[str], list[str]]:
         except ValueError as exc:
             print(f"corrupt hex in wordlist: {exc}", file=sys.stderr)
             raise SystemExit(2) from exc
-        (words if kind == "W" else exempt).append(token)
+        words.append(token)
     if not words:
         print("banned-token list is EMPTY - fail-closed red", file=sys.stderr)
         raise SystemExit(2)
-    return words, exempt
+    return words
 
 
 def build_pattern(words: list[str]) -> re.Pattern[str]:
@@ -84,16 +87,16 @@ def build_pattern(words: list[str]) -> re.Pattern[str]:
 
 
 def main() -> int:
-    words, exempt = load_config()
+    words = load_config()
     pattern = build_pattern(words)
-    exempt_abs = [str((REPO / p).resolve()) for p in exempt]
+    exempt_abs = [str((REPO / p).resolve()) for p in EXEMPT_PATHS]
     hits: list[str] = []
     scanned = 0
     for path in sorted(REPO.rglob("*")):
         if not path.is_file():
             continue
         rel = path.relative_to(REPO)
-        if set(rel.parts) & SKIP_DIRS or rel.name in SKIP_FILES:
+        if set(rel.parts) & SKIP_DIRS:
             continue
         if any(str(path.resolve()).startswith(p) for p in exempt_abs):
             continue
@@ -102,7 +105,10 @@ def main() -> int:
         except (UnicodeDecodeError, PermissionError, OSError):
             continue  # binary / unreadable: the history door re-scans raw bytes
         scanned += 1
+        is_lock = rel.name == "Cargo.lock"
         for lineno, line in enumerate(text.splitlines(), 1):
+            if is_lock and VERSION_LINE.match(line):
+                continue  # version strings carry pre-release suffixes; names stay covered
             if pattern.search(line):
                 hits.append(f"{rel.as_posix()}:{lineno}")
     if hits:

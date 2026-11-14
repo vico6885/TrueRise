@@ -25,7 +25,7 @@ def run_git(*args: str) -> str:
 
 
 def main() -> int:
-    words, _exempt = load_config()
+    words = load_config()
     pattern = build_pattern(words)
     hits: list[str] = []
 

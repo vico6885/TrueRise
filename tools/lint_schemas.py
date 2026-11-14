@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
-"""Wire-schema alignment gate (fail-closed).
+"""Wire-schema alignment gate (fail-closed, spec-level assertions).
 
-M0 state: ``schemas/`` is intentionally empty until the wire crate lands in
-M1.
-- If ``schemas/EMPTY_UNTIL_M1`` exists: emit an explicit SKIP line (which
-  MUST be recorded in the docs/PROGRESS.md not-doing list) and exit 0. A
-  marker coexisting with any ``*.json`` schema file is an error.
-- No marker AND no schemas: exit 1 (an empty gate is never silently green).
+Every entry in ``schemas/INDEX.json`` is a spec-level expectation set. This
+gate compares the schema FILE CONTENT against the expectations - field sets,
+required keys, enum values, additionalProperties - never mere file existence.
 
-M1+: ``INDEX.json`` lists every schema; each entry must exist and every
-check compares fields / required / enum values at spec level - never file
-references.
+Exit codes: 0 = all entries aligned; 1 = any mismatch/missing; 2 = config
+error (a missing INDEX.json is red: an empty gate is never silently green).
 """
 from __future__ import annotations
 
@@ -20,44 +16,72 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 SCHEMAS = REPO / "schemas"
-MARKER = SCHEMAS / "EMPTY_UNTIL_M1"
+
+
+def fail(msg: str) -> int:
+    print(f"schema gate FAIL: {msg}", file=sys.stderr)
+    return 1
 
 
 def main() -> int:
-    schema_files = sorted(p for p in SCHEMAS.glob("*.json"))
-    if MARKER.exists():
-        if schema_files:
-            print("FAIL: EMPTY_UNTIL_M1 marker coexists with schema files", file=sys.stderr)
-            return 1
-        print(
-            "SKIP: schemas/ intentionally empty until M1 (marker present) - "
-            "record in PROGRESS not-doing list"
-        )
-        return 0
-    index = SCHEMAS / "INDEX.json"
-    if not index.exists():
-        print("FAIL: no INDEX.json and no EMPTY_UNTIL_M1 marker - fail-closed red", file=sys.stderr)
-        return 1
-    entries = json.loads(index.read_text(encoding="utf-8"))
+    index_path = SCHEMAS / "INDEX.json"
+    if not index_path.exists():
+        return fail("no INDEX.json - fail-closed red")
+    try:
+        entries = json.loads(index_path.read_text(encoding="utf-8"))
+    except ValueError as exc:
+        return fail(f"INDEX.json unparsable: {exc}")
     problems: list[str] = []
+    checked = 0
     for name, spec in entries.items():
+        if name.startswith("_") or not isinstance(spec, dict):
+            continue  # metadata keys are not schema entries
         path = SCHEMAS / f"{name}.json"
         if not path.exists():
-            problems.append(f"missing schema file: {name}.json")
+            problems.append(f"{name}: schema file missing")
             continue
-        doc = json.loads(path.read_text(encoding="utf-8"))
-        for field in spec.get("required", []):
-            if field not in doc.get("required", []):
-                problems.append(f"{name}: required field not asserted: {field}")
-        for enum_name, values in spec.get("enums", {}).items():
-            if doc.get("enums", {}).get(enum_name) != values:
-                problems.append(f"{name}: enum mismatch: {enum_name}")
+        try:
+            doc = json.loads(path.read_text(encoding="utf-8"))
+        except ValueError as exc:
+            problems.append(f"{name}: schema unparsable: {exc}")
+            continue
+        checked += 1
+        props = set(doc.get("properties", {}))
+        want_fields = set(spec.get("fields", []))
+        if props != want_fields:
+            problems.append(
+                f"{name}: field set mismatch: missing={sorted(want_fields - props)} "
+                f"extra={sorted(props - want_fields)}"
+            )
+        want_required = set(spec.get("required", []))
+        got_required = set(doc.get("required", []))
+        if got_required != want_required:
+            problems.append(
+                f"{name}: required mismatch: got={sorted(got_required)} "
+                f"want={sorted(want_required)}"
+            )
+        want_enums = spec.get("enums", {})
+        got_enums = {
+            k: v.get("enum") for k, v in doc.get("properties", {}).items() if "enum" in v
+        }
+        for enum_name, values in want_enums.items():
+            if got_enums.get(enum_name) != values:
+                problems.append(
+                    f"{name}: enum mismatch on {enum_name}: "
+                    f"got={got_enums.get(enum_name)} want={values}"
+                )
+        want_ap = spec.get("additionalProperties")
+        if want_ap is not None and doc.get("additionalProperties") != want_ap:
+            problems.append(
+                f"{name}: additionalProperties mismatch: got={doc.get('additionalProperties')} "
+                f"want={want_ap}"
+            )
     if problems:
         print("schema gate violations:")
         for p in problems:
             print(f"  {p}")
         return 1
-    print(f"schema gate: {len(entries)} schema(s) aligned at spec level (exit 0)")
+    print(f"schema gate: {checked} schema(s) aligned at spec level (fields/required/enums) (exit 0)")
     return 0
 
 
