@@ -4,27 +4,29 @@ Format per wave: ID | files | reproducible command | output (<= 10 lines) | HEAD
 
 ## M0 — repository scaffold (2026-11-14)
 
-HEAD: see `git log -1` (branch `main`, all commits DCO-signed). Wave M0 scaffold commit: `4e58fa6` (2026-11-14T15:59:40+08:00). This file is refreshed at every wave commit; the stale-HEAD line was removed after the review caught it conflicting with the evidence bundle.
+HEAD: `133bdf0` (2026-11-14T18:55+08:00) at the last evidence-bundle refresh (anchor source: bundle `00_summary.md`; this line is refreshed at every wave commit). Branch `main`, all commits DCO-signed. Wave M0 scaffold commit: `4e58fa6` (2026-11-14T15:59:40+08:00) — a different event, not to be conflated with the refresh point.
 
 Files: root `Cargo.toml` / `rust-toolchain.toml` / `deny.toml` / `Makefile` / `.gitignore` / `.gitattributes`; `crates/truerise-{core,wire,platform,governance,sandbox,eval,memory,rsi,hats,mcp,observe,cli}/` (skeletons, `publish = false`, doc-only `lib.rs`); `tools/` (9 gate scripts + `banned_words.hex`); `.github/workflows/ci.yml` + ISSUE_TEMPLATE; `schemas/` (`audit_event.v2.schema.json` + `INDEX.json`, spec-level alignment gate); `tests/timesafety/` (four-vector contract skeleton); `README` / `CONTRIBUTING` / `SECURITY` / `GOVERNANCE` / `CODE_OF_CONDUCT` / `CHANGELOG` / `LICENSE-APACHE` / `LICENSE-MIT`.
 
 ### Gate evidence
 
-| Gate | Command | Result |
-|---|---|---|
-| build | `cargo check --workspace --all-targets` | Finished dev profile in 0.37s, 12 crates, zero warnings |
-| clippy | `cargo clippy --workspace --all-targets -- -D warnings` | Finished, zero warnings |
-| fmt | `cargo fmt --all -- --check` | exit 0 |
-| workspace door (= naming gate) | `python tools/lint_banned_words.py` | `0 hits across 58 files (exit 0)` |
-| history-object door | `python tools/lint_git_history.py` | `0 hits across 59 blobs + full ref log (exit 0)` |
-| file length | `python tools/lint_file_length.py` | `all 20 code files <= 600 lines (exit 0)` |
-| license isolation | `python tools/lint_deny_isolation.py` | `allow list clean, dual core licenses present (exit 0)` |
-| schemas | `python tools/lint_schemas.py` | `1 schema(s) aligned at spec level (fields/required/enums) (exit 0)` |
-| SBOM format | `cargo cyclonedx --format json` + `python tools/check_sbom.py` | `SBOM gate: 12/12 member reports parsed with specVersion (exit 0)` — one report per member crate dir, parse failures listed, build-tree residue excluded |
-| cargo deny | `cargo deny check` | `advisories ok, bans ok, licenses ok, sources ok` (exit 0) |
-| timesafety placeholder | `python tools/check_leakguard_skeleton.py` | `4 vectors declared planned (exit 0)` |
-| DCO | `python tools/lint_dco.py` | `all 1 commit(s) signed (exit 0)` |
-| naming check | crates.io API + GitHub search | crates.io `truerise`: 404 = not taken; GitHub: one unrelated personal repo (`dev-abdullah-shahid/truerise`) |
+Every row carries the commit it was measured at (era anchor). Live values = the evidence-bundle `gates/` transcriptions at the current HEAD; where a row's number differs from the bundle, the bundle is the authority.
+
+| Gate | Command | Result | Measured at |
+|---|---|---|---|
+| build | `cargo check --workspace --all-targets` | Finished dev profile, 12 crates, zero warnings | `4e58fa6`; re-verified fresh (uncached) at `133bdf0` bundle gates/00+08 |
+| clippy | `cargo clippy --workspace --all-targets -- -D warnings` | Finished, zero warnings | `4e58fa6`; re-verified at `133bdf0` gates/10 |
+| fmt | `cargo fmt --all -- --check` | exit 0 | `4e58fa6`; re-verified at `133bdf0` gates/11 |
+| workspace door (= naming gate) | `python tools/lint_banned_words.py` | `0 hits across 58 files (exit 0)` | `4e58fa6`; live = `133bdf0` gates/01 (87 files, 0 hits) |
+| history-object door | `python tools/lint_git_history.py` | `0 hits across 59 blobs + full ref log (exit 0)` | `4e58fa6`; live = `133bdf0` gates/02 (83 blobs, floor 70 intact) |
+| file length | `python tools/lint_file_length.py` | `all 20 code files <= 600 lines (exit 0)` | `4e58fa6`; re-verified at `133bdf0` gates/03 |
+| license isolation | `python tools/lint_deny_isolation.py` | `allow list clean, dual core licenses present (exit 0)` | `4e58fa6`; re-verified at `133bdf0` gates/04 |
+| schemas | `python tools/lint_schemas.py` | `1 schema(s) aligned at spec level (fields/required/enums) (exit 0)` | `991c1b1` (gate made real); re-verified at `133bdf0` gates/05 |
+| SBOM existence+count | `cargo cyclonedx --format json` + `python tools/check_sbom.py` | `SBOM gate: 12/12 member reports parsed with specVersion (exit 0)` — existence+count assertion (one report per member dir, parse failures listed, build residue excluded); format/version/identity compliance is M5 scope | `133bdf0` gates/14 |
+| cargo deny | `cargo deny check` | `advisories ok, bans ok, licenses ok, sources ok` (exit 0) | `133bdf0` gates/13 |
+| timesafety placeholder | `python tools/check_leakguard_skeleton.py` | `4 vectors declared planned (exit 0)` | `4e58fa6`; re-verified at `133bdf0` gates/06 |
+| DCO | `python tools/lint_dco.py` | `all 1 commit(s) signed (exit 0)` | `4e58fa6`; live = `133bdf0` gates/07 (8/8 signed) |
+| naming check | crates.io API + GitHub search | crates.io `truerise`: 404 = not taken; GitHub: one unrelated personal repo (`dev-abdullah-shahid/truerise`) | `4e58fa6` |
 
 ### Self-introduced decisions (not spec-mandated; recorded per the external review round-1 ruling, item Q3)
 
@@ -55,7 +57,7 @@ The history door caught this document's own first draft: 4 hits (3 in commit tex
 5. [vico, no clock] Trademark-database manual check (automated GitHub / crates.io check done, see evidence).
 6. [vico, no clock] git identity email `vico@users.noreply.github.com` is a placeholder pending vico's GitHub account decision (DCO trailers carry it).
 7. [M1, no clock] benchmark-compare gate lands with M1 (applies every wave from M1 per spec).
-8. [M5, no clock] SBOM baseline upgrade: component count baseline switches from workspace members to the declared dependency closure; specVersion asserted == 1.5.
+8. [M5, no clock] SBOM format upgrade: specVersion asserted == 1.5 and component-name identity per member; the M0 gate is existence+count only (never to be read as format compliance).
 9. [trigger-based, no clock] resolver observation re-test is MANDATORY when the first external dependency lands (weak evidence in the dependency-free state); record the re-test result in this file.
 10. [trigger-based, no clock] history floor (`tools/history_floor.json`): blob count must never decrease; any floor bump requires the deletion three-gate protocol in the same reviewed commit. This is the technical control behind the no-prune commitment.
 11. [vico, no clock] External-review probe channel: the review harness jail root is hardcoded to the parent repository; interim channel = the evidence-bundle directory on the parent side (path recorded in the external governance task log). Durable fix (vico decision): harness repo-root override (1-line change, separate dispatch) or formalized evidence-bundle convention. Authoring rule (learned twice this session): never write parent-side directory names or internal role names into this repository — they contain banned tokens; refer to them descriptively.
