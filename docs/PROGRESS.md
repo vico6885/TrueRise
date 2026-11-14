@@ -23,9 +23,9 @@ Every row carries the commit it was measured at (era anchor). Live values = the 
 | license isolation | `python tools/lint_deny_isolation.py` | `allow list clean, dual core licenses present (exit 0)` | `4e58fa6`; re-verified at `133bdf0` gates/04 |
 | schemas | `python tools/lint_schemas.py` | `1 schema(s) aligned at spec level (fields/required/enums) (exit 0)` | `991c1b1` (gate made real); re-verified at `133bdf0` gates/05 |
 | SBOM existence+count | `cargo cyclonedx --format json` + `python tools/check_sbom.py` | `SBOM gate: 12/12 member reports parsed with specVersion (exit 0)` — existence+count assertion (one report per member dir, parse failures listed, build residue excluded); format/version/identity compliance is M5 scope | `133bdf0` gates/14 |
-| cargo deny | `cargo deny check` | `advisories ok, bans ok, licenses ok, sources ok` (exit 0) | `133bdf0` gates/13 |
+| cargo deny | `cargo deny check` |  `advisories ok, bans ok, licenses ok, sources ok` (exit 0) | `133bdf0` gates/13 |
 | timesafety placeholder | `python tools/check_leakguard_skeleton.py` | `4 vectors declared planned (exit 0)` | `4e58fa6`; re-verified at `133bdf0` gates/06 |
-| DCO | `python tools/lint_dco.py` | `all 1 commit(s) signed (exit 0)` | `4e58fa6`; live = `133bdf0` gates/07 (8/8 signed) |
+| DCO | `python tools/lint_dco.py` | `all 1 commit(s) signed (exit 0)` | `4e58fa6`; live = `339daad` gates/07 (9/9 signed) |
 | naming check | crates.io API + GitHub search | crates.io `truerise`: 404 = not taken; GitHub: one unrelated personal repo (`dev-abdullah-shahid/truerise`) | `4e58fa6` |
 
 ### Self-introduced decisions (not spec-mandated; recorded per the external review round-1 ruling, item Q3)
