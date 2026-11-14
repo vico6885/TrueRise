@@ -4,7 +4,7 @@ Format per wave: ID | files | reproducible command | output (<= 10 lines) | HEAD
 
 ## M0 — repository scaffold (2026-11-14)
 
-HEAD: `133bdf0` (2026-11-14T18:55+08:00) at the last evidence-bundle refresh (anchor source: bundle `00_summary.md`; this line is refreshed at every wave commit). Branch `main`, all commits DCO-signed. Wave M0 scaffold commit: `4e58fa6` (2026-11-14T15:59:40+08:00) — a different event, not to be conflated with the refresh point.
+HEAD: `158c4bd` (2026-11-14T19:45+08:00) — the commit whose gate transcriptions this file's live-anchor rows cite (11 commits all DCO-signed; external-review rounds 8-11 verified against it). Branch `main`; commits after `158c4bd` are documentation-alignment commits whose live counts live in the evidence bundle (era-anchored rows below + bundle = live authority). Wave M0 scaffold commit: `4e58fa6` (2026-11-14T15:59:40+08:00) — a different event, not to be conflated.
 
 Files: root `Cargo.toml` / `rust-toolchain.toml` / `deny.toml` / `Makefile` / `.gitignore` / `.gitattributes`; `crates/truerise-{core,wire,platform,governance,sandbox,eval,memory,rsi,hats,mcp,observe,cli}/` (skeletons, `publish = false`, doc-only `lib.rs`); `tools/` (9 gate scripts + `banned_words.hex`); `.github/workflows/ci.yml` + ISSUE_TEMPLATE; `schemas/` (`audit_event.v2.schema.json` + `INDEX.json`, spec-level alignment gate); `tests/timesafety/` (four-vector contract skeleton); `README` / `CONTRIBUTING` / `SECURITY` / `GOVERNANCE` / `CODE_OF_CONDUCT` / `CHANGELOG` / `LICENSE-APACHE` / `LICENSE-MIT`.
 
@@ -17,15 +17,15 @@ Every row carries the commit it was measured at (era anchor). Live values = the 
 | build | `cargo check --workspace --all-targets` | Finished dev profile, 12 crates, zero warnings | `4e58fa6`; re-verified fresh (uncached) at `133bdf0` bundle gates/00+08 |
 | clippy | `cargo clippy --workspace --all-targets -- -D warnings` | Finished, zero warnings | `4e58fa6`; re-verified at `133bdf0` gates/10 |
 | fmt | `cargo fmt --all -- --check` | exit 0 | `4e58fa6`; re-verified at `133bdf0` gates/11 |
-| workspace door (= naming gate) | `python tools/lint_banned_words.py` | `0 hits across 58 files (exit 0)` | `4e58fa6`; live = `080f1da` gates/01 (87 files, 0 hits) |
-| history-object door | `python tools/lint_git_history.py` | `0 hits across 59 blobs + full ref log (exit 0)` | `4e58fa6`; live = `080f1da` gates/02 (85 blobs, floor 70 intact) |
+| workspace door (= naming gate) | `python tools/lint_banned_words.py` | `0 hits across 58 files (exit 0)` | `4e58fa6`; live = `158c4bd` gates/01 (87 files, 0 hits) |
+| history-object door | `python tools/lint_git_history.py` | `0 hits across 59 blobs + full ref log (exit 0)` | `4e58fa6`; live = `158c4bd` gates/02 (86 blobs, floor 70 intact) |
 | file length | `python tools/lint_file_length.py` | `all 20 code files <= 600 lines (exit 0)` | `4e58fa6`; re-verified at `133bdf0` gates/03 |
 | license isolation | `python tools/lint_deny_isolation.py` | `allow list clean, dual core licenses present (exit 0)` | `4e58fa6`; re-verified at `133bdf0` gates/04 |
 | schemas | `python tools/lint_schemas.py` | `1 schema(s) aligned at spec level (fields/required/enums) (exit 0)` | `991c1b1` (gate made real); re-verified at `133bdf0` gates/05 |
 | SBOM existence+count | `cargo cyclonedx --format json` + `python tools/check_sbom.py` | `SBOM gate: 12/12 member reports parsed with specVersion (exit 0)` — existence+count assertion (one report per member dir, parse failures listed, build residue excluded); format/version/identity compliance is M5 scope | `133bdf0` gates/14 |
 | cargo deny | `cargo deny check` | `advisories ok, bans ok, licenses ok, sources ok` (exit 0) | `133bdf0` gates/13; re-verified at `080f1da` gates/13 (one earlier run hit a transient advisory-db fetch failure, recorded here; final transcription green) |
 | timesafety placeholder | `python tools/check_leakguard_skeleton.py` | `4 vectors declared planned (exit 0)` | `4e58fa6`; re-verified at `133bdf0` gates/06 |
-| DCO | `python tools/lint_dco.py` | `all 1 commit(s) signed (exit 0)` | `4e58fa6`; live = `080f1da` gates/07 (10/10 signed) |
+| DCO | `python tools/lint_dco.py` | `all 1 commit(s) signed (exit 0)` | `4e58fa6`; live = `158c4bd` gates/07 (11/11 signed) |
 | naming check | crates.io API + GitHub search | crates.io `truerise`: 404 = not taken; GitHub: one unrelated personal repo (`dev-abdullah-shahid/truerise`) | `4e58fa6` |
 
 ### Self-introduced decisions (not spec-mandated; recorded per the external review round-1 ruling, item Q3)
