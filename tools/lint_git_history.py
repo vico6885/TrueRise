@@ -31,25 +31,37 @@ def check_history_floor(blobs: int) -> int:
     """History-floor technical gate: blob count must never DECREASE.
 
     A drop proves a prune/rewrite destroyed history objects (evidence
-    destruction). Legitimate amend+prune flows must raise the floor in the
-    same reviewed commit that justifies them (deletion three-gate protocol).
+    destruction). Raising the floor is a governed operation, NOT
+    self-authorizable in-repo: the floor document must carry an
+    ``authorization`` field pointing at the external governance log entry
+    (three-gate record), which reviewers cross-check out-of-repo. A missing
+    floor file is a configuration error (exit 2), never a silent pass.
     """
     if not FLOOR_FILE.exists():
-        return 0
+        print("HISTORY FLOOR missing: tools/history_floor.json must exist (fail-closed)")
+        return 2
     try:
         floor_doc = json.loads(FLOOR_FILE.read_text(encoding="utf-8"))
         floor = int(floor_doc["floor_blobs"])
+        authorization = str(floor_doc["authorization"]).strip()
     except (OSError, ValueError, KeyError) as exc:
         print(f"history floor file unreadable: {exc}", file=sys.stderr)
+        return 2
+    if not authorization:
+        print("HISTORY FLOOR unparsable: missing authorization (external-log reference)")
         return 2
     if blobs < floor:
         print(
             f"HISTORY FLOOR VIOLATION: {blobs} blobs < recorded floor {floor} "
             "- history objects were destroyed (prune). "
-            "Raising the floor requires the deletion three-gate protocol."
+            "Raising the floor requires a record in the external governance log "
+            "(deletion three-gate protocol) referenced by the authorization field."
         )
         return 1
-    print(f"history floor: {blobs} blobs >= recorded floor {floor} (no evidence destruction)")
+    print(
+        f"history floor: {blobs} blobs >= recorded floor {floor} "
+        f"(no evidence destruction; authorization: {authorization})"
+    )
     return 0
 
 
