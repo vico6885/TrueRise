@@ -16,10 +16,10 @@ pub const TRUSTED_KEY_ENV: &str = "TRUERISE_TRUSTED_KEY";
 #[must_use]
 pub fn load_signing_key() -> Option<SigningKey> {
     let hex = std::env::var(SIGNING_KEY_ENV).ok()?;
-    let mut seed = [0u8; 32];
-    for i in 0..32 {
-        seed[i] = u8::from_str_radix(hex.get(i * 2..i * 2 + 2)?, 16).ok()?;
-    }
+    let seed: Vec<u8> = (0..32)
+        .map(|i| u8::from_str_radix(hex.get(i * 2..i * 2 + 2)?, 16).ok())
+        .collect::<Option<Vec<u8>>>()?;
+    let seed: [u8; 32] = seed.try_into().ok()?;
     Some(SigningKey::from_bytes(&seed))
 }
 
