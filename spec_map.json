@@ -160,6 +160,11 @@
       "injected_regression_rolls_back_and_chains_the_reason",
       "generation_certificate_recomputes_identically_offline",
       "stale_or_revoked_epoch_write_rejected"
+    ],
+    "证书签发身份": [
+      "tampered_certificate_fails_signature_check",
+      "unsigned_certificate_reports_unverified_issuer",
+      "verified_certificate_prints_issuer_and_chain_tip"
     ]
   }
 }

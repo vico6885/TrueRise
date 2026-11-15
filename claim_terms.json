@@ -25,11 +25,11 @@
     },
     {
       "term": "Verifiable",
-      "status": "unmet",
+      "status": "met",
       "meaning": "a third party can recompute offline AND verify who issued the certificate",
       "command": "cargo test -p truerise-cli --test cert_identity",
       "test": "tampered_certificate_fails_signature_check",
-      "artifact": "readings/v0.2/gen1_certificate.json"
+      "artifact": "docs/rfc/0003-generation-certificate-and-apply.md"
     },
     {
       "term": "Recursive Self-Improvement",

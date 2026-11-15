@@ -124,6 +124,9 @@ HEAD at wave start: `71538d4`.
 | claim gate | `python tools/check_claim_terms.py` | 3 met / 2 unmet: Harness, Governance, Recursive Self-Improvement now carry command+test+artifact evidence; Verifiable (needs W10 signing) and Deterministic (needs W14 tape + W17 policy) stay unmet - the remaining title gap is CI-visible |
 | workspace | `cargo test --workspace` | 138 passed 0 failed; clippy -D warnings clean; fmt clean |
 
+| W10 signing identity | `cargo test -p truerise-cli --test cert_identity` | 3 passed: `verified_certificate_prints_issuer_and_chain_tip`, `tampered_certificate_fails_signature_check` (tampered payload AND foreign-issuer key both refused), `unsigned_certificate_reports_unverified_issuer` (unsigned = unverified, never silent trust; a signature without a trusted anchor is equally unverified) |
+| W10 surface | `truerise verify --cert <p> [--issuer-key <hex>]` + sign-on-issue under `TRUERISE_SIGNING_KEY` | keys live in the environment ONLY (never repo/argv/logs, SECURITY.md); the committed readings cert is UNSIGNED (no release key on this machine) - `verify` reports unverified_issuer for it, honestly |
+
 Not doing (P1): no auto-apply path was added, anywhere (RFC 0003 boundary 1; the M4 `no_merge_path_exists` gate still guards the surface).
 
 ---

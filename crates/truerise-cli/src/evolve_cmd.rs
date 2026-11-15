@@ -359,7 +359,14 @@ pub fn evolve_demo(run_dir: &Path, approve: Option<&str>, inject_regression: boo
         rollback_reason.as_deref(),
     );
     let cert_path = run_dir.join("gen1_certificate.json");
-    let cert_text = match serde_json::to_string_pretty(&cert) {
+    // W10: sign the certificate when the issuer key is in the environment
+    // (a keyless run produces an UNSIGNED cert - verify reports
+    // unverified_issuer, never silent trust).
+    let mut cert_out = cert.clone();
+    if let Some(key) = crate::identity::load_signing_key() {
+        crate::identity::sign_certificate(&mut cert_out, &key);
+    }
+    let cert_text = match serde_json::to_string_pretty(&cert_out) {
         Ok(t) => t,
         Err(e) => {
             eprintln!("evolve: certificate unserialisable: {e}");

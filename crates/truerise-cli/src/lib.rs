@@ -28,6 +28,7 @@ use truerise_wire::Severity;
 
 pub mod assembly;
 pub mod evolve_cmd;
+pub mod identity;
 pub mod mcp_serve;
 
 pub use assembly::{GovernedPolicy, RunTooling};
@@ -719,6 +720,42 @@ pub fn cli_main(args: Vec<String>) -> i32 {
             let inject = args.iter().any(|a| a == "--inject-regression");
             let dir = std::env::temp_dir().join("truerise_cli_evolve");
             evolve_cmd::evolve_demo(&dir, approve.as_deref(), inject)
+        }
+        "verify" => {
+            // `verify --cert <path> [--issuer-key <hex>]` (W10): exit 0
+            // verified / 1 invalid or unverified (never silent trust).
+            let cert = args
+                .iter()
+                .position(|a| a == "--cert")
+                .and_then(|i| args.get(i + 1))
+                .map(PathBuf::from);
+            let Some(cert) = cert else {
+                eprintln!("usage: truerise verify --cert <path> [--issuer-key <hex>]");
+                return 2;
+            };
+            let trusted = args
+                .iter()
+                .position(|a| a == "--issuer-key")
+                .and_then(|i| args.get(i + 1))
+                .cloned();
+            match identity::verify_certificate(&cert, trusted.as_deref()) {
+                identity::VerifyOutcome::Verified { issuer } => {
+                    println!("verified: issuer {issuer}");
+                    0
+                }
+                identity::VerifyOutcome::UnverifiedIssuer => {
+                    eprintln!("unverified issuer (unsigned, or no trusted key configured)");
+                    1
+                }
+                identity::VerifyOutcome::InvalidSignature => {
+                    eprintln!("invalid signature (tampered, or signed by another key)");
+                    1
+                }
+                identity::VerifyOutcome::Unparsable => {
+                    eprintln!("certificate unparsable");
+                    1
+                }
+            }
         }
         "mcp" => {
             // `mcp --serve [--chain <dir>]`: zero-exposure server over stdio.
