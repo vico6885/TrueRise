@@ -876,6 +876,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "truerise-core",
+ "truerise-eval",
  "truerise-governance",
  "truerise-rsi",
  "truerise-sandbox",

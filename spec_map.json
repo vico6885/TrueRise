@@ -132,6 +132,11 @@
       "budget_exhaustion_halts_run_at_step_n",
       "budget_is_shared_across_hats_not_sharded",
       "run_exit_code_reflects_budget_stop"
+    ],
+    "运行判定": [
+      "run_emits_verdict_row_from_eval_authority",
+      "score_regression_fails_the_run_with_grade_exit",
+      "unrecordable_verdict_is_error_not_warning"
     ]
   }
 }

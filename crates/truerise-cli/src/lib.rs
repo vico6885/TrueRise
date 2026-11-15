@@ -204,12 +204,63 @@ impl truerise_core::AuditSink for ChainSinkBridge<'_> {
     }
 }
 
+/// The default ratchet baseline: `baselines/run_scores.json` at this repo
+/// root (resolved by walking up from the cwd, like git does; `None` when no
+/// ancestor carries it - the judge then runs with an empty baseline and the
+/// verdict row says so).
+#[must_use]
+pub fn find_default_baseline() -> Option<PathBuf> {
+    let mut dir = std::env::current_dir().ok()?;
+    loop {
+        let candidate = dir.join("baselines").join("run_scores.json");
+        if candidate.exists() {
+            return Some(candidate);
+        }
+        if !dir.pop() {
+            return None;
+        }
+    }
+}
+
+/// Load a ratchet baseline from a JSON file (integer metric values; the
+/// `_note` key and any non-numeric field is ignored).
+fn load_baseline(path: Option<&Path>) -> truerise_eval::ratchet::Baseline {
+    let Some(path) = path else {
+        return truerise_eval::ratchet::Baseline::new();
+    };
+    let Ok(text) = std::fs::read_to_string(path) else {
+        return truerise_eval::ratchet::Baseline::new();
+    };
+    let Ok(doc) = serde_json::from_str::<serde_json::Value>(&text) else {
+        return truerise_eval::ratchet::Baseline::new();
+    };
+    doc.as_object()
+        .map(|obj| {
+            obj.iter()
+                .filter_map(|(k, v)| v.as_f64().map(|x| (k.clone(), x)))
+                .collect()
+        })
+        .unwrap_or_else(truerise_eval::ratchet::Baseline::new)
+}
+
+/// Map a judged verdict onto the exit code (PASS=0 / FAIL=1 - the same
+/// contract as the demo; no third meaning is ever introduced).
+#[must_use]
+pub fn grade_exit(verdict: &truerise_eval::RunVerdict) -> i32 {
+    i32::from(!verdict.is_pass())
+}
+
 /// The `run --goal` subcommand: one governed run over the FULL assembly
 /// (scripted router + governance policy + fenced sandbox executor, RFC 0002;
-/// budget enforced per W3 - `budget_units` is the per-hat round/tool quota).
-/// Returns the process exit code (0 run completed / 1 run failed - a budget
+/// budget enforced per W3; the run ends with a judged verdict per W4).
+/// Returns the process exit code (0 PASS / 1 FAIL or failed run - a budget
 /// stop IS a failure, never a note).
-pub fn run_commandline(goal: &str, approvals: &[String], budget_units: Option<u64>) -> i32 {
+pub fn run_commandline(
+    goal: &str,
+    approvals: &[String],
+    budget_units: Option<u64>,
+    baseline_path: Option<&Path>,
+) -> i32 {
     let dir = std::env::temp_dir().join("truerise_cli_run");
     std::fs::create_dir_all(&dir).ok();
     let tooling = match RunTooling::new(&dir) {
@@ -241,7 +292,39 @@ pub fn run_commandline(goal: &str, approvals: &[String], budget_units: Option<u6
             println!("  transcript entries: {}", books.transcript.len());
             println!("  transitions:        {}", books.transitions.len());
             println!("  audit rows:         {}", books.audit_rows);
-            0
+            // W4: the run ends with a judged verdict from THE authority.
+            let chain = match HashChain::open(&dir.join("run.jsonl")) {
+                Ok(c) => c,
+                Err(e) => {
+                    eprintln!("run: verdict unrecordable (chain reopened): {e}");
+                    return 1;
+                }
+            };
+            let facts = truerise_eval::RunFacts {
+                finished: truerise_core::Loop::final_state(&books.transitions)
+                    == truerise_core::State::Finished,
+                rounds_total: 1,
+            };
+            match truerise_eval::judge_run(&facts, &load_baseline(baseline_path), &chain) {
+                Ok(verdict) => {
+                    println!(
+                        "  verdict:            {} (failures {}, baseline {})",
+                        verdict.verdict_str(),
+                        verdict.failures(),
+                        if baseline_path.is_some() {
+                            "loaded"
+                        } else {
+                            "none"
+                        }
+                    );
+                    grade_exit(&verdict)
+                }
+                Err(e) => {
+                    // Unrecordable verdicts are ERRORS, not warnings.
+                    eprintln!("run: verdict could not be recorded: {e}");
+                    1
+                }
+            }
         }
         Err(e) => {
             eprintln!("run failed: {e}");
@@ -288,7 +371,8 @@ pub fn repl() {
             }
             text => {
                 // Reuse the run path (single book write) - no bare-face entry.
-                let _code = run_commandline(text, &[], None);
+                let baseline = find_default_baseline();
+                let _code = run_commandline(text, &[], None, baseline.as_deref());
             }
         }
     }
@@ -450,6 +534,25 @@ pub fn cli_main(args: Vec<String>) -> i32 {
                     idx += 1;
                 }
             }
+            // --baseline <path>: ratchet baseline for the run verdict
+            // (default: the repo-root baselines/run_scores.json, walked up
+            // from the cwd like git).
+            let explicit_baseline: Option<PathBuf> = {
+                let mut it = args.iter();
+                let mut found = None;
+                while let Some(arg) = it.next() {
+                    if arg == "--baseline" {
+                        match it.next() {
+                            Some(p) => found = Some(Some(PathBuf::from(p))),
+                            None => {
+                                eprintln!("usage error: --baseline needs a path");
+                                return 2;
+                            }
+                        }
+                    }
+                }
+                found.unwrap_or(None)
+            };
             // --budget <n>: per-hat quota for the run (rounds + tool units).
             // Over budget stops the run with exit 1 (a stop is a failure).
             let budget_units: Option<u64> = {
@@ -468,7 +571,8 @@ pub fn cli_main(args: Vec<String>) -> i32 {
                 }
                 found.unwrap_or(None)
             };
-            run_commandline(&goal, &approvals, budget_units)
+            let baseline = explicit_baseline.or_else(find_default_baseline);
+            run_commandline(&goal, &approvals, budget_units, baseline.as_deref())
         }
         "repl" => {
             repl();

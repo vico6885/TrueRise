@@ -91,7 +91,12 @@ HEAD at wave start: `5d38fb1` (in-flight W3 open-source wave landed as one DCO c
 | W3 wiring | core `Budget` port (`with_budget`, consumption at round start + every allowed tool execution); rsi `RunBudget` adapter (rsi gains its first internal dependency: core, per the Q4 ruling); cli `--budget <n>` | over budget = `LoopError::Budget` + audited stop; a stop IS a failure (exit 1) |
 | budget test serialisation | `BUDGET_GUARD` in the test file | the ledger singleton is process-global by design; consuming tests hold a guard so delta arithmetic is never raced (same protocol the rsi unit tests document) |
 
-Not doing (P0 so far): Harness claim row stays unmet (judging lands with W4); run subcommand exit code still 0 on SUCCESS (verdict-grade exit lands with W4; failure exits are already 1).
+| W4 run verdict | `cargo test -p truerise-cli --test run_eval_gate` | 3 passed: `run_emits_verdict_row_from_eval_authority` (one eval.verdict row, PASS/failures 0, RunVerdict has NO public constructor - the authority is a type-system fact), `score_regression_fails_the_run_with_grade_exit` (empty plan -> takeover -> failures 1 > baseline 0 -> FAIL recorded + grade_exit 1), `unrecordable_verdict_is_error_not_warning` (tampered rows -> open refuses -> exit-grade, never a warning) |
+| W4 eval unit | `cargo test -p truerise-eval --lib` | run_verdict: finished passes/unfinished fails/integer metric only (run_failures); baseline `baselines/run_scores.json` (run_failures: 0) committed |
+| W4 exit mapping | `grade_exit` = PASS 0 / FAIL 1 | same contract as the demo verdict; no third code introduced |
+| wiring | truerise-eval reachable from the binary | 4 islands left (rsi/hats... wait: rsi reachable since W3) -> islands: hats/memory/mcp/observe |
+
+Not doing (P0 so far): Governance claim row still unmet (hat filtering lands with W5; the budget+ratchet+policy trio is now enforced - the row flips when the last piece wires).
 
 ---
 

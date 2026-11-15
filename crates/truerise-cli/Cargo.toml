@@ -19,6 +19,7 @@ truerise-core = { version = "0.2.0-dev.0", path = "../truerise-core" }
 truerise-governance = { version = "0.2.0-dev.0", path = "../truerise-governance" }
 truerise-sandbox = { version = "0.2.0-dev.0", path = "../truerise-sandbox" }
 truerise-rsi = { version = "0.2.0-dev.0", path = "../truerise-rsi" }
+truerise-eval = { version = "0.2.0-dev.0", path = "../truerise-eval" }
 sha2 = "0.11.0"
 serde_json = "1.0.154"
 

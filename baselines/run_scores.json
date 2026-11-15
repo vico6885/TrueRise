@@ -1,0 +1,4 @@
+{
+  "_note": "Run-path ratchet baseline (W4): max allowed failures per governed run. The ratchet only tightens - a run with more failures than this cap is a FAIL verdict with exit-grade severity. Integers only (float rule).",
+  "run_failures": 0
+}
