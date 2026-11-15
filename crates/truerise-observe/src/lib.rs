@@ -87,6 +87,10 @@ pub fn chain_digest(chain_path: &Path) -> String {
 }
 
 #[cfg(test)]
+#[cfg(feature = "otel")]
+pub mod otel_export;
+
+#[cfg(test)]
 mod tests {
     #![allow(clippy::unwrap_used, clippy::expect_used)]
     use super::*;
@@ -151,9 +155,27 @@ mod tests {
 
     #[cfg(feature = "otel")]
     #[test]
-    fn otlp_feature_placeholder_compiles() {
-        // The OTLP SDK tier lands behind this feature; the jsonl tier stays
-        // the default and the one-way property applies to both.
-        assert!(chain_digest(Path::new("no/such/file")) == chain_digest(Path::new("no/such/file")));
+    fn export_spans_via_otlp_feature() {
+        // The OTel tier: REAL spans from REAL chain rows (stdout exporter,
+        // deterministic); the one-way property applies to this tier too.
+        let dir = std::env::temp_dir().join(format!("truerise_otel_{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("c.jsonl");
+        // Synthetic rows (the export reads rows generically - no chain deps
+        // needed at this tier; the jsonl tier's tests cover real chains).
+        std::fs::write(
+            &path,
+            concat!(
+                r#"{"seq":0,"kind":"otel.probe","severity":"info","detail":{"api_key":"sk-x","step":1},"prev_hash":"00","hash":"aa"}"#,
+                "
+",
+            ),
+        )
+        .unwrap();
+        let before = chain_digest(&path);
+        let count = super::otel_export::export_spans_stdout(&path).unwrap();
+        assert_eq!(count, 1, "one span per row");
+        assert_eq!(chain_digest(&path), before, "one-way: digest unchanged");
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

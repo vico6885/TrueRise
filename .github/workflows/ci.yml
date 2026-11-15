@@ -23,6 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: cargo check --workspace --all-targets
+      - run: cargo check -p truerise-observe --features otel
       - run: cargo test --workspace
 
   python:

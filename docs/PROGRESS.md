@@ -145,6 +145,10 @@ HEAD at wave start: `71538d4`.
 | W13a Python SDK | pytest (test_sdk.py) | 8 passed: the zero-dependency `truerise.sdk` mirrors the Rust contracts as a CONSUMER (never a second authority): Session (three books + RFC 0002 enforcement chain: decide -> execute -> audit, plain text never executes), Policy (ask needs approval ON FILE; deny short-circuits; default-deny), ApprovalQueue (single-point epoch, revoke terminal), Budget (one shared denominator + reconcile==0), Ratchet (tighten-only, integer metrics). Mirrored test names documented per Rust behaviour |
 | SDK boundary | `truerise.sdk.__all__` | fingerprint / seal / prereg / evidence gate RE-EXPORTED from their single sources (no copies of the authority) |
 
+| W15 examples | `python examples/langgraph_harness.py` + `python examples/openai_agents_harness.py` | both smoke PASS WITHOUT the third-party framework installed (guarded imports); the pattern: YOUR agent loop stays yours, TrueRise owns budget + hash-chain audit + policy + ratchet |
+| W15 OTel tier | `cargo test -p truerise-observe --features otel` | `export_spans_via_otlp_feature`: REAL OpenTelemetry spans from chain rows (stdout exporter in-feature; an OTLP collector wires at the boundary in one line); no global tracer state; one-way property holds (digest unchanged); sensitive keys redacted on the way out; CI checks the feature compiles |
+| W15 integration doc | `docs/integrations.md` (bilingual) | the three surfaces in preference order: MCP (tool supply) -> Python SDK (harness embedding) -> external-solver protocol (evaluation); what we deliberately do NOT do (per-framework shims, a second judging authority) |
+
 Not doing (P2): the committed tape/keystones remain unsigned until a release signing key exists (W10's verify honestly reports unverified_issuer for them).
 
 ---

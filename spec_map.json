@@ -198,6 +198,9 @@
       "test_sdk_plain_text_never_executes",
       "test_sdk_budget_exhaustion_stops_the_session",
       "test_sdk_approval_never_expires_into_consent"
+    ],
+    "OTel 导出": [
+      "export_spans_via_otlp_feature"
     ]
   }
 }

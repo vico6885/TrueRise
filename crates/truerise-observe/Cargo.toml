@@ -14,10 +14,16 @@ publish = false
 workspace = true
 
 [dependencies]
+opentelemetry = { version = "0.27", optional = true }
+opentelemetry_sdk = { version = "0.27", optional = true, features = ["trace"] }
+opentelemetry-stdout = { version = "0.27", optional = true, features = ["trace"] }
 serde_json = "1.0.154"
 sha2 = "0.11.0"
 
 [features]
 # The OTLP SDK tier lands behind this feature (jsonl stays default); declared
-# so `cfg(feature = "otel")` is a known value to the compiler/CI lints.
-otel = []
+# The OTLP tier: the audit rows become REAL OpenTelemetry spans. The
+# stdout exporter ships in the feature (deterministic, test-friendly); a
+# collector endpoint is wired at the boundary with one line (see
+# docs/integrations.md) - the mapping layer is exporter-agnostic.
+otel = ["dep:opentelemetry", "dep:opentelemetry_sdk", "dep:opentelemetry-stdout"]
