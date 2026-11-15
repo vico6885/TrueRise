@@ -68,7 +68,7 @@ python tools/check_dual_impl.py         # 双实现互证：Rust 与 Python 判�
 
 M0–M5 五波完成（规格映射闸门机器核对，23 行行为规格 / 67 个具名标识符）；W3（基准门面）记录在 `docs/PROGRESS.md`。
 
-- 安全：见 `SECURITY.md`。一切代码执行必须经一致性达标的沙箱提供方；密钥永不进入仓库、argv 与日志。
+- 安全：见 `SECURITY.md`。一切被执行的动作必须经沙箱端口（工具执行接线正在本波次落地——落地前本仓库不存在任何代码执行，因此暂无对象可沙箱）；密钥永不进入仓库、argv 与日志。
 - 贡献：DCO 签名 + 来源清洁声明（`CONTRIBUTING.md`）；题包贡献按数据许可走 CC-BY-4.0（`LICENSE-DATA.md`）。
 - 仓库形态与依赖方向：[`docs/topology.md`](docs/topology.md)。
 - 命令与开关的单一权威页：[`docs/cli.md`](docs/cli.md)（[中文版](docs/cli.zh-CN.md)）。

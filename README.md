@@ -84,9 +84,10 @@ Technical report: [`docs/report/anti_cheat_bench_v0.1.md`](docs/report/anti_chea
 M0-M5 waves complete (spec-mapped gates, 23 spec rows / 67 identifiers,
 machine-checked); W3 (the bench) recorded in `docs/PROGRESS.md`.
 
-- Security: see `SECURITY.md`. All code execution goes through
-  conformance-certified sandbox providers; secrets never enter the
-  repository, argv, or logs.
+- Security: see `SECURITY.md`. Every executed action must flow through the
+  sandbox port (tool-execution wiring is landing in the current wave —
+  until it does, no code executes in this repository at all, so there is
+  nothing to sandbox); secrets never enter the repository, argv, or logs.
 - Contributing: DCO sign-off + IP-clean declarations
   (`CONTRIBUTING.md`); task-pack contributions are data-licensed
   CC-BY-4.0 (`LICENSE-DATA.md`).
