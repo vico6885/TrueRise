@@ -30,6 +30,8 @@ pub mod assembly;
 pub mod evolve_cmd;
 pub mod identity;
 pub mod mcp_serve;
+pub mod provider_openai;
+pub mod tape;
 
 pub use assembly::{GovernedPolicy, RunTooling};
 
@@ -718,8 +720,24 @@ pub fn cli_main(args: Vec<String>) -> i32 {
                 .and_then(|i| args.get(i + 1))
                 .cloned();
             let inject = args.iter().any(|a| a == "--inject-regression");
+            let tape: Option<PathBuf> = {
+                let mut it = args.iter();
+                let mut found = None;
+                while let Some(arg) = it.next() {
+                    if arg == "--tape" {
+                        match it.next() {
+                            Some(p) => found = Some(Some(PathBuf::from(p))),
+                            None => {
+                                eprintln!("usage error: --tape needs a path");
+                                return 2;
+                            }
+                        }
+                    }
+                }
+                found.unwrap_or(None)
+            };
             let dir = std::env::temp_dir().join("truerise_cli_evolve");
-            evolve_cmd::evolve_demo(&dir, approve.as_deref(), inject)
+            evolve_cmd::evolve_demo(&dir, approve.as_deref(), inject, tape.as_deref())
         }
         "verify" => {
             // `verify --cert <path> [--issuer-key <hex>]` (W10): exit 0

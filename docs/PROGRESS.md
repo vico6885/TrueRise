@@ -131,7 +131,14 @@ HEAD at wave start: `71538d4`.
 | W9 exactness | p = k / 2^n as INTEGERS | the significance decision is an integer comparison (20k <= 2^n); certificates carry numerator/exponent, never floats (float rule) |
 | W9 into evolve | regenerate `readings/v0.2/gen1_certificate.json` | the cert now carries `significance: voided (discordant 1 < floor 10)` - the 4-task demo's "improvement" is honestly NOT claimable; replay still recomputes identically |
 
-Not doing (P1): no auto-apply path was added, anywhere (RFC 0003 boundary 1; the M4 `no_merge_path_exists` gate still guards the surface).
+| W14 tape | `cargo test -p truerise-cli --test tape_replay` | 3 passed: `same_tape_replays_identical_digest` (record -> header digest derivable -> fresh-chain replay produces field-identical books; the tape does not change under replay), `tape_model_mismatch_voids_round` (a foreign-model tape voids through the EXISTING pinning check - the tape bypasses nothing), `readings_ship_tapes_and_replay_offline` (committed `readings/v0.2/gen1_tape.jsonl` replays byte-exact offline, consumed-take semantics give each call its own response) |
+| W14 provider | `cargo test -p truerise-cli --lib` | `openai_compat_adapter_speaks_the_standard_shape` + `missing_key_never_sends_a_phantom_header` against a canned local HTTP server: temperature pinned to 0, Bearer auth only when configured, model self-reported for pinning |
+| W17 float rule | `cargo test -p truerise-governance --test chain_gate` + pytest | `canonical_json_float_rule_test` (Rust) + `test_canonical_json_float_rule_refuses_floats_in_rows` (Python): floats refused AT THE WRITE GATE in BOTH implementations; chain rows carry integers/strings only (per-mille, basis points, p = k/2^n) |
+| W17 policy | `docs/determinism.md` (bilingual, docs-gate registered) | three scoped determinism claims + the honest boundary (no cross-hardware bit claims, no deterministic-model-output claims); the `ts` field is provenance, not derivation |
+| honest data fix | python demo + certify chain rows | `claim_p` -> `claim_p_bp` (basis points), `accuracy` -> `accuracy_per_mille`; the bench's own rows now obey the rule they inspired |
+| claim gate | `python tools/check_claim_terms.py` | 5 met / 0 unmet: Deterministic flips (tape + float rule + policy). THE FULL SLOGAN IS NOW EVIDENCE-BACKED |
+
+Not doing (P2): the committed tape/keystones remain unsigned until a release signing key exists (W10's verify honestly reports unverified_issuer for them).
 
 ---
 

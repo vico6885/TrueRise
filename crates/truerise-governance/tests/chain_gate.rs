@@ -229,3 +229,30 @@ fn prev_hash_tampering_located() {
         other => panic!("expected tamper error, got {other:?}"),
     }
 }
+
+/// W17: the canonical-JSON float rule - chain rows carry integers or
+/// strings ONLY; a float in the detail tree is refused AT THE WRITE GATE
+/// (the 10.0-vs-10 dual-implementation bug class, caught once for real).
+#[test]
+fn canonical_json_float_rule_test() {
+    let (_dir, chain) = tmp_chain("float_rule.jsonl");
+    chain
+        .append("clean.row", Severity::Info, &json!({"count": 3}), None)
+        .expect("integers are legal");
+    let err = chain
+        .append(
+            "floaty.row",
+            Severity::Info,
+            &json!({"ratio": 0.5, "nested": {"a": [1, 2.5]}}),
+            None,
+        )
+        .unwrap_err();
+    assert!(
+        matches!(err, ChainError::FloatForbidden(ref p) if p.starts_with("detail")),
+        "a float path is named (map order decides which first): {err}"
+    );
+    // Integers (even zero) stay legal:
+    chain
+        .append("zero.row", Severity::Info, &json!({"count": 0}), None)
+        .expect("zero is an integer");
+}

@@ -43,6 +43,7 @@ PAIRED = [
 # Single-file documents that carry both languages inline.
 INLINE_BILINGUAL = [
     "docs/arch.md",
+    "docs/determinism.md",
     "docs/governance.md",
     "docs/timesafety.md",
     "docs/topology.md",

@@ -144,7 +144,8 @@ def run_bench(*, solver, pack, work_dir: Path, out_dir: Path,
     ledger.append(
         kind=VERDICT_KIND,
         detail={"key": fp_key, "claim": claim, "verdict": verdict, "reasons": reasons,
-                "trials": counted, "accuracy": summary["accuracy"],
+                "trials": counted,
+                "accuracy_per_mille": round(summary["accuracy"] * 1000),  # int (float rule)
                 "pack_digest": pack.pack_digest, "answer_seal": pack.answer_seal},
         severity="warning" if verdict == "FAIL" else "info",
         fingerprint_key=fp_key,

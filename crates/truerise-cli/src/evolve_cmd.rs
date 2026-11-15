@@ -111,13 +111,23 @@ fn evaluate_generation(
     router: &AnswersRouter,
     budget: &truerise_rsi::RunBudget,
     chain: &HashChain,
+    tape_path: Option<&Path>,
 ) -> Vec<(String, bool)> {
+    // W14: when a tape path is wired, THIS generation's calls are recorded
+    // (a fresh recorder per generation, seeded from the existing tape so
+    // the whole evolve run lands in ONE file).
+    let _tape_router =
+        tape_path.map(|p| crate::tape::TapeRouter::recording(router, p.to_path_buf()));
+    let taped: &dyn truerise_core::ModelRouter = match &_tape_router {
+        Some(t) => t,
+        None => router,
+    };
     TASKS
         .iter()
         .map(|(id, goal, expected)| {
             let books = crate::run_books_in(RunParams {
                 chain_dir: run_dir,
-                router,
+                router: taped,
                 hooks: None,
                 budget: Some(("evolve", budget)),
                 hat_toml: None,
@@ -186,7 +196,12 @@ fn certificate(
 /// Exit codes: 0 = the closed loop COMPLETED (a FAIL verdict + rollback is
 /// a completed loop that caught a regression - the machinery worked);
 /// 1 = the loop did not complete (refusals, chain failures).
-pub fn evolve_demo(run_dir: &Path, approve: Option<&str>, inject_regression: bool) -> i32 {
+pub fn evolve_demo(
+    run_dir: &Path,
+    approve: Option<&str>,
+    inject_regression: bool,
+    tape_path: Option<&Path>,
+) -> i32 {
     let _ = std::fs::create_dir_all(run_dir.join("skills"));
     let skill_path = run_dir.join("skills").join("skill.json");
     if !skill_path.exists() {
@@ -220,7 +235,7 @@ pub fn evolve_demo(run_dir: &Path, approve: Option<&str>, inject_regression: boo
             return 1;
         }
     };
-    let results0 = evaluate_generation(run_dir, &gen0_router, &budget, &chain);
+    let results0 = evaluate_generation(run_dir, &gen0_router, &budget, &chain, tape_path);
     let gen0_failures = results0.iter().filter(|(_, ok)| !ok).count() as u32;
     let mut baseline = truerise_eval::ratchet::Baseline::new();
     baseline.insert("task_failures".to_string(), f64::from(gen0_failures));
@@ -326,7 +341,7 @@ pub fn evolve_demo(run_dir: &Path, approve: Option<&str>, inject_regression: boo
             return 1;
         }
     };
-    let results1 = evaluate_generation(run_dir, &child_router, &budget, &chain);
+    let results1 = evaluate_generation(run_dir, &child_router, &budget, &chain, tape_path);
     let verdict = match truerise_eval::judge_tasks(&results1, &baseline, &chain) {
         Ok(v) => v,
         Err(e) => {
@@ -487,7 +502,7 @@ pub fn evolve_replay(cert_path: &Path) -> i32 {
         }
     };
     let budget = truerise_rsi::RunBudget::new(None);
-    let results = evaluate_generation(&throwaway, &router, &budget, &chain);
+    let results = evaluate_generation(&throwaway, &router, &budget, &chain, None);
     let recomputed = match truerise_eval::judge_tasks(
         &results,
         &truerise_eval::ratchet::Baseline::new(),

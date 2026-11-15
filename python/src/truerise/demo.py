@@ -111,7 +111,8 @@ def run_demo(out_dir: Path, *, n_trials: int = DEFAULT_TRIALS,
     ledger.append(
         kind="claim.verdict.v1",
         detail={"key": fp_key, "claim": claim_text, "verdict": verdict,
-                "reasons": reasons, "trials": counted, "claim_p": claim_p},
+                "reasons": reasons, "trials": counted,
+                "claim_p_bp": round(claim_p * 10000)},  # basis points: int (float rule)
         severity="warning" if verdict == "FAIL" else "info",
         fingerprint_key=fp_key,
     )

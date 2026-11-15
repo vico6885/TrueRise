@@ -170,6 +170,15 @@
       "one_task_improvement_is_not_significant",
       "unequal_budget_comparison_is_refused",
       "discordant_pair_count_below_floor_voids_claim"
+    ],
+    "录制回放带": [
+      "same_tape_replays_identical_digest",
+      "tape_model_mismatch_voids_round",
+      "readings_ship_tapes_and_replay_offline"
+    ],
+    "确定性": [
+      "canonical_json_float_rule_test",
+      "openai_compat_adapter_speaks_the_standard_shape"
     ]
   }
 }

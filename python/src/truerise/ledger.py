@@ -87,6 +87,27 @@ class Ledger:
         problems = self.verify()
         if problems:
             raise LedgerTampered(problems)
+        # Float rule (docs/determinism.md): chain rows carry integers or
+        # strings ONLY - `10.0` vs `10` divergence is a real cross-
+        # implementation bug class; the write gate refuses floats.
+        def _find_float(value, path="detail"):
+            if isinstance(value, float):
+                return path
+            if isinstance(value, dict):
+                for key, item in value.items():
+                    found = _find_float(item, f"{path}.{key}")
+                    if found:
+                        return found
+            if isinstance(value, list):
+                for i, item in enumerate(value):
+                    found = _find_float(item, f"{path}[{i}]")
+                    if found:
+                        return found
+            return None
+
+        float_path = _find_float(detail)
+        if float_path is not None:
+            raise ValueError(f"float forbidden in row {float_path} (integer or string only)")
         if fingerprint_key is not None:
             for row in self.rows:
                 if row.governs() and row.detail.get("key") == fingerprint_key:

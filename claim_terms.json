@@ -41,7 +41,7 @@
     },
     {
       "term": "Deterministic",
-      "status": "unmet",
+      "status": "met",
       "meaning": "pinned model steps + recorded tape + hash-chained ledger recompute to identical digests offline (harness mechanics; model outputs themselves are NOT claimed deterministic)",
       "command": "cargo test -p truerise-cli --test tape_replay",
       "test": "same_tape_replays_identical_digest",

@@ -1,0 +1,49 @@
+{"entries":48,"tape_version":1,"trace_digest":"5879dd498157e91be0460e10de32eab98da849e5a81efadd503f30784790f10d"}
+{"model":"scripted","request":"solve task-1: state the fold window boundary rule [round 0]","response":"plan for: solve task-1: state the fold window boundary rule [round 0]","tag":"plan"}
+{"model":"scripted","request":"plan for: solve task-1: state the fold window boundary rule [round 0]","response":"task-answer: half-open","tag":"act"}
+{"model":"scripted","request":"task-answer: half-open","response":"observed: task-answer: half-open","tag":"observe"}
+{"model":"scripted","request":"solve task-2: name the conformance judging authority [round 0]","response":"plan for: solve task-2: name the conformance judging authority [round 0]","tag":"plan"}
+{"model":"scripted","request":"plan for: solve task-2: name the conformance judging authority [round 0]","response":"task-answer: eval-crate","tag":"act"}
+{"model":"scripted","request":"task-answer: eval-crate","response":"observed: task-answer: eval-crate","tag":"observe"}
+{"model":"scripted","request":"solve task-3: state what the ratchet allows [round 0]","response":"plan for: solve task-3: state what the ratchet allows [round 0]","tag":"plan"}
+{"model":"scripted","request":"plan for: solve task-3: state what the ratchet allows [round 0]","response":"task-answer: tighten-only","tag":"act"}
+{"model":"scripted","request":"task-answer: tighten-only","response":"observed: task-answer: tighten-only","tag":"observe"}
+{"model":"scripted","request":"solve task-4: name who may apply a proposal [round 0]","response":"plan for: solve task-4: name who may apply a proposal [round 0]","tag":"plan"}
+{"model":"scripted","request":"plan for: solve task-4: name who may apply a proposal [round 0]","response":"task-answer: unknown","tag":"act"}
+{"model":"scripted","request":"task-answer: unknown","response":"observed: task-answer: unknown","tag":"observe"}
+{"model":"scripted","request":"solve task-1: state the fold window boundary rule [round 0]","response":"plan for: solve task-1: state the fold window boundary rule [round 0]","tag":"plan"}
+{"model":"scripted","request":"plan for: solve task-1: state the fold window boundary rule [round 0]","response":"task-answer: half-open","tag":"act"}
+{"model":"scripted","request":"task-answer: half-open","response":"observed: task-answer: half-open","tag":"observe"}
+{"model":"scripted","request":"solve task-2: name the conformance judging authority [round 0]","response":"plan for: solve task-2: name the conformance judging authority [round 0]","tag":"plan"}
+{"model":"scripted","request":"plan for: solve task-2: name the conformance judging authority [round 0]","response":"task-answer: eval-crate","tag":"act"}
+{"model":"scripted","request":"task-answer: eval-crate","response":"observed: task-answer: eval-crate","tag":"observe"}
+{"model":"scripted","request":"solve task-3: state what the ratchet allows [round 0]","response":"plan for: solve task-3: state what the ratchet allows [round 0]","tag":"plan"}
+{"model":"scripted","request":"plan for: solve task-3: state what the ratchet allows [round 0]","response":"task-answer: tighten-only","tag":"act"}
+{"model":"scripted","request":"task-answer: tighten-only","response":"observed: task-answer: tighten-only","tag":"observe"}
+{"model":"scripted","request":"solve task-4: name who may apply a proposal [round 0]","response":"plan for: solve task-4: name who may apply a proposal [round 0]","tag":"plan"}
+{"model":"scripted","request":"plan for: solve task-4: name who may apply a proposal [round 0]","response":"task-answer: unknown","tag":"act"}
+{"model":"scripted","request":"task-answer: unknown","response":"observed: task-answer: unknown","tag":"observe"}
+{"model":"scripted","request":"solve task-1: state the fold window boundary rule [round 0]","response":"plan for: solve task-1: state the fold window boundary rule [round 0]","tag":"plan"}
+{"model":"scripted","request":"plan for: solve task-1: state the fold window boundary rule [round 0]","response":"task-answer: half-open","tag":"act"}
+{"model":"scripted","request":"task-answer: half-open","response":"observed: task-answer: half-open","tag":"observe"}
+{"model":"scripted","request":"solve task-2: name the conformance judging authority [round 0]","response":"plan for: solve task-2: name the conformance judging authority [round 0]","tag":"plan"}
+{"model":"scripted","request":"plan for: solve task-2: name the conformance judging authority [round 0]","response":"task-answer: eval-crate","tag":"act"}
+{"model":"scripted","request":"task-answer: eval-crate","response":"observed: task-answer: eval-crate","tag":"observe"}
+{"model":"scripted","request":"solve task-3: state what the ratchet allows [round 0]","response":"plan for: solve task-3: state what the ratchet allows [round 0]","tag":"plan"}
+{"model":"scripted","request":"plan for: solve task-3: state what the ratchet allows [round 0]","response":"task-answer: tighten-only","tag":"act"}
+{"model":"scripted","request":"task-answer: tighten-only","response":"observed: task-answer: tighten-only","tag":"observe"}
+{"model":"scripted","request":"solve task-4: name who may apply a proposal [round 0]","response":"plan for: solve task-4: name who may apply a proposal [round 0]","tag":"plan"}
+{"model":"scripted","request":"plan for: solve task-4: name who may apply a proposal [round 0]","response":"task-answer: unknown","tag":"act"}
+{"model":"scripted","request":"task-answer: unknown","response":"observed: task-answer: unknown","tag":"observe"}
+{"model":"scripted","request":"solve task-1: state the fold window boundary rule [round 0]","response":"plan for: solve task-1: state the fold window boundary rule [round 0]","tag":"plan"}
+{"model":"scripted","request":"plan for: solve task-1: state the fold window boundary rule [round 0]","response":"task-answer: half-open","tag":"act"}
+{"model":"scripted","request":"task-answer: half-open","response":"observed: task-answer: half-open","tag":"observe"}
+{"model":"scripted","request":"solve task-2: name the conformance judging authority [round 0]","response":"plan for: solve task-2: name the conformance judging authority [round 0]","tag":"plan"}
+{"model":"scripted","request":"plan for: solve task-2: name the conformance judging authority [round 0]","response":"task-answer: eval-crate","tag":"act"}
+{"model":"scripted","request":"task-answer: eval-crate","response":"observed: task-answer: eval-crate","tag":"observe"}
+{"model":"scripted","request":"solve task-3: state what the ratchet allows [round 0]","response":"plan for: solve task-3: state what the ratchet allows [round 0]","tag":"plan"}
+{"model":"scripted","request":"plan for: solve task-3: state what the ratchet allows [round 0]","response":"task-answer: tighten-only","tag":"act"}
+{"model":"scripted","request":"task-answer: tighten-only","response":"observed: task-answer: tighten-only","tag":"observe"}
+{"model":"scripted","request":"solve task-4: name who may apply a proposal [round 0]","response":"plan for: solve task-4: name who may apply a proposal [round 0]","tag":"plan"}
+{"model":"scripted","request":"plan for: solve task-4: name who may apply a proposal [round 0]","response":"task-answer: human-approval","tag":"act"}
+{"model":"scripted","request":"task-answer: human-approval","response":"observed: task-answer: human-approval","tag":"observe"}

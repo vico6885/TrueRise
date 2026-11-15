@@ -123,3 +123,17 @@ def test_unsigned_records_contribute_nothing() -> None:
     assert ev.records_counted == 0
     assert ev.effective_level == 0
     assert any("self-report" in d["reason"] for d in ev.downgrades)
+
+
+def test_canonical_json_float_rule_refuses_floats_in_rows():
+    """W17: the float rule on the Python side too - integers or strings only."""
+    import pytest
+
+    from truerise.ledger import Ledger
+
+    ledger = Ledger()
+    ledger.append("clean.row", {"count": 3, "name": "ok"})
+    with pytest.raises(ValueError, match="float forbidden"):
+        ledger.append("floaty.row", {"ratio": 0.5})
+    # Integers (even zero) stay legal:
+    ledger.append("zero.row", {"count": 0})

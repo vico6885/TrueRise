@@ -38,6 +38,35 @@ pub enum ChainError {
     /// An I/O or lock error while appending.
     #[error("chain io error: {0}")]
     Io(#[from] std::io::Error),
+    /// A float appeared in a chain row (canonical-JSON float rule,
+    /// docs/determinism.md): chain rows carry integers or strings ONLY -
+    /// `10.0` vs `10` divergence is a real cross-implementation bug class.
+    #[error("chain: float forbidden in row detail at {0} (integer or string only)")]
+    FloatForbidden(String),
+}
+
+/// Walk a JSON tree and report the FIRST float value's path (the
+/// canonical-JSON float rule's enforcement point).
+fn find_float(value: &serde_json::Value, path: &str) -> Option<String> {
+    match value {
+        serde_json::Value::Number(n) => {
+            if n.as_f64()
+                .is_some_and(|f| f.fract() != 0.0 || n.to_string().contains('.'))
+            {
+                Some(path.to_string())
+            } else {
+                None
+            }
+        }
+        serde_json::Value::Array(items) => items
+            .iter()
+            .enumerate()
+            .find_map(|(i, v)| find_float(v, &format!("{path}[{i}]"))),
+        serde_json::Value::Object(map) => map
+            .iter()
+            .find_map(|(k, v)| find_float(v, &format!("{path}.{k}"))),
+        _ => None,
+    }
 }
 
 /// One in-memory chain row (thin wrapper over the wire type + legacy flag).
@@ -205,6 +234,12 @@ impl HashChain {
                 });
             }
             state.rows = rows;
+        }
+
+        // The float rule (docs/determinism.md): chain rows never carry
+        // floats - integers or strings only, enforced at THE write gate.
+        if let Some(path) = find_float(detail, "detail") {
+            return Err(ChainError::FloatForbidden(path));
         }
 
         let seq = state.rows.last().map(|r| r.event.seq + 1).unwrap_or(0);

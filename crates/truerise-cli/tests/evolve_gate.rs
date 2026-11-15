@@ -43,7 +43,7 @@ fn gen1_token() -> String {
 #[test]
 fn evolve_gen0_to_gen1_produces_lineage_certificate() {
     let dir = temp_dir("gen1");
-    let code = evolve_cmd::evolve_demo(&dir, Some(&gen1_token()), false);
+    let code = evolve_cmd::evolve_demo(&dir, Some(&gen1_token()), false, None);
     assert_eq!(code, 0, "the closed loop completed");
     let cert = read_cert(&dir);
     assert_eq!(cert["applied"], serde_json::json!(true));
@@ -82,7 +82,7 @@ fn evolve_gen0_to_gen1_produces_lineage_certificate() {
 #[test]
 fn apply_without_human_approval_token_is_refused() {
     let dir = temp_dir("no_token");
-    let code = evolve_cmd::evolve_demo(&dir, None, false);
+    let code = evolve_cmd::evolve_demo(&dir, None, false, None);
     assert_eq!(code, 1, "a refusal stops the flow (a stop is a failure)");
     let skill = std::fs::read_to_string(dir.join("skills").join("skill.json")).expect("skill");
     assert_eq!(skill, evolve_cmd::GEN0_ANSWERS, "gen0 content untouched");
@@ -108,7 +108,7 @@ fn approval_hash_mismatch_with_proposal_is_refused() {
     let dir = temp_dir("mismatch");
     // Approve the WRONG bytes (the gen0 content, not the proposal):
     let wrong_token = content_hash(evolve_cmd::GEN0_ANSWERS);
-    let code = evolve_cmd::evolve_demo(&dir, Some(&wrong_token), false);
+    let code = evolve_cmd::evolve_demo(&dir, Some(&wrong_token), false, None);
     assert_eq!(code, 1);
     let skill = std::fs::read_to_string(dir.join("skills").join("skill.json")).expect("skill");
     assert_eq!(skill, evolve_cmd::GEN0_ANSWERS, "approve A cannot apply B");
@@ -126,7 +126,7 @@ fn injected_regression_rolls_back_and_chains_the_reason() {
     let dir = temp_dir("regression");
     // The proposal is a REGRESSION: the ratchet must catch it and undo it.
     let regressed_token = content_hash(evolve_cmd::REGRESSED_ANSWERS);
-    let code = evolve_cmd::evolve_demo(&dir, Some(&regressed_token), true);
+    let code = evolve_cmd::evolve_demo(&dir, Some(&regressed_token), true, None);
     assert_eq!(
         code, 0,
         "a caught regression is a COMPLETED closed loop (machinery success)"
@@ -172,7 +172,10 @@ fn injected_regression_rolls_back_and_chains_the_reason() {
 fn generation_certificate_recomputes_identically_offline() {
     // PASS case:
     let dir = temp_dir("replay_pass");
-    assert_eq!(evolve_cmd::evolve_demo(&dir, Some(&gen1_token()), false), 0);
+    assert_eq!(
+        evolve_cmd::evolve_demo(&dir, Some(&gen1_token()), false, None),
+        0
+    );
     let cert_path = dir.join("gen1_certificate.json");
     // Copy out: replay must not depend on the run dir.
     let cert_copy = temp_dir("replay_pass_cert").join("gen1_certificate.json");
@@ -186,7 +189,7 @@ fn generation_certificate_recomputes_identically_offline() {
     let dir2 = temp_dir("replay_fail");
     let regressed_token = content_hash(evolve_cmd::REGRESSED_ANSWERS);
     assert_eq!(
-        evolve_cmd::evolve_demo(&dir2, Some(&regressed_token), true),
+        evolve_cmd::evolve_demo(&dir2, Some(&regressed_token), true, None),
         0
     );
     let cert2 = dir2.join("gen1_certificate.json");
