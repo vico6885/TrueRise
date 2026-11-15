@@ -6,6 +6,8 @@ rust-version.workspace = true
 license.workspace = true
 authors.workspace = true
 description = "Conformance judging authority, bench harness, ratchet, four-part fingerprints, judge agreement statistics."
+keywords = ["evaluation", "benchmark", "judge", "ratchet", "fingerprint"]
+categories = ["development-tools", "development-tools::testing", "science"]
 publish = false
 
 [lints]
@@ -18,3 +20,10 @@ thiserror = "2.0.21"
 truerise-governance = { version = "0.2.0-dev.0", path = "../truerise-governance" }
 truerise-sandbox = { version = "0.2.0-dev.0", path = "../truerise-sandbox" }
 truerise-wire = { version = "0.2.0-dev.0", path = "../truerise-wire" }
+
+[dev-dependencies]
+criterion = "0.7.0"
+
+[[bench]]
+name = "eval_baseline"
+harness = false

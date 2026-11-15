@@ -6,6 +6,8 @@ rust-version.workspace = true
 license.workspace = true
 authors.workspace = true
 description = "Sandbox provider port, lifecycle core, capability bits, conformance self-check (judging authority lives in truerise-eval)."
+keywords = ["sandbox", "isolation", "conformance", "provider", "fence"]
+categories = ["os", "api-bindings"]
 publish = false
 
 [lints]

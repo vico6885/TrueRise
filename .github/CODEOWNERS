@@ -1,0 +1,24 @@
+# CODEOWNERS - review routing.
+#
+# NOTE: the GitHub handle below is a placeholder until the remote and the
+# account decision land (tracked in docs/PROGRESS.md, "vico, no clock" item:
+# git identity email vico@users.noreply.github.com is likewise provisional).
+# Until then this file documents the routing INTENT; GitHub will not resolve
+# it, which is exactly the failure mode the release checklist catches
+# (RELEASING.md, "review routing" item) - an unresolved CODEOWNERS silently
+# stops assigning reviewers, so it must be verified on the first real PR.
+
+# Single maintainer today. The two-approver rule in GOVERNANCE.md and
+# docs/rfc/README.md starts binding the moment a second maintainer exists;
+# it is deliberately not simulated by self-approval.
+*                          @vico
+
+# Governance-critical surfaces: RFC required before change (port traits,
+# wire schemas, licence and history controls).
+/crates/truerise-wire/     @vico
+/crates/truerise-platform/ @vico
+/schemas/                  @vico
+/deny.toml                 @vico
+/tools/lint_git_history.py @vico
+/tools/history_floor.json  @vico
+/tools/banned_words.hex    @vico

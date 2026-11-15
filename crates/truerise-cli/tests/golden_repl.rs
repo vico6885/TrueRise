@@ -1,17 +1,22 @@
 //! REPL golden test (spec §6.5 ruling 3 acceptance): the repl path and the
 //! direct loop path must produce IDENTICAL books for the same input sequence
-//! - field-level equality on transcript, transitions and audit rows. Any
+//! (field-level equality on transcript, transitions and audit rows). Any
 //! divergence = the repl became a second track (forbidden).
+//!
+//! Tests may unwrap/expect (CONTRIBUTING engineering rules), so the deny
+//! lints are relaxed for this target only.
+#![allow(clippy::expect_used, clippy::unwrap_used)]
 
 use truerise_cli::{direct_loop_books, repl_turn, run_books};
 
-fn books_signature(
-    books: &truerise_core::RunBooks,
-) -> (
+/// The field signature of a run: (transcript, transitions, audit rows).
+type BooksSignature = (
     Vec<(String, String, u64)>,
     Vec<(String, String, String)>,
     usize,
-) {
+);
+
+fn books_signature(books: &truerise_core::RunBooks) -> BooksSignature {
     (
         books
             .transcript

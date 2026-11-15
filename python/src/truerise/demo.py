@@ -32,7 +32,7 @@ CLAIM_TEXT = "self-improvement +23% (n={trials} trials, best-of)"
 DEFAULT_TRIALS = 1000
 DEFAULT_CLAIM_P = 0.03
 BASE_SIGNIFICANCE = 0.05
-SEALED_THRESHOLDS = {"min_gain_pct": 10.0, "significance": BASE_SIGNIFICANCE}
+SEALED_THRESHOLDS = {"min_gain_pct": 10, "significance": BASE_SIGNIFICANCE}
 
 
 @dataclass
@@ -76,7 +76,7 @@ def run_demo(out_dir: Path, *, n_trials: int = DEFAULT_TRIALS,
 
     # --- S1 pay-later: seal first, then check the thresholds against the seal ---
     sealed = seal_thresholds(SEALED_THRESHOLDS)
-    current = dict(SEALED_THRESHOLDS) if honest_seal else {"min_gain_pct": 10.0, "significance": claim_p}
+    current = dict(SEALED_THRESHOLDS) if honest_seal else {"min_gain_pct": 10, "significance": claim_p}
     diff = prereg_diff(sealed, current)
 
     # --- S2 many-shots: count ALL trials, correct the bar, print it ---

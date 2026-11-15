@@ -1,7 +1,13 @@
 /target
 /output
+/vibe_images/
+readings/local/
+__pycache__/
+.pytest_cache/
+*.pyc
 *.cdx.json
 *.cdx.xml
 *.swp
 .DS_Store
 Thumbs.db
+.venv/

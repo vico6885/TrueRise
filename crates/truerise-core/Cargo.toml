@@ -6,6 +6,8 @@ rust-version.workspace = true
 license.workspace = true
 authors.workspace = true
 description = "Cognitive core: governed loop, mode switch, time slices, state machine, error taxonomy, compaction."
+keywords = ["agent", "runtime", "state-machine", "governance", "audit"]
+categories = ["asynchronous", "data-structures", "rust-patterns"]
 publish = false
 
 [lints]

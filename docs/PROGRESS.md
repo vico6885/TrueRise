@@ -62,6 +62,40 @@ The history door caught this document's own first draft: 4 hits (3 in commit tex
 10. [trigger-based, no clock] history floor (`tools/history_floor.json`): blob count must never decrease; the floor file carries an `authorization` field referencing the external governance task log (path recorded out-of-repo only; reviewers cross-check it directly — in-repo floor bumps are not self-authorizable); a missing floor file or empty authorization is exit 2 (fail-closed). Current floor 88 (re-baselined at `1a5d3bc`, authorized by the same external three-gate record). This is the technical control behind the no-prune commitment.
 11. [vico, no clock] External-review probe channel: the review harness jail root is hardcoded to the parent repository; interim channel = the evidence-bundle directory on the parent side (path recorded in the external governance task log). Durable fix (vico decision): harness repo-root override (1-line change, separate dispatch) or formalized evidence-bundle convention. Authoring rule (learned twice this session): never write parent-side directory names or internal role names into this repository — they contain banned tokens; refer to them descriptively.
 12. [supply-chain, due first remote push (vico decision), no clock] `actions/checkout@v4` is tag-pinned, not SHA-pinned; pin to full commit SHAs when the remote exists (third-party tags can be re-pointed upstream).
+13. [vico, 2026-11-15 ruling recorded] crates.io `truerise*` name occupation: APPROVED (occupy). GitHub remote creation: APPROVED (org name check + noreply email). Both are account-side actions on vico's machine; remote item 3 above executes at that push.
+14. [credibility, no clock] **External model run pending**: one public model through the external-solver protocol (subprocess + sandbox conformance), readings committed under `readings/`. Registered as the required credibility step before any third-party adoption claim (report §4).
+
+---
+
+## W3 — Anti-Cheat Bench (truerise.evals) + open-source construction wave (2026-11-15)
+
+HEAD at wave start: `123f3c5`. All gates re-run at wave end (see the gate matrix below).
+
+| Item | Command | Result |
+|---|---|---|
+| toolchain unpinned | `rust-toolchain.toml` -> channel `stable`; MSRV floor stays with the dedicated `msrv` CI job (1.85) | local builds resolve stable; MSRV contract unchanged |
+| CI hardening | `.github/workflows/ci.yml` | build-test OS matrix (ubuntu+windows), new `python` job (pytest + demo + replay + honest), new `cross-cert` job (dual-implementation gate) |
+| workspace hygiene | `git rm -r --cached` 8 tracked `.pyc` + `.gitignore` (`__pycache__/`, `.pytest_cache/`, `*.pyc`, `.venv/`) | index clean; files remain on disk, never deleted |
+| dual-implementation gate | `python tools/check_dual_impl.py` | OK: verdict/claim/fingerprint/seal/bar/reason-kinds agree in default AND honest modes; **caught a real contract break during construction: the Python seal digest diverged from Rust (`10.0` vs `10` in canonical JSON) — aligned to `10`, seal digests now equal** |
+| Rust example | `cargo run -p truerise-cli --example integrity_walkthrough` | honest=false caught=3 / honest=true caught=0, seal constant across flips |
+| eval bench | `cargo bench -p truerise-eval` | `eval_baseline.rs`: fingerprint digest / ratchet tighten / conformance judge baselines compile + run |
+| bench package | `PYTHONPATH=python/src python -m truerise evals demo` | 120 tasks (6 families x 20, seed 20261115); honest PASS 100% (120/120); cheater FAIL (trials=20 -> corrected 2.5e-03 vs claim 0.05); mutator FAIL (prereg diff names keys); acceptance exit 0 |
+| pack determinism + isolation | `python -m pytest python/tests -q` | **25 passed** (13 demo + 12 bench: determinism byte-reproducible, canary fail-closed, no family field on public rows, no assembly marker leakage, cheat catches, replay + tamper fail-closed, rule coverage incl. safe-twin negatives) |
+| committed readings | `readings/v0.1/*.json` | three certificates + pack manifest (machine-local paths stripped) |
+| docs | `docs/anti_cheat_bench.md`, `docs/report/anti_cheat_bench_v0.1.md`, `docs/rfc/0001-claim-certificate.md`, `docs/topology.md`, `LICENSE-DATA.md` | bench spec + 4-page report (every number -> artifact path) + certificate schema RFC (draft) + one-way dependency/pin policy + data license |
+| README storefront | `README.md` | integrity layer first; pain-point table with one runnable command per row; Limitations states the honest boundaries (no external model run yet; internal production deployment stays out of this repo by design; solo project) |
+
+Construction-time failure inventory (published discipline): the reference
+honest solver's FIRST full run scored 100/120 with ALL 20 misses in
+`full_sample_scaling` — a solver-side rule bug (regex demanded an index token
+after `mu`), surfaced by the miss inventory itself; fixed, re-run 120/120.
+The reading was superseded by `readings/v0.1/honest_verdict.json`.
+
+Not doing (W3): level-3 same-family twins (v0.2); external-solver subprocess
+protocol (v0.2, pending item 14); PyO3 binding (python package remains the
+pure-Python dual implementation; PyO3 tracked for the first-public-tag wave);
+macOS CI leg (cargo-dist covers darwin binaries; test matrix adds darwin at
+first remote push when CI minutes are visible).
 13. [M1, due 2026-11-28] schema-gate coverage: M0 asserts exactly one wire contract (audit_event.v2 — the single chain contract defined at spec level). The full schema roster is defined at the M1 wire freeze; the gate's INDEX.json grows with it.
 
 ---
@@ -162,7 +196,7 @@ Spec decisions (M5):
 - Client write-class hard-denial happens BEFORE any server interaction and the denial itself is audited.
 - REPL is an IO adapter only: free text reuses the same run path (no bare-face entry, spec §6.5 external-review ruling 3).
 - Onboarding writes a config skeleton with NO secrets (env/keyring only, fail-closed wording).
-- cargo-dist release.yml is an in-repo placeholder: the six-platform matrix + SHA256 + installer scripts land with the first public tag (spec §6.5); the workflow shape is reviewable now.
+- cargo-dist release.yml is an in-repo placeholder: the five-platform matrix + SHA256 + installer scripts land with the first public tag (spec §6.5); the workflow shape is reviewable now.
 
 Not doing (M5): authenticode/notarization signing (needs certificates); npm/pip shim distribution (needs published artifacts); OTLP SDK exporter behind the otel feature (feature placeholder compiles, SDK wiring deferred to first release); REPL golden transcript test (requires the chat-reference parity harness, M5+ post-release).
 
@@ -179,8 +213,8 @@ HEAD: `9011804` (2026-11-14T22:46:44+08:00), 22 commits all DCO-signed.
 | criterion baseline | `cargo bench -p truerise-governance` | chain/append + verify_full baselines saved; CI job saves `main` baseline, critcmp 20% gate activates from the second run |
 | REPL golden | `cargo test -p truerise-cli --test golden_repl` | repl adapter path and direct loop path: transcript/transitions field-identical, audit delta per run == transitions (shared chain accumulates) |
 | SBOM M5 gate | `python tools/check_sbom.py` (after `cargo cyclonedx --format json --spec-version 1.5`) | 12/12 reports, specVersion == 1.5, components >= declared EXTERNAL dependencies per member |
-| cargo-dist config | `[workspace.metadata.dist]` | six targets, shell/powershell installers, github CI |
+| cargo-dist config | `[workspace.metadata.dist]` | five targets, shell/powershell installers, github CI |
 | dry-run | `cargo package --workspace --list --offline` | clean (exit 0) |
 | docs | docs/arch.md, timesafety.md, governance.md, rfc/README.md | bilingual (EN+CN) |
 
-The M5 exit gates are now: e2e toy server PASS, dry-run clean, SBOM assertions at M5 grade, release config in-repo. The ONLY remaining item that cannot run on this machine is the actual six-platform artifact build, which triggers on the first public tag (release.yml is in-repo and reviewable).
+The M5 exit gates are now: e2e toy server PASS, dry-run clean, SBOM assertions at M5 grade, release config in-repo. The ONLY remaining item that cannot run on this machine is the actual five-platform artifact build, which triggers on the first public tag (release.yml is in-repo and reviewable).

@@ -1,5 +1,6 @@
-# Pinned toolchain for reproducible local + CI builds.
-# Upgrade flow: a dedicated PR bumping this file, recorded in docs/PROGRESS.md.
-# MSRV floor is 1.85 (edition 2024), verified by the dedicated msrv CI job.
+# Unpinned toolchain: CI and local builds track `stable` so external
+# contributors can `git clone && cargo test` without toolchain negotiation.
+# The MSRV floor is 1.85 (edition 2024), enforced by the dedicated `msrv` CI
+# job -- that job, not this file, is the compatibility contract.
 [toolchain]
-channel = "1.100.0"
+channel = "stable"

@@ -8,7 +8,10 @@ provider/plugin projects that consume the port traits.
 
 ## Decision making
 
-- Port traits (ModelRouter / ToolProvider / SandboxProvider / MemoryBackend)
+- Port traits (ModelRouter / SandboxProvider / MemoryBackend — the tool side
+  is carried by hat `tool_subset`, the three-state policy and `truerise-mcp`;
+  the spec's fourth name, `ToolProvider`, is a registered divergence, see
+  `docs/arch.md` and `providers/README.md`)
   change only through RFCs (`docs/rfc/`): motivation, alternatives, wire
   compatibility, migration. Two maintainer approvals required.
 - The spec-mapping gate rules: a behaviour without a spec row and a named

@@ -6,6 +6,8 @@ rust-version.workspace = true
 license.workspace = true
 authors.workspace = true
 description = "Hat schema + TOML loader (hats are data, not traits) + preset hat data packs."
+keywords = ["configuration", "roles", "toml", "agent", "prompt"]
+categories = ["config"]
 publish = false
 
 [lints]

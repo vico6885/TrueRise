@@ -1,12 +1,16 @@
 #![allow(missing_docs)]
+// Benches are test-like targets: fixture setup may unwrap/expect
+// (CONTRIBUTING: "tests may"); the deny lints relax for this target only.
+#![allow(clippy::expect_used, clippy::unwrap_used)]
 
 //! Chain baseline benchmark (spec §8: benchmark gate applies from M1/M2
 //! onward - this is the hot-path baseline: hash-chain append + verify).
 //! The 20% regression comparison activates once the first saved baseline
 //! exists (CI saves `main` baseline on default branch runs).
 
-use criterion::{Criterion, black_box, criterion_group, criterion_main};
+use criterion::{Criterion, criterion_group, criterion_main};
 use serde_json::json;
+use std::hint::black_box;
 use truerise_governance::HashChain;
 use truerise_wire::Severity;
 

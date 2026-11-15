@@ -1,0 +1,20 @@
+{
+  "pack": {
+    "seed": 20261115,
+    "per_family": 20,
+    "families": 6,
+    "tasks": 120,
+    "generator": "truerise.evals.generator.generate_pack",
+    "determinism": "same seed -> byte-identical surfaces (test_generator_determinism)"
+  },
+  "runs": [
+    "honest",
+    "cheater",
+    "mutator"
+  ],
+  "acceptance": {
+    "honest": "PASS",
+    "cheater": "FAIL",
+    "mutator": "FAIL"
+  }
+}

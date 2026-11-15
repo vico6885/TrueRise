@@ -152,7 +152,9 @@ impl<'a> Loop<'a> {
         let m0 = Machine::new().run_start();
         {
             let log = m0.log();
-            let t = log.last().expect("run_start logged");
+            let Some(t) = log.last() else {
+                return Err(LoopError::Config("run_start produced no log entry".into()));
+            };
             self.record(t.from, t.event, t.to)?;
         }
         self.transcript

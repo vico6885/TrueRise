@@ -6,6 +6,8 @@ rust-version.workspace = true
 license.workspace = true
 authors.workspace = true
 description = "Audit hash chain (process singleton), three-state policy, approval queue, resource policy port."
+keywords = ["audit", "hash-chain", "policy", "approval", "tamper-evident"]
+categories = ["data-structures", "filesystem", "caching"]
 publish = false
 
 [lints]

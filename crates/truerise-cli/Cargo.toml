@@ -6,6 +6,8 @@ rust-version.workspace = true
 license.workspace = true
 authors.workspace = true
 description = "Single-binary entry: REPL / run / demo / onboarding wizard (binary target lands in M5)."
+keywords = ["cli", "repl", "demo", "evaluation", "onboarding"]
+categories = ["command-line-utilities", "development-tools::testing"]
 publish = false
 
 [lints]

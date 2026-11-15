@@ -10,7 +10,6 @@
 // - onboarding: writes config.toml WITHOUT any secret (keys live in env or
 //   an OS keyring; the config stores nothing sensitive).
 
-use std::collections::HashMap;
 use std::io::{BufRead, Write};
 use std::path::PathBuf;
 
@@ -24,7 +23,6 @@ pub fn hex_digest(out: impl AsRef<[u8]>) -> String {
     }
     hex
 }
-use truerise_core::ModeViolation;
 use truerise_governance::HashChain;
 use truerise_wire::Severity;
 
@@ -89,9 +87,13 @@ pub fn demo_scenarios(honest: bool) -> (Vec<String>, String) {
 }
 
 /// Print the demo walkthrough and record the verdict on the demo chain.
-pub fn run_demo(honest: bool) {
+///
+/// Returns whether the claim passed, so the binary can map the verdict onto
+/// the exit code exactly like the Python CLI does (FAIL is a gate, not a note).
+pub fn run_demo(honest: bool) -> bool {
     let (reasons, seal) = demo_scenarios(honest);
-    let verdict = if reasons.is_empty() { "PASS" } else { "FAIL" };
+    let passed = reasons.is_empty();
+    let verdict = if passed { "PASS" } else { "FAIL" };
     println!(
         "CLAIM     : self-improvement +23% (n={} trials, best-of)",
         if honest { 1 } else { 1000 }
@@ -114,6 +116,7 @@ pub fn run_demo(honest: bool) {
             None,
         );
     }
+    passed
 }
 
 /// The per-process demo chain location (temp).
@@ -219,7 +222,9 @@ pub fn repl() {
         match trimmed {
             "" => continue,
             "/quit" | "/exit" => break,
-            "/demo" => run_demo(false),
+            "/demo" => {
+                run_demo(false);
+            }
             "/audit" => {
                 if let Ok(chain) = HashChain::open(&demo_chain_path()) {
                     println!(
@@ -344,8 +349,9 @@ pub fn cli_main(args: Vec<String>) -> i32 {
     match cmd {
         "demo" => {
             let honest = args.iter().any(|a| a == "--honest");
-            run_demo(honest);
-            0
+            // The verdict drives the exit code (same contract as the Python
+            // CLI): a FAIL has to be able to stop a CI lane.
+            i32::from(!run_demo(honest))
         }
         "run" => {
             let goal = args

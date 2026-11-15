@@ -6,6 +6,8 @@ rust-version.workspace = true
 license.workspace = true
 authors.workspace = true
 description = "MCP server (zero exposure by default) and client (disclosure governance, write actions hard-denied)."
+keywords = ["mcp", "json-rpc", "model-context-protocol", "allowlist", "zero-exposure"]
+categories = ["network-programming", "api-bindings"]
 publish = false
 
 [lints]

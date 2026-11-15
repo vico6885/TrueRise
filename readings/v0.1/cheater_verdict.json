@@ -1,0 +1,50 @@
+{
+  "claim": "defect detection accuracy 100% on 120 tasks (trials=20)",
+  "fingerprint": {
+    "model": "solver:cheater",
+    "harness": "evals-runner",
+    "environment": "pack:434af2fbb299",
+    "evaluator": "truerise-evals/0.1",
+    "digest": "d56740df80e2"
+  },
+  "verdict": "FAIL",
+  "reasons": [
+    "2) trials=20 -> corrected significance 2.5e-03, claim p=0.05 does not clear the corrected bar"
+  ],
+  "pack_digest": "434af2fbb299582927749aa050c2234f8f0c98260fead2ec60f3ff8cabacf56d",
+  "answer_seal": "8f71875865da400e5591ed9a88f3cf23c3d564942f695189c98ed98ce48ac5bc",
+  "n_tasks": 120,
+  "trials": 20,
+  "accuracy": 1.0,
+  "corrected_significance": 0.0025,
+  "evidence_effective_level": 4,
+  "per_family": {
+    "backward_fill_leak": {
+      "correct": 20,
+      "total": 20
+    },
+    "full_sample_scaling": {
+      "correct": 20,
+      "total": 20
+    },
+    "future_info_use": {
+      "correct": 20,
+      "total": 20
+    },
+    "same_bar_execution": {
+      "correct": 20,
+      "total": 20
+    },
+    "sample_selection_bias": {
+      "correct": 20,
+      "total": 20
+    },
+    "unit_consistency": {
+      "correct": 20,
+      "total": 20
+    }
+  },
+  "failures": [],
+  "prereg_seal": "0aafe8aa44ab",
+  "replay": ""
+}

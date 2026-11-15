@@ -1,5 +1,5 @@
 # cargo-dist release pipeline (placeholder until the first public release;
-# the six-platform matrix + SHA256 + installer scripts land with that release,
+# the five-platform matrix + SHA256 + installer scripts land with that release,
 # per spec §6.5). Kept in-repo so the release surface is reviewable from M5.
 name: release
 on:

@@ -32,3 +32,39 @@ contributions), you assert all three:
 - every public item is documented (`missing_docs` is denied).
 - single file <= 600 lines; workspace lints deny violations.
 - all gates in `.github/workflows/ci.yml` must pass; none may be skipped.
+
+## The leak-prevention gates (read before your first PR)
+
+Two CI gates scan for a small set of banned tokens that must never enter the
+repository. The token list exists ONLY hex-encoded (`tools/banned_words.hex`);
+the literals are not published anywhere in the repository.
+
+- **Workspace door** (`tools/lint_banned_words.py`): scans every repository
+  text file. ASCII tokens match on word boundaries, CJK tokens match as
+  substrings, matching is case-insensitive. A hit lists `file:line` and
+  fails the gate.
+  - If your PR trips it: rephrase the flagged line (pick a different word,
+    including in comments and commit messages). Do NOT obfuscate or encode
+    a banned token to slip it through — that is treated as a leak attempt
+    and fails closed. Durable path exemptions live in the auditable
+    plaintext `EXEMPT_PATHS` list in the script and change only via
+    reviewed PRs.
+- **History door** (`tools/lint_git_history.py`): scans every git object
+  (full history + reflog) for the same tokens, and enforces a blob-count
+  floor (`tools/history_floor.json`) — any history rewrite that destroys
+  objects fails the gate. Never amend or rewrite pushed commits outside
+  the deletion three-gate protocol (recorded in `docs/PROGRESS.md`).
+
+Both gates are fail-closed: an empty or corrupt token list is a red gate,
+not a skipped check.
+
+## Data contributions (task packs)
+
+Task packs are DATA and are licensed CC-BY-4.0, separate from the code
+license (see `LICENSE-DATA.md`). Generator/judge CODE accompanying a pack
+follows the code license above. A pack contribution must:
+
+- pass the pack validation gates (id alignment, line ranges, taxonomy);
+- keep the sealed surface sealed (isolation canary intact; no family field
+  on public rows);
+- be generator-driven and deterministic (seed + byte-reproducible surfaces).
