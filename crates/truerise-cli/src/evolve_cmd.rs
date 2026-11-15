@@ -155,6 +155,7 @@ fn certificate(
     child_content: &str,
     verdict: Option<&truerise_eval::RunVerdict>,
     rollback_reason: Option<&str>,
+    significance_json: serde_json::Value,
 ) -> serde_json::Value {
     let (added, removed) = diff_stat(parent_content, child_content);
     json!({
@@ -174,6 +175,7 @@ fn certificate(
             None => json!(null)
         },
         "rollback": rollback_reason,
+        "significance": significance_json,
         "replay": { "command": "truerise evolve --replay --cert gen1_certificate.json" },
         "contents": { "parent": parent_content, "child": child_content }
     })
@@ -333,6 +335,49 @@ pub fn evolve_demo(run_dir: &Path, approve: Option<&str>, inject_regression: boo
         }
     };
 
+    // W9: the improvement claim must be statistically DEFENSIBLE or it is
+    // refused. Paired per-trial outcomes: gen0 vs gen1 over the SAME task
+    // pack at the SAME budget. A 4-task pack can never meet the discordant
+    // floor - the certificate says VOIDED, honestly.
+    let arm_a = truerise_eval::ArmResult {
+        outcomes: results0.iter().map(|(_, ok)| *ok).collect(),
+        budget_units: TASKS.len() as u64,
+    };
+    let arm_b = truerise_eval::ArmResult {
+        outcomes: results1.iter().map(|(_, ok)| *ok).collect(),
+        budget_units: TASKS.len() as u64,
+    };
+    let significance = match truerise_eval::mcnemar_exact(&arm_a, &arm_b) {
+        Ok(sig) => sig,
+        Err(e) => {
+            eprintln!("evolve: significance comparison refused: {e}");
+            return 1;
+        }
+    };
+    let significance_json = match &significance {
+        truerise_eval::Significance::Significant {
+            a_better,
+            discordant,
+            p_numerator,
+            p_pow2,
+        } => json!({
+            "verdict": "significant", "a_better": a_better,
+            "discordant": discordant, "p_numerator": p_numerator, "p_pow2": p_pow2
+        }),
+        truerise_eval::Significance::NotSignificant {
+            discordant,
+            p_numerator,
+            p_pow2,
+        } => json!({
+            "verdict": "not_significant", "discordant": discordant,
+            "p_numerator": p_numerator, "p_pow2": p_pow2
+        }),
+        truerise_eval::Significance::Voided { discordant, floor } => json!({
+            "verdict": "voided", "reason": "discordant pairs below the floor",
+            "discordant": discordant, "floor": floor
+        }),
+    };
+
     // The ratchet's undo: a regression is ROLLED BACK, reason on the chain.
     let mut rollback_reason: Option<String> = None;
     if !verdict.is_pass() {
@@ -357,6 +402,7 @@ pub fn evolve_demo(run_dir: &Path, approve: Option<&str>, inject_regression: boo
         child_content,
         Some(&verdict),
         rollback_reason.as_deref(),
+        significance_json,
     );
     let cert_path = run_dir.join("gen1_certificate.json");
     // W10: sign the certificate when the issuer key is in the environment
@@ -389,8 +435,13 @@ pub fn evolve_demo(run_dir: &Path, approve: Option<&str>, inject_regression: boo
         }),
         None,
     );
+    let sig_word = match &significance {
+        truerise_eval::Significance::Significant { .. } => "significant",
+        truerise_eval::Significance::NotSignificant { .. } => "not-significant",
+        truerise_eval::Significance::Voided { .. } => "voided",
+    };
     println!(
-        "evolve gen0->gen1: verdict {} (failures {}) rolled_back={} cert={}",
+        "evolve gen0->gen1: verdict {} (failures {}) rolled_back={} significance={sig_word} cert={}",
         verdict.verdict_str(),
         verdict.failures(),
         rollback_reason.is_some(),

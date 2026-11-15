@@ -24,6 +24,12 @@
     "command": "truerise evolve --replay --cert gen1_certificate.json"
   },
   "rollback": null,
+  "significance": {
+    "discordant": 1,
+    "floor": 10,
+    "reason": "discordant pairs below the floor",
+    "verdict": "voided"
+  },
   "verdict": {
     "failures": 0,
     "total": 4,

@@ -127,6 +127,10 @@ HEAD at wave start: `71538d4`.
 | W10 signing identity | `cargo test -p truerise-cli --test cert_identity` | 3 passed: `verified_certificate_prints_issuer_and_chain_tip`, `tampered_certificate_fails_signature_check` (tampered payload AND foreign-issuer key both refused), `unsigned_certificate_reports_unverified_issuer` (unsigned = unverified, never silent trust; a signature without a trusted anchor is equally unverified) |
 | W10 surface | `truerise verify --cert <p> [--issuer-key <hex>]` + sign-on-issue under `TRUERISE_SIGNING_KEY` | keys live in the environment ONLY (never repo/argv/logs, SECURITY.md); the committed readings cert is UNSIGNED (no release key on this machine) - `verify` reports unverified_issuer for it, honestly |
 
+| W9 significance | `cargo test -p truerise-eval` | significance module (5 tests): `one_task_improvement_is_not_significant` (100/100 vs 99/100 -> ONE discordant pair -> floor VOIDS the claim outright), `unequal_budget_comparison_is_refused` (same trials + 4x budget -> refused; different trial counts -> unpairable), `discordant_pair_count_below_floor_voids_claim` (4 one-directional pairs that LOOK like improvement -> voided), defensible 30-pair improvement -> Significant + label-swap antisymmetry property test over deterministic seeds |
+| W9 exactness | p = k / 2^n as INTEGERS | the significance decision is an integer comparison (20k <= 2^n); certificates carry numerator/exponent, never floats (float rule) |
+| W9 into evolve | regenerate `readings/v0.2/gen1_certificate.json` | the cert now carries `significance: voided (discordant 1 < floor 10)` - the 4-task demo's "improvement" is honestly NOT claimable; replay still recomputes identically |
+
 Not doing (P1): no auto-apply path was added, anywhere (RFC 0003 boundary 1; the M4 `no_merge_path_exists` gate still guards the surface).
 
 ---
