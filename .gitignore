@@ -11,3 +11,6 @@ __pycache__/
 .DS_Store
 Thumbs.db
 .venv/
+
+# local reference scratch (third-party awesome-list; not repo content)
+/ahe.md

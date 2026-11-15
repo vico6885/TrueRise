@@ -152,6 +152,14 @@
       "mcp_server_default_empty_allowlist_over_stdio",
       "client_write_class_hard_denied_before_any_server_call",
       "mcp_calls_appear_on_the_chain"
+    ],
+    "RSI 一代闭环": [
+      "evolve_gen0_to_gen1_produces_lineage_certificate",
+      "apply_without_human_approval_token_is_refused",
+      "approval_hash_mismatch_with_proposal_is_refused",
+      "injected_regression_rolls_back_and_chains_the_reason",
+      "generation_certificate_recomputes_identically_offline",
+      "stale_or_revoked_epoch_write_rejected"
     ]
   }
 }

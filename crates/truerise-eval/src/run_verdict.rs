@@ -76,6 +76,56 @@ pub enum EvalError {
     Chain(#[from] truerise_governance::ChainError),
 }
 
+/// Judge one generation's TASK results against the baseline and RECORD the
+/// verdict (the evolve loop's re-evaluation step). Same authority, same
+/// rules: integer metric (`task_failures`), ratchet baseline caps it, the
+/// verdict is recorded even when it is a FAIL.
+///
+/// # Errors
+/// [`EvalError::Chain`] when the recording fails.
+pub fn judge_tasks(
+    results: &[(String, bool)],
+    baseline: &Baseline,
+    chain: &HashChain,
+) -> Result<RunVerdict, EvalError> {
+    let total = results.len() as u32;
+    let failures = results.iter().filter(|(_, ok)| !ok).count() as u32;
+    let mut scores = Baseline::new();
+    scores.insert("task_failures".to_string(), f64::from(failures));
+    let regressed = verify_scores(baseline, &scores).is_err();
+    let verdict = if failures == 0 && !regressed {
+        Verdict::Pass
+    } else {
+        Verdict::Fail
+    };
+    let out = RunVerdict {
+        verdict: verdict.clone(),
+        failures,
+        finished: true,
+        rounds_total: total,
+    };
+    chain
+        .append(
+            "eval.verdict",
+            if verdict == Verdict::Pass {
+                Severity::Info
+            } else {
+                Severity::Error
+            },
+            &json!({
+                "scope": "tasks",
+                "verdict": out.verdict_str(),
+                "passed": total - failures,
+                "total": total,
+                "failures": failures,
+                "baseline_present": !baseline.is_empty()
+            }),
+            None,
+        )
+        .map_err(EvalError::Chain)?;
+    Ok(out)
+}
+
 /// Judge one run's facts against the baseline and RECORD the verdict.
 /// The metric is integer-valued (`run_failures`); the baseline caps it
 /// (ratchet: regression = FAIL, never a silent merge).

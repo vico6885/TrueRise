@@ -1,0 +1,32 @@
+{
+  "applied": true,
+  "child": {
+    "content_hash": "0a77be1cd0a88eb78904dd9683acf71899ed485e05bc656a4de2e3bc37bdc93a"
+  },
+  "contents": {
+    "child": "{\"schema_version\":\"truerise.answers.v1\",\"answers\":{\"task-1\":\"half-open\",\"task-2\":\"eval-crate\",\"task-3\":\"tighten-only\",\"task-4\":\"human-approval\"}}",
+    "parent": "{\"schema_version\":\"truerise.answers.v1\",\"answers\":{\"task-1\":\"half-open\",\"task-2\":\"eval-crate\",\"task-3\":\"tighten-only\",\"task-4\":\"unknown\"}}"
+  },
+  "cost": {
+    "budget_hat": "evolve",
+    "task_runs": 8
+  },
+  "diff_stat": {
+    "lines_added": 1,
+    "lines_removed": 1
+  },
+  "generation": 1,
+  "parent": {
+    "content_hash": "6f12666819f9265259b18ca96c329ad3afcbaeff118f57b72b16299ddb952f7d"
+  },
+  "proposal_hash": "0a77be1cd0a88eb78904dd9683acf71899ed485e05bc656a4de2e3bc37bdc93a",
+  "replay": {
+    "command": "truerise evolve --replay --cert gen1_certificate.json"
+  },
+  "rollback": null,
+  "verdict": {
+    "failures": 0,
+    "total": 4,
+    "verdict": "PASS"
+  }
+}

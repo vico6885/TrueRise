@@ -27,6 +27,7 @@ use truerise_governance::HashChain;
 use truerise_wire::Severity;
 
 pub mod assembly;
+pub mod evolve_cmd;
 pub mod mcp_serve;
 
 pub use assembly::{GovernedPolicy, RunTooling};
@@ -685,6 +686,39 @@ pub fn cli_main(args: Vec<String>) -> i32 {
         "onboarding" => {
             onboarding();
             0
+        }
+        "evolve" => {
+            // `evolve --demo [--approve <hash>] [--inject-regression]` /
+            // `evolve --replay --cert <path>` (W7, RFC 0003).
+            let replay = args.iter().any(|a| a == "--replay");
+            if replay {
+                let cert = args
+                    .iter()
+                    .position(|a| a == "--cert")
+                    .and_then(|i| args.get(i + 1))
+                    .map(PathBuf::from);
+                match cert {
+                    Some(p) => return evolve_cmd::evolve_replay(&p),
+                    None => {
+                        eprintln!("usage error: --replay needs --cert <path>");
+                        return 2;
+                    }
+                }
+            }
+            if !args.iter().any(|a| a == "--demo") {
+                eprintln!(
+                    "usage: truerise evolve --demo [--approve <hash>] | --replay --cert <path>"
+                );
+                return 2;
+            }
+            let approve = args
+                .iter()
+                .position(|a| a == "--approve")
+                .and_then(|i| args.get(i + 1))
+                .cloned();
+            let inject = args.iter().any(|a| a == "--inject-regression");
+            let dir = std::env::temp_dir().join("truerise_cli_evolve");
+            evolve_cmd::evolve_demo(&dir, approve.as_deref(), inject)
         }
         "mcp" => {
             // `mcp --serve [--chain <dir>]`: zero-exposure server over stdio.

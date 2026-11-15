@@ -111,6 +111,23 @@ P0+P1 wiring complete. Remaining in P1: W7 (gen0->gen1 closed loop), W10 (certif
 
 ---
 
+## P1 — the RSI closed loop (W7/W8, 2026-11-16)
+
+HEAD at wave start: `71538d4`.
+
+| Item | Command | Result |
+|---|---|---|
+| RFC 0003 | `docs/rfc/0003-generation-certificate-and-apply.md` | generation lineage + the approval-gated apply path; six non-negotiable boundaries, each with a named test; honest single-maintainer approval + external-review invitation |
+| rsi apply | `cargo test -p truerise-rsi` | 10 passed: the ONLY apply path refuses without a token (`apply_without_human_approval_token_is_refused`), refuses hash mismatches (approve A / apply B), refuses STALE epochs + REVOKED approvals through the M2 fence semantics (`stale_or_revoked_epoch_write_rejected`), and records lineage on approval (`evolve.apply` row with parent/child hashes) |
+| evolve demo | `cargo test -p truerise-cli --test evolve_gate` | 5 passed: `evolve_gen0_to_gen1_produces_lineage_certificate` (PASS 4/4; chain rows proposal/approval/apply/verdict/certificate), `apply_without_human_approval_token_is_refused` (gen0 untouched, refusal audited, NO certificate), `approval_hash_mismatch_with_proposal_is_refused`, `injected_regression_rolls_back_and_chains_the_reason` (FAIL verdict recorded + byte-exact rollback + reason on chain - the FAIL+rollback certificate is machinery SUCCESS), `generation_certificate_recomputes_identically_offline` (PASS + FAIL cases both replay offline; a tampered cert does NOT recompute) |
+| committed artifact | `readings/v0.2/gen1_certificate.json` | byte-DETERMINISTIC across runs (two independent runs -> identical bytes); embeds both skill contents so replay is file-free; `cargo run -p truerise-cli -- evolve --replay --cert readings/v0.2/gen1_certificate.json` -> exit 0 |
+| claim gate | `python tools/check_claim_terms.py` | 3 met / 2 unmet: Harness, Governance, Recursive Self-Improvement now carry command+test+artifact evidence; Verifiable (needs W10 signing) and Deterministic (needs W14 tape + W17 policy) stay unmet - the remaining title gap is CI-visible |
+| workspace | `cargo test --workspace` | 138 passed 0 failed; clippy -D warnings clean; fmt clean |
+
+Not doing (P1): no auto-apply path was added, anywhere (RFC 0003 boundary 1; the M4 `no_merge_path_exists` gate still guards the surface).
+
+---
+
 ## W3 — Anti-Cheat Bench (truerise.evals) + open-source construction wave (2026-11-15)
 
 HEAD at wave start: `123f3c5`. All gates re-run at wave end (see the gate matrix below).

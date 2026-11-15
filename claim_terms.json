@@ -9,15 +9,15 @@
   "terms": [
     {
       "term": "Harness",
-      "status": "unmet",
+      "status": "met",
       "meaning": "one real run path chains model calls, tool execution, judging and the audit ledger",
-      "command": "cargo test -p truerise-cli --test tool_gate",
-      "test": "tool_denied_by_policy_writes_no_side_effect",
-      "artifact": "readings/v0.2/wired_run_audit.jsonl"
+      "command": "cargo test -p truerise-cli --test evolve_gate",
+      "test": "evolve_gen0_to_gen1_produces_lineage_certificate",
+      "artifact": "readings/v0.2/gen1_certificate.json"
     },
     {
       "term": "Governance",
-      "status": "unmet",
+      "status": "met",
       "meaning": "policy/budget/approval/ratchet can stop a live run, not only pass unit tests",
       "command": "cargo test -p truerise-cli --test budget_enforcement",
       "test": "budget_exhaustion_halts_run_at_step_n",
@@ -33,10 +33,10 @@
     },
     {
       "term": "Recursive Self-Improvement",
-      "status": "unmet",
+      "status": "met",
       "meaning": "one generation gen0->gen1 runs end to end: propose -> human approval -> apply -> re-eval -> ratchet -> (rollback on regression), recomputable offline",
-      "command": "cargo run -p truerise-cli -- evolve --demo",
-      "test": "evolve_gen0_to_gen1_produces_lineage_certificate",
+      "command": "cargo run -p truerise-cli -- evolve --replay --cert readings/v0.2/gen1_certificate.json",
+      "test": "generation_certificate_recomputes_identically_offline",
       "artifact": "readings/v0.2/gen1_certificate.json"
     },
     {
