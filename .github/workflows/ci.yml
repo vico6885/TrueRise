@@ -71,6 +71,29 @@ jobs:
       - run: python3 tools/check_wiring.py --selftest
       - run: python3 tools/check_wiring.py
 
+  # W13b: PyO3 wheels for the optional truerise-native backend (three OS).
+  native-wheels:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: build the native wheel (maturin)
+        run: |
+          python -m pip install maturin
+          maturin build --out dist -m python-native/pyproject.toml
+      - name: smoke the wheel (parity with the pure-Python SDK)
+        run: |
+          python -m pip install --find-links dist truerise-native
+          python -c "import truerise_native; print(truerise_native.chain_append is not None)"
+          python -m pip install -e python/
+          python -m pytest python/tests/test_sdk.py -q -k native
+
   deny:
     runs-on: ubuntu-latest
     steps:

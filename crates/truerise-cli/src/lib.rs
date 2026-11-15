@@ -10,30 +10,25 @@
 // - onboarding: writes config.toml WITHOUT any secret (keys live in env or
 //   an OS keyring; the config stores nothing sensitive).
 
-use std::io::{BufRead, Write};
 use std::path::{Path, PathBuf};
 
-use sha2::{Digest, Sha256};
-
-/// Hex-encode a sha2 digest (LowerHex is not implemented for the output array).
-pub fn hex_digest(out: impl AsRef<[u8]>) -> String {
-    let mut hex = String::with_capacity(64);
-    for b in out.as_ref() {
-        hex.push_str(&format!("{b:02x}"));
-    }
-    hex
-}
 use truerise_governance::HashChain;
 use truerise_wire::Severity;
 
 pub mod assembly;
+pub mod baseline;
+pub mod demo;
 pub mod evolve_cmd;
 pub mod identity;
+pub mod interactive;
 pub mod mcp_serve;
 pub mod provider_openai;
 pub mod tape;
 
 pub use assembly::{GovernedPolicy, RunTooling};
+pub use baseline::{find_default_baseline, grade_exit};
+pub use demo::{demo_scenarios, run_demo};
+pub use interactive::{onboarding, repl, repl_turn};
 
 // truerise-cli library surface (the binary is a thin IO shell over this). the REPL is an IO adapter over
 // THESE functions only (spec §6.5 single-track ruling) - the golden test
@@ -50,87 +45,6 @@ pub fn print_help() {
          \x20 onboarding        first-run wizard (writes config.toml, NEVER stores keys)\n\
          \x20 help              this text"
     );
-}
-
-// ---------------------------------------------------------------------------
-// demo: S1 pay-later seal / S2 many-shots / S3 self-signed evidence
-// ---------------------------------------------------------------------------
-
-/// Derive the three scenario reasons from inputs (pure; verdict = reasons empty ? PASS : FAIL).
-pub fn demo_scenarios(honest: bool) -> (Vec<String>, String) {
-    let mut reasons = Vec::new();
-
-    // S1: thresholds sealed, then (dishonestly) mutated before the verdict.
-    let sealed = r#"{"min_gain_pct":10,"significance":0.05}"#;
-    let mut hasher = Sha256::new();
-    hasher.update(sealed);
-    let seal = hex_digest(hasher.finalize());
-    let current = if honest {
-        sealed.to_string()
-    } else {
-        r#"{"min_gain_pct":10,"significance":0.03}"#.to_string()
-    };
-    let mut check = Sha256::new();
-    check.update(current.as_bytes());
-    let current_seal = hex_digest(check.finalize());
-    if current_seal != seal {
-        reasons.push("1) prereg diff: thresholds mutated after seal".into());
-    }
-
-    // S2: all trials counted; the corrected bar tightens with n.
-    let trials: u64 = if honest { 1 } else { 1000 };
-    let claim_p = if honest { 0.04 } else { 0.03 };
-    let corrected = 0.05_f64 / trials as f64;
-    if claim_p > corrected {
-        reasons.push(format!(
-            "2) trials={trials} -> corrected significance {corrected:.1e}, claim p={claim_p} does not clear it"
-        ));
-    }
-
-    // S3: unsigned records are self-report = no evidence.
-    if !honest {
-        reasons.push("3) evidence: 0 executor-signed records (self-report only)".into());
-    }
-
-    (reasons, seal)
-}
-
-/// Print the demo walkthrough and record the verdict on the demo chain.
-///
-/// Returns whether the claim passed, so the binary can map the verdict onto
-/// the exit code exactly like the Python CLI does (FAIL is a gate, not a note).
-pub fn run_demo(honest: bool) -> bool {
-    let (reasons, seal) = demo_scenarios(honest);
-    let passed = reasons.is_empty();
-    let verdict = if passed { "PASS" } else { "FAIL" };
-    println!(
-        "CLAIM     : self-improvement +23% (n={} trials, best-of)",
-        if honest { 1 } else { 1000 }
-    );
-    println!("FINGERPRINT: model=m* harness=h* env=e* evaluator=v*");
-    println!("VERDICT   : {verdict}");
-    for r in &reasons {
-        println!("            {r}");
-    }
-    println!(
-        "CERTIFICATE: sealed at {} (verdict derives from inputs; --honest flips PASS)",
-        &seal[..12]
-    );
-    // The demo verdict lands on a chain (auditability of the demo itself).
-    if let Ok(chain) = HashChain::open(&demo_chain_path()) {
-        let _ = chain.append(
-            "cli.demo.verdict",
-            Severity::Info,
-            &serde_json::json!({"verdict": verdict, "honest": honest}),
-            None,
-        );
-    }
-    passed
-}
-
-/// The per-process demo chain location (temp).
-pub fn demo_chain_path() -> PathBuf {
-    std::env::temp_dir().join(format!("truerise_cli_demo_{}.jsonl", std::process::id()))
 }
 
 // ---------------------------------------------------------------------------
@@ -209,52 +123,6 @@ impl truerise_core::AuditSink for ChainSinkBridge<'_> {
     }
 }
 
-/// The default ratchet baseline: `baselines/run_scores.json` at this repo
-/// root (resolved by walking up from the cwd, like git does; `None` when no
-/// ancestor carries it - the judge then runs with an empty baseline and the
-/// verdict row says so).
-#[must_use]
-pub fn find_default_baseline() -> Option<PathBuf> {
-    let mut dir = std::env::current_dir().ok()?;
-    loop {
-        let candidate = dir.join("baselines").join("run_scores.json");
-        if candidate.exists() {
-            return Some(candidate);
-        }
-        if !dir.pop() {
-            return None;
-        }
-    }
-}
-
-/// Load a ratchet baseline from a JSON file (integer metric values; the
-/// `_note` key and any non-numeric field is ignored).
-fn load_baseline(path: Option<&Path>) -> truerise_eval::ratchet::Baseline {
-    let Some(path) = path else {
-        return truerise_eval::ratchet::Baseline::new();
-    };
-    let Ok(text) = std::fs::read_to_string(path) else {
-        return truerise_eval::ratchet::Baseline::new();
-    };
-    let Ok(doc) = serde_json::from_str::<serde_json::Value>(&text) else {
-        return truerise_eval::ratchet::Baseline::new();
-    };
-    doc.as_object()
-        .map(|obj| {
-            obj.iter()
-                .filter_map(|(k, v)| v.as_f64().map(|x| (k.clone(), x)))
-                .collect()
-        })
-        .unwrap_or_else(truerise_eval::ratchet::Baseline::new)
-}
-
-/// Map a judged verdict onto the exit code (PASS=0 / FAIL=1 - the same
-/// contract as the demo; no third meaning is ever introduced).
-#[must_use]
-pub fn grade_exit(verdict: &truerise_eval::RunVerdict) -> i32 {
-    i32::from(!verdict.is_pass())
-}
-
 /// The `run --goal` subcommand: one governed run over the FULL assembly
 /// (scripted router + governance policy + fenced sandbox executor, RFC 0002;
 /// budget enforced per W3; the run ends with a judged verdict per W4).
@@ -321,7 +189,8 @@ pub fn run_commandline(
                     == truerise_core::State::Finished,
                 rounds_total: 1,
             };
-            match truerise_eval::judge_run(&facts, &load_baseline(baseline_path), &chain) {
+            match truerise_eval::judge_run(&facts, &baseline::load_baseline(baseline_path), &chain)
+            {
                 Ok(verdict) => {
                     println!(
                         "  verdict:            {} (failures {}, baseline {})",
@@ -352,111 +221,6 @@ pub fn run_commandline(
         Err(e) => {
             eprintln!("run failed: {e}");
             1
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------
-// REPL + onboarding
-// ---------------------------------------------------------------------------
-
-/// The interactive read-eval loop (IO adapter over repl_turn only).
-pub fn repl() {
-    println!(
-        "truerise repl - /demo /audit /quit (IO adapter only; multi-turn semantics reuse the loop path)"
-    );
-    let stdin = std::io::stdin();
-    let mut line = String::new();
-    loop {
-        print!("truerise> ");
-        std::io::stdout().flush().ok();
-        line.clear();
-        if stdin.lock().read_line(&mut line).unwrap_or(0) == 0 {
-            break; // EOF
-        }
-        let trimmed = line.trim();
-        match trimmed {
-            "" => continue,
-            "/quit" | "/exit" => break,
-            "/demo" => {
-                run_demo(false);
-            }
-            "/audit" => {
-                if let Ok(chain) = HashChain::open(&demo_chain_path()) {
-                    println!(
-                        "audit: {} row(s), verified: {}",
-                        chain.len(),
-                        chain.verify().is_ok()
-                    );
-                } else {
-                    println!("audit: no chain yet (run /demo first)");
-                }
-            }
-            text => {
-                // Reuse the run path (single book write) - no bare-face entry.
-                let baseline = find_default_baseline();
-                let _code = run_commandline(text, &[], None, baseline.as_deref(), None);
-            }
-        }
-    }
-}
-
-/// The first-run wizard (writes a secret-free config skeleton).
-pub fn onboarding() {
-    let config_path = PathBuf::from("config.toml");
-    if config_path.exists() {
-        println!("onboarding: config.toml already exists - nothing to do");
-        return;
-    }
-    println!("onboarding wizard (secrets NEVER land in this file):");
-    println!("  1. pick a provider: openai-compatible / anthropic / custom base_url");
-    println!("  2. put your key in the environment (TRUERISE_API_KEY) or an OS keyring");
-    println!("     - argv and config files are forbidden for keys");
-    println!("  3. tool execution through the sandbox port (planned - see docs/PROGRESS.md)");
-    let sample = "[provider]\nkind = \"openai-compatible\"\nbase_url = \"https://example.invalid/v1\"\nmodel_route = \"default\"\n\n# NO keys here: TRUERISE_API_KEY env or OS keyring only.\n";
-    if std::fs::write(&config_path, sample).is_ok() {
-        println!("wrote config.toml (provider skeleton; no secrets). Set TRUERISE_API_KEY next.");
-    } else {
-        eprintln!("could not write config.toml in this directory");
-    }
-}
-
-// HashMap import kept for the router signature shape used by the loop port.
-#[allow(unused_imports)]
-use std::collections::HashMap as _HashMap;
-
-/// The repl's non-interactive equivalent: one line in, the SAME run path.
-pub fn repl_turn(line: &str) -> String {
-    let trimmed = line.trim();
-    match trimmed {
-        "/demo" => {
-            run_demo(false);
-            "demo printed".into()
-        }
-        "/audit" => {
-            if let Ok(chain) = HashChain::open(&demo_chain_path()) {
-                format!(
-                    "audit: {} row(s), verified: {}",
-                    chain.len(),
-                    chain.verify().is_ok()
-                )
-            } else {
-                "audit: no chain yet (run /demo first)".into()
-            }
-        }
-        "" => String::new(),
-        text => {
-            // Free text reuses the run path (no bare-face entry).
-            run_books(text, 1)
-                .map(|b| {
-                    format!(
-                        "run complete (three books): transcript {} / transitions {} / audit {}",
-                        b.transcript.len(),
-                        b.transitions.len(),
-                        b.audit_rows
-                    )
-                })
-                .unwrap_or_else(|e| format!("run failed: {e}"))
         }
     }
 }
@@ -587,7 +351,7 @@ pub fn cli_main(args: Vec<String>) -> i32 {
             let honest = args.iter().any(|a| a == "--honest");
             // The verdict drives the exit code (same contract as the Python
             // CLI): a FAIL has to be able to stop a CI lane.
-            i32::from(!run_demo(honest))
+            i32::from(!demo::run_demo(honest))
         }
         "run" => {
             let goal = args
@@ -683,11 +447,11 @@ pub fn cli_main(args: Vec<String>) -> i32 {
             )
         }
         "repl" => {
-            repl();
+            interactive::repl();
             0
         }
         "onboarding" => {
-            onboarding();
+            interactive::onboarding();
             0
         }
         "evolve" => {

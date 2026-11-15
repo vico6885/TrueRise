@@ -26,7 +26,13 @@ from .evals.pack import FAMILIES  # re-export: the sealed taxonomy
 from .fingerprint import Fingerprint
 from .gates import EvidenceRecord, evidence_gate, prereg_diff, seal_thresholds
 
+try:  # W13b: the PyO3 backend is OPTIONAL - the pure-Python path is complete
+    import truerise_native as _native  # type: ignore[import-not-found]
+except ImportError:
+    _native = None  # type: ignore[assignment]
+
 __all__ = [
+    "native_available",
     "Session",
     "Policy",
     "ApprovalQueue",
@@ -39,6 +45,13 @@ __all__ = [
     "seal_thresholds",
     "FAMILIES",
 ]
+
+
+def native_available() -> bool:
+    """True when the PyO3 backend (`truerise-native` wheel) is importable.
+    The SDK is FUNCTIONAL without it; the native backend accelerates chain
+    and ratchet operations with the SAME crate semantics."""
+    return _native is not None
 
 
 # -- policy ----------------------------------------------------------------

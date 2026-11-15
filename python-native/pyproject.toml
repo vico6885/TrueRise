@@ -1,0 +1,22 @@
+[build-system]
+requires = ["maturin>=1.7,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "truerise-native"
+version = "0.2.0.dev0"
+description = "Native (Rust/PyO3) backend for the truerise harness: chain append/verify, ratchet - the same crates, importable."
+requires-python = ">=3.10"
+license = { text = "Apache-2.0 OR MIT" }
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+]
+
+[tool.maturin]
+# the cdylib source lives with the rest of the Rust workspace
+manifest-path = "../crates/truerise-py/Cargo.toml"
+module-name = "truerise_native"
+features = ["pyo3/extension-module"]
+include = [{ path = "../LICENSE-MIT", format = "sdist" }, { path = "../LICENSE-APACHE", format = "sdist" }]

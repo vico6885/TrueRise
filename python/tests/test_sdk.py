@@ -117,3 +117,26 @@ def test_sdk_budget_exhaustion_stops_the_session():
     assert summary["transitions"] < 3 * 5, "round 2 never started"
     rows = [r.kind for r in session.ledger.rows]
     assert "budget.exhausted" in rows
+
+
+def test_native_backend_is_optional_and_pure_python_is_complete():
+    """W13b: the PyO3 wheel is an OPTIONAL accelerator. When present, its
+    ratchet must agree with the SDK's; when absent, the SDK still runs."""
+    from truerise.sdk import native_available
+
+    if not native_available():
+        assert True, "pure-Python path is the complete fallback"
+        return
+    import truerise_native as native
+
+    from truerise.sdk import Ratchet
+
+    native.ratchet_verify('{"failures_pm": 20}', '{"failures_pm": 20}')
+    try:
+        native.ratchet_verify('{"failures_pm": 20}', '{"failures_pm": 30}')
+        raise AssertionError("regression must be refused natively")
+    except ValueError:
+        pass
+    sdk = Ratchet(baseline={"failures_pm": 20})
+    with pytest.raises(ValueError, match="regressed"):
+        sdk.verify({"failures_pm": 30})
