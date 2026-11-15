@@ -20,7 +20,7 @@ SPEC_MAP = REPO / "spec_map.json"
 def collect_tree_text() -> str:
     """Concatenate all tracked code/doc text (crates, tests, benches, docs, tools)."""
     chunks: list[str] = []
-    for base in ("crates", "tests", "benches", "docs", "tools", "hats", "schemas"):
+    for base in ("crates", "tests", "benches", "docs", "tools", "hats", "schemas", "python"):
         base_path = REPO / base
         if not base_path.exists():
             continue

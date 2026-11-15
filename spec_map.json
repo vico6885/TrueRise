@@ -188,6 +188,16 @@
       "test_external_solver_records_are_executor_signed_at_L4",
       "test_self_reported_external_run_is_capped_at_L0",
       "test_external_solver_protocol_end_to_end"
+    ],
+    "Python SDK": [
+      "test_sdk_session_three_books",
+      "test_sdk_budget_denominator_not_sharded",
+      "test_sdk_policy_ask_requires_approval_on_file",
+      "test_sdk_ratchet_only_tightens",
+      "test_sdk_tool_request_goes_through_the_enforcement_chain",
+      "test_sdk_plain_text_never_executes",
+      "test_sdk_budget_exhaustion_stops_the_session",
+      "test_sdk_approval_never_expires_into_consent"
     ]
   }
 }

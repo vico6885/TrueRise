@@ -142,6 +142,9 @@ HEAD at wave start: `71538d4`.
 | W11a external protocol | pytest | `test_external_solver_protocol_end_to_end` (the reference external solver runs as a SUBPROCESS: public surface by env, submission.jsonl back, grades signed by the runner = executor), `test_external_solver_records_are_executor_signed_at_L4` (signed records count at the declared level), `test_self_reported_external_run_is_capped_at_L0` (the solver's own claim contributes nothing) |
 | protocol surface | `truerise.evals.runner.run_external_trials(solver_cmd, pack, ...)` | one contract for any third-party solver: env TRUERISE_PUBLIC_DIR / TRUERISE_OUT_DIR, submission.jsonl in; the W11b public-model reading is now ONE command away |
 
+| W13a Python SDK | pytest (test_sdk.py) | 8 passed: the zero-dependency `truerise.sdk` mirrors the Rust contracts as a CONSUMER (never a second authority): Session (three books + RFC 0002 enforcement chain: decide -> execute -> audit, plain text never executes), Policy (ask needs approval ON FILE; deny short-circuits; default-deny), ApprovalQueue (single-point epoch, revoke terminal), Budget (one shared denominator + reconcile==0), Ratchet (tighten-only, integer metrics). Mirrored test names documented per Rust behaviour |
+| SDK boundary | `truerise.sdk.__all__` | fingerprint / seal / prereg / evidence gate RE-EXPORTED from their single sources (no copies of the authority) |
+
 Not doing (P2): the committed tape/keystones remain unsigned until a release signing key exists (W10's verify honestly reports unverified_issuer for them).
 
 ---
