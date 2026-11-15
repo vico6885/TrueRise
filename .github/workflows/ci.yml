@@ -110,7 +110,16 @@ jobs:
       - name: "timesafety: four vectors ENFORCED since M1 (declaration + enforcing tests asserted; never skippable)"
         run: python3 tools/check_leakguard_skeleton.py
 
+  # Claim gate runs BEFORE the docs job on purpose: a title word whose
+  # evidence is missing must be removed, not documented.
+  claim-terms:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/check_claim_terms.py
+
   docs:
+    needs: [claim-terms]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

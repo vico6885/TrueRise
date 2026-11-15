@@ -24,6 +24,7 @@ gates-py:
 	python tools/lint_schemas.py
 	python tools/lint_spec_map.py
 	python tools/check_leakguard_skeleton.py
+	python tools/check_claim_terms.py
 	python tools/lint_dco.py
 	python tools/check_docs.py
 

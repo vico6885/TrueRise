@@ -117,6 +117,10 @@
     "接线": [
       "check_wiring_selftest_bites_both_directions",
       "wiring_manifest_roster_reachable_from_cli_binary"
+    ],
+    "口号": [
+      "claim_gate_red_means_the_word_leaves_the_title",
+      "claim_terms_map_term_to_command_test_artifact"
     ]
   }
 }

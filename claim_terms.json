@@ -1,0 +1,51 @@
+{
+  "_note": "Claim gate registry: every verifiable noun that may appear in the project title/slogan maps to one command, one named test and one committed artifact. status=unmet means the noun must NOT appear in any guarded surface (title zone = H1 + the following 6 lines of each file in guarded_surfaces); status=met means the command, test identifier and artifact must ALL exist or the gate goes red - and a red gate means the word leaves the title. The RSI row ships unmet by design until the gen0->gen1 closed loop (W7) lands; flipping a row to met requires its evidence to exist in the same commit.",
+  "guarded_surfaces": [
+    "README.md",
+    "README.zh-CN.md",
+    "docs/README.md",
+    "docs/README.zh-CN.md"
+  ],
+  "terms": [
+    {
+      "term": "Harness",
+      "status": "unmet",
+      "meaning": "one real run path chains model calls, tool execution, judging and the audit ledger",
+      "command": "cargo test -p truerise-cli --test tool_gate",
+      "test": "tool_denied_by_policy_writes_no_side_effect",
+      "artifact": "readings/v0.2/wired_run_audit.jsonl"
+    },
+    {
+      "term": "Governance",
+      "status": "unmet",
+      "meaning": "policy/budget/approval/ratchet can stop a live run, not only pass unit tests",
+      "command": "cargo test -p truerise-cli --test budget_enforcement",
+      "test": "budget_exhaustion_halts_run_at_step_n",
+      "artifact": "baselines/run_scores.json"
+    },
+    {
+      "term": "Verifiable",
+      "status": "unmet",
+      "meaning": "a third party can recompute offline AND verify who issued the certificate",
+      "command": "cargo test -p truerise-cli --test cert_identity",
+      "test": "tampered_certificate_fails_signature_check",
+      "artifact": "readings/v0.2/gen1_certificate.json"
+    },
+    {
+      "term": "Recursive Self-Improvement",
+      "status": "unmet",
+      "meaning": "one generation gen0->gen1 runs end to end: propose -> human approval -> apply -> re-eval -> ratchet -> (rollback on regression), recomputable offline",
+      "command": "cargo run -p truerise-cli -- evolve --demo",
+      "test": "evolve_gen0_to_gen1_produces_lineage_certificate",
+      "artifact": "readings/v0.2/gen1_certificate.json"
+    },
+    {
+      "term": "Deterministic",
+      "status": "unmet",
+      "meaning": "pinned model steps + recorded tape + hash-chained ledger recompute to identical digests offline (harness mechanics; model outputs themselves are NOT claimed deterministic)",
+      "command": "cargo test -p truerise-cli --test tape_replay",
+      "test": "same_tape_replays_identical_digest",
+      "artifact": "docs/determinism.md"
+    }
+  ]
+}
