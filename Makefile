@@ -1,4 +1,4 @@
-.PHONY: check test fmt clippy gates gates-py demo replay dual docs doc-links verify
+.PHONY: check test fmt clippy gates gates-py wiring demo replay dual docs doc-links verify
 
 # --- Rust -------------------------------------------------------------------
 
@@ -30,7 +30,11 @@ gates-py:
 # Full local mirror of the CI gate set, minus the two jobs that need extra
 # tooling (cargo-deny, cargo-cyclonedx) and the benchmark baseline job. Use
 # `make verify` for the complete parity run.
-gates: gates-py
+gates: gates-py wiring
+
+wiring:
+	python tools/check_wiring.py --selftest
+	python tools/check_wiring.py
 
 # --- Behaviour you can look at ---------------------------------------------
 
@@ -52,7 +56,7 @@ doc-links:
 	python tools/check_docs.py
 
 # Everything CI asserts that this machine can assert, in one command.
-verify: fmt clippy check test gates-py
+verify: fmt clippy check test gates-py wiring
 	python -m pytest python/tests -q
 	python tools/check_dual_impl.py
 	@echo "local verify complete (CI adds: cargo deny, SBOM, MSRV 1.85, criterion baseline)"

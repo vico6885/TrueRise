@@ -1,0 +1,16 @@
+{
+  "_note": "Wiring gate roster: every crate listed here must be reachable from the truerise-cli binary through PRODUCTION dependency edges (cargo metadata). tools/check_wiring.py fails CI while any entry is an unreachable island. Add an entry only together with the work package that wires it into the run path; the roster may never exceed what the binary actually drives. truerise-cli itself is the root and is not listed.",
+  "roster": [
+    "truerise-core",
+    "truerise-wire",
+    "truerise-platform",
+    "truerise-governance",
+    "truerise-sandbox",
+    "truerise-eval",
+    "truerise-rsi",
+    "truerise-hats",
+    "truerise-memory",
+    "truerise-mcp",
+    "truerise-observe"
+  ]
+}

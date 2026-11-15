@@ -113,6 +113,10 @@
       "expiry_uses_monotonic_domain",
       "lock_write_via_guard_roundtrip",
       "wait_ms_returns_none_for_sleeping_child"
+    ],
+    "接线": [
+      "check_wiring_selftest_bites_both_directions",
+      "wiring_manifest_roster_reachable_from_cli_binary"
     ]
   }
 }

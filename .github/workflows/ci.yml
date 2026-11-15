@@ -61,6 +61,16 @@ jobs:
       - name: run both implementations and diff the certificates
         run: python3 tools/check_dual_impl.py
 
+  # Wiring gate: every crate in wiring_manifest.json must be reachable from
+  # the truerise-cli binary through production dependency edges. The selftest
+  # runs first so a toothless gate can never guard anything.
+  wiring:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/check_wiring.py --selftest
+      - run: python3 tools/check_wiring.py
+
   deny:
     runs-on: ubuntu-latest
     steps:
