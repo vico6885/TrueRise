@@ -8,6 +8,7 @@
 
 use std::sync::Mutex;
 
+use crate::budget::Budget;
 use crate::compaction::Entry;
 use crate::errors::CoreError;
 use crate::router::{ModelRouter, RetryPolicy, RouterError, TurnRequest, backoff_ms, check_pinned};
@@ -41,6 +42,12 @@ pub enum LoopError {
     /// Audit sink refused.
     #[error("loop: audit sink: {0}")]
     Sink(String),
+    /// Budget exhausted (W3): the audit row landed, then the run stopped.
+    #[error("loop: budget exhausted for hat {hat}")]
+    Budget {
+        /// The hat that hit the wall.
+        hat: String,
+    },
     /// State machine refused.
     #[error("loop: state: {0}")]
     State(#[from] CoreError),
@@ -84,6 +91,7 @@ pub struct Loop<'a> {
     config: LoopConfig,
     sink: &'a dyn AuditSink,
     tools: Option<ToolHooks<'a>>,
+    budget: Option<(&'a str, &'a dyn Budget)>,
     transcript: Mutex<Vec<Entry>>,
     transitions: Mutex<Vec<TransitionLog>>,
     audit_rows: Mutex<usize>,
@@ -97,6 +105,7 @@ impl<'a> Loop<'a> {
             config,
             sink,
             tools: None,
+            budget: None,
             transcript: Mutex::new(Vec::new()),
             transitions: Mutex::new(Vec::new()),
             audit_rows: Mutex::new(0),
@@ -110,6 +119,32 @@ impl<'a> Loop<'a> {
     pub fn with_tools(mut self, hooks: ToolHooks<'a>) -> Self {
         self.tools = Some(hooks);
         self
+    }
+
+    /// Wire the budget (W3): one unit per round + one unit per allowed tool
+    /// execution, attributed to ``hat``. Exhaustion stops the run
+    /// (fail-closed, audited).
+    #[must_use]
+    pub fn with_budget(mut self, hat: &'a str, budget: &'a dyn Budget) -> Self {
+        self.budget = Some((hat, budget));
+        self
+    }
+
+    /// Consume ``units`` against the wired budget; on exhaustion audit the
+    /// stop and return the Budget error (fail-closed).
+    fn consume_budget(&self, units: u32, what: &str) -> Result<(), LoopError> {
+        let Some((hat, budget)) = self.budget else {
+            return Ok(());
+        };
+        if let Err(stop) = budget.consume(hat, units) {
+            self.audit(
+                "budget.exhausted",
+                "warn",
+                &serde_json::json!({ "hat": stop.hat, "what": what, "units": units }),
+            )?;
+            return Err(LoopError::Budget { hat: stop.hat });
+        }
+        Ok(())
     }
 
     /// One router call with retry/backoff (retryable only) + pinning check.
@@ -201,42 +236,46 @@ impl<'a> Loop<'a> {
                 )?;
                 format!("tool {} requires approval; not executed", request.tool)
             }
-            GateDecision::Allow => match hooks.provider.execute(request) {
-                Ok(outcome) => {
-                    // The capability level is the executor's return value,
-                    // never a declared one (RFC 0002 acceptance test).
-                    self.audit(
-                        "tool.executed",
-                        "info",
-                        &serde_json::json!({
-                            "tool": request.tool,
-                            "capability": outcome.capability,
-                            "code": outcome.code
-                        }),
-                    )?;
-                    self.transcript
-                        .lock()
-                        .unwrap_or_else(|p| p.into_inner())
-                        .push(Entry {
-                            role: "tool".into(),
-                            text: outcome.stdout.clone(),
-                            tokens: total_estimate(&outcome.stdout),
-                        });
-                    outcome.stdout
+            GateDecision::Allow => {
+                // W3: an allowed execution costs one unit too.
+                self.consume_budget(1, "tool")?;
+                match hooks.provider.execute(request) {
+                    Ok(outcome) => {
+                        // The capability level is the executor's return value,
+                        // never a declared one (RFC 0002 acceptance test).
+                        self.audit(
+                            "tool.executed",
+                            "info",
+                            &serde_json::json!({
+                                "tool": request.tool,
+                                "capability": outcome.capability,
+                                "code": outcome.code
+                            }),
+                        )?;
+                        self.transcript
+                            .lock()
+                            .unwrap_or_else(|p| p.into_inner())
+                            .push(Entry {
+                                role: "tool".into(),
+                                text: outcome.stdout.clone(),
+                                tokens: total_estimate(&outcome.stdout),
+                            });
+                        outcome.stdout
+                    }
+                    Err(err) => {
+                        self.audit(
+                            "tool.denied",
+                            "warn",
+                            &serde_json::json!({
+                                "tool": request.tool,
+                                "reason": "sandbox_refused",
+                                "detail": err.to_string()
+                            }),
+                        )?;
+                        format!("tool {} refused by the sandbox: {err}", request.tool)
+                    }
                 }
-                Err(err) => {
-                    self.audit(
-                        "tool.denied",
-                        "warn",
-                        &serde_json::json!({
-                            "tool": request.tool,
-                            "reason": "sandbox_refused",
-                            "detail": err.to_string()
-                        }),
-                    )?;
-                    format!("tool {} refused by the sandbox: {err}", request.tool)
-                }
-            },
+            }
         };
         Ok(observation)
     }
@@ -271,6 +310,9 @@ impl<'a> Loop<'a> {
 
         let mut plan_payload = String::new();
         for round in 0..rounds {
+            // W3: every round consumes one unit BEFORE any model call -
+            // "over budget stops the run" is the minimum Governance proof.
+            self.consume_budget(1, "round")?;
             plan_payload = self.call("plan", &format!("{goal} [round {round}]"))?;
             self.record(State::Running, Event::Plan, State::Planned)?;
             self.transcript

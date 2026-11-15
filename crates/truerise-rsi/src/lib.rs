@@ -6,7 +6,7 @@ pub mod budget;
 pub mod evolve;
 pub mod skill;
 
-pub use budget::{BudgetError, BudgetLedger};
+pub use budget::{BudgetError, BudgetLedger, RunBudget};
 pub use evolve::{EvolveError, Proposal, evolve_propose, proposal_dir};
 pub use skill::{SkillError, SkillPackage, load_skill};
 

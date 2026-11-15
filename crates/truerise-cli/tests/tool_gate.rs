@@ -67,7 +67,7 @@ fn run(
         policy,
         provider: &provider.provider,
     };
-    run_books_in(dir, router, Some(hooks), "write the report", 1).expect("run completes");
+    run_books_in(dir, router, Some(hooks), None, "write the report", 1).expect("run completes");
 }
 
 #[test]
@@ -167,7 +167,7 @@ fn no_hooks_means_no_execution_surface() {
     let router = ScriptRouter::tool_calling("scripted");
     // The envelope is in the act payload, but with no hooks wired it is
     // PLAIN TEXT - it must parse as nothing and execute as nothing.
-    let books = truerise_cli::run_books_in(&dir, &router, None, "goal", 1).expect("run");
+    let books = truerise_cli::run_books_in(&dir, &router, None, None, "goal", 1).expect("run");
     assert!(!RunTooling::sandbox_path(&dir, "report.md").exists());
     assert_eq!(books.audit_rows, books.transitions.len(), "no tool rows");
     let chain = HashChain::open(&dir.join("run.jsonl")).expect("chain");

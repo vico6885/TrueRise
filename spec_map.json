@@ -127,6 +127,11 @@
       "ask_requires_approval_on_file_before_execution",
       "execution_lands_capability_level_on_chain",
       "sandbox_refused_escape_is_recorded_as_denial"
+    ],
+    "预算执法": [
+      "budget_exhaustion_halts_run_at_step_n",
+      "budget_is_shared_across_hats_not_sharded",
+      "run_exit_code_reflects_budget_stop"
     ]
   }
 }

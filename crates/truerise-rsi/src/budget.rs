@@ -153,3 +153,39 @@ mod tests {
         assert_eq!(b.reconcile(), 0);
     }
 }
+
+/// The loop-facing budget (W3): binds the singleton ledger to a hat quota
+/// and implements the core `Budget` port. One instance per run; two
+/// instances still share the SAME global denominator (the singleton rule).
+#[derive(Debug, Clone)]
+pub struct RunBudget {
+    /// The underlying singleton ledger (clone = same ledger).
+    pub ledger: BudgetLedger,
+    /// Per-hat quota (`None` = unbounded; the global denominator still
+    /// accumulates - sequential correction divides by the global count).
+    pub quota: Option<u64>,
+}
+
+impl RunBudget {
+    /// Bind the global ledger to ``quota``.
+    #[must_use]
+    pub fn new(quota: Option<u64>) -> Self {
+        Self {
+            ledger: BudgetLedger::global(),
+            quota,
+        }
+    }
+}
+
+impl truerise_core::Budget for RunBudget {
+    fn consume(&self, hat: &str, units: u32) -> Result<(), truerise_core::BudgetStop> {
+        for _ in 0..units {
+            self.ledger
+                .consume(hat, self.quota)
+                .map_err(|_| truerise_core::BudgetStop {
+                    hat: hat.to_string(),
+                })?;
+        }
+        Ok(())
+    }
+}

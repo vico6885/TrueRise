@@ -87,7 +87,11 @@ HEAD at wave start: `5d38fb1` (in-flight W3 open-source wave landed as one DCO c
 | docs gate scope | `tools/check_docs.py` | judges TRACKED markdown only (git ls-files) - CI parity; untracked developer scratch no longer turns local gates red |
 | workspace | `cargo test --workspace` | 111 passed 0 failed; clippy -D warnings clean; fmt clean |
 
-Not doing (P0 so far): Harness claim row stays unmet (judging lands with W4); run subcommand exit code still 0 on success (verdict-grade exit lands with W4).
+| W3 budget port | `cargo test -p truerise-cli --test budget_enforcement` | 3 passed: `budget_exhaustion_halts_run_at_step_n` (quota 2 + 3 rounds -> round 3 never starts, `budget.exhausted` on chain, ledger stopped at 2), `budget_is_shared_across_hats_not_sharded` (two hats, one global denominator, reconcile == 0), `run_exit_code_reflects_budget_stop` (--budget 0 -> exit 1; --budget 100 -> exit 0) |
+| W3 wiring | core `Budget` port (`with_budget`, consumption at round start + every allowed tool execution); rsi `RunBudget` adapter (rsi gains its first internal dependency: core, per the Q4 ruling); cli `--budget <n>` | over budget = `LoopError::Budget` + audited stop; a stop IS a failure (exit 1) |
+| budget test serialisation | `BUDGET_GUARD` in the test file | the ledger singleton is process-global by design; consuming tests hold a guard so delta arithmetic is never raced (same protocol the rsi unit tests document) |
+
+Not doing (P0 so far): Harness claim row stays unmet (judging lands with W4); run subcommand exit code still 0 on SUCCESS (verdict-grade exit lands with W4; failure exits are already 1).
 
 ---
 

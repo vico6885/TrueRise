@@ -205,9 +205,11 @@ impl truerise_core::AuditSink for ChainSinkBridge<'_> {
 }
 
 /// The `run --goal` subcommand: one governed run over the FULL assembly
-/// (scripted router + governance policy + fenced sandbox executor, RFC 0002).
-/// Returns the process exit code (0 run completed / 1 run failed).
-pub fn run_commandline(goal: &str, approvals: &[String]) -> i32 {
+/// (scripted router + governance policy + fenced sandbox executor, RFC 0002;
+/// budget enforced per W3 - `budget_units` is the per-hat round/tool quota).
+/// Returns the process exit code (0 run completed / 1 run failed - a budget
+/// stop IS a failure, never a note).
+pub fn run_commandline(goal: &str, approvals: &[String], budget_units: Option<u64>) -> i32 {
     let dir = std::env::temp_dir().join("truerise_cli_run");
     std::fs::create_dir_all(&dir).ok();
     let tooling = match RunTooling::new(&dir) {
@@ -225,7 +227,15 @@ pub fn run_commandline(goal: &str, approvals: &[String]) -> i32 {
         policy: &tooling.policy,
         provider: &tooling.provider,
     };
-    match run_books_in(&dir, &router, Some(hooks), goal, 1) {
+    let run_budget = truerise_rsi::RunBudget::new(budget_units);
+    match run_books_in(
+        &dir,
+        &router,
+        Some(hooks),
+        Some(("cli-run", &run_budget)),
+        goal,
+        1,
+    ) {
         Ok(books) => {
             println!("run complete (three books):");
             println!("  transcript entries: {}", books.transcript.len());
@@ -278,7 +288,7 @@ pub fn repl() {
             }
             text => {
                 // Reuse the run path (single book write) - no bare-face entry.
-                let _code = run_commandline(text, &[]);
+                let _code = run_commandline(text, &[], None);
             }
         }
     }
@@ -352,11 +362,13 @@ pub fn direct_loop_books(goal: &str) -> Result<truerise_core::RunBooks, truerise
 /// The single governed-run implementation (single-track rule): BOTH the
 /// repl path and the run subcommand land here. ``hooks`` wire the RFC 0002
 /// enforcement chain; `None` keeps the run execution-free (byte-identical
-/// to the pre-RFC behaviour, which the golden test locks).
+/// to the pre-RFC behaviour, which the golden test locks). ``budget``
+/// wires the W3 enforcement (hat id + ledger port); `None` = unbounded.
 pub fn run_books_in(
     chain_dir: &Path,
     router: &dyn truerise_core::ModelRouter,
     hooks: Option<truerise_core::ToolHooks<'_>>,
+    budget: Option<(&str, &dyn truerise_core::Budget)>,
     goal: &str,
     rounds: usize,
 ) -> Result<truerise_core::RunBooks, truerise_core::LoopError> {
@@ -372,19 +384,22 @@ pub fn run_books_in(
     if let Some(hooks) = hooks {
         governed = governed.with_tools(hooks);
     }
+    if let Some((hat, budget)) = budget {
+        governed = governed.with_budget(hat, budget);
+    }
     governed.run(goal, rounds)
 }
 
 /// Shared run core used by BOTH the repl adapter and the direct path
 /// (single-track: there is exactly one governed run implementation).
-/// Execution-free: no tool hooks are wired on this path.
+/// Execution-free and unbounded-budget: no hooks wired on this path.
 pub fn run_books(
     goal: &str,
     rounds: usize,
 ) -> Result<truerise_core::RunBooks, truerise_core::LoopError> {
     let dir = std::env::temp_dir().join("truerise_cli_run");
     let router = ScriptRouter::plain("scripted");
-    run_books_in(&dir, &router, None, goal, rounds)
+    run_books_in(&dir, &router, None, None, goal, rounds)
 }
 
 /// Print the three-books summary (shared formatting for run/repl).
@@ -435,7 +450,25 @@ pub fn cli_main(args: Vec<String>) -> i32 {
                     idx += 1;
                 }
             }
-            run_commandline(&goal, &approvals)
+            // --budget <n>: per-hat quota for the run (rounds + tool units).
+            // Over budget stops the run with exit 1 (a stop is a failure).
+            let budget_units: Option<u64> = {
+                let mut it = args.iter();
+                let mut found = None;
+                while let Some(arg) = it.next() {
+                    if arg == "--budget" {
+                        match it.next().and_then(|v| v.parse::<u64>().ok()) {
+                            Some(n) => found = Some(Some(n)),
+                            None => {
+                                eprintln!("usage error: --budget needs a number");
+                                return 2;
+                            }
+                        }
+                    }
+                }
+                found.unwrap_or(None)
+            };
+            run_commandline(&goal, &approvals, budget_units)
         }
         "repl" => {
             repl();

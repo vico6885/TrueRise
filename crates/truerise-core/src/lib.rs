@@ -8,6 +8,7 @@
 //!   overlap detection (LeakGuard vectors 1-2 foundations).
 //! - [`state_machine`]: typestate + table-driven run machine (§6.7.1).
 
+pub mod budget;
 pub mod compaction;
 pub mod errors;
 pub mod loop_;
@@ -17,6 +18,7 @@ pub mod state_machine;
 pub mod timecore;
 pub mod tool;
 
+pub use budget::{Budget, BudgetStop};
 pub use compaction::{CompactionError, Entry, Level, PreCompactEvent, compact, total_tokens};
 pub use errors::{CoreError, DataConsistency, ModeViolation, RiskGate, StaleFence, TimeLeak};
 pub use loop_::{AuditSink, Loop, LoopConfig, LoopError, RunBooks, ToolHooks};
