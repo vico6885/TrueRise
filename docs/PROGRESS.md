@@ -138,6 +138,10 @@ HEAD at wave start: `71538d4`.
 | honest data fix | python demo + certify chain rows | `claim_p` -> `claim_p_bp` (basis points), `accuracy` -> `accuracy_per_mille`; the bench's own rows now obey the rule they inspired |
 | claim gate | `python tools/check_claim_terms.py` | 5 met / 0 unmet: Deterministic flips (tape + float rule + policy). THE FULL SLOGAN IS NOW EVIDENCE-BACKED |
 
+| W16 long_horizon | pytest (test_evals_bench) | `test_long_horizon_deterministic_byte_reproducible` + `test_long_horizon_honest_completes_all_and_skipping_fails`: multi-step pipelines with SEALED value chains; completion requires EVERY step (a right endpoint via a skipped step is a FAIL); integers only (per-mille completion); committed reading `readings/v0.2/long_horizon_honest.json` (8 chains, 1000/1000 steps) |
+| W11a external protocol | pytest | `test_external_solver_protocol_end_to_end` (the reference external solver runs as a SUBPROCESS: public surface by env, submission.jsonl back, grades signed by the runner = executor), `test_external_solver_records_are_executor_signed_at_L4` (signed records count at the declared level), `test_self_reported_external_run_is_capped_at_L0` (the solver's own claim contributes nothing) |
+| protocol surface | `truerise.evals.runner.run_external_trials(solver_cmd, pack, ...)` | one contract for any third-party solver: env TRUERISE_PUBLIC_DIR / TRUERISE_OUT_DIR, submission.jsonl in; the W11b public-model reading is now ONE command away |
+
 Not doing (P2): the committed tape/keystones remain unsigned until a release signing key exists (W10's verify honestly reports unverified_issuer for them).
 
 ---

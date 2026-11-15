@@ -12,13 +12,27 @@ SAME counted trials; it cannot un-count them.
 """
 from __future__ import annotations
 
+import hashlib
+import json
+import os
+import shlex
 import shutil
+import subprocess
 from collections import Counter
 from pathlib import Path
 
 from .judge import Grade, grade
 from .pack import ANSWERS_NAME, CANARY, TASKS_NAME, Pack
 from .solvers import Solver
+
+EXECUTOR_ID = "truerise-runner"
+
+
+def executor_signature(task_id: str, line_hit: bool, family_hit: bool) -> str:
+    """The executor's signature over one grade record (W11a): the runner
+    signs what IT observed - a solver's own claims are self-report (L0)."""
+    payload = f"{EXECUTOR_ID}|{task_id}|{int(line_hit)}|{int(family_hit)}".encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
 
 
 def materialize_public(pack: Pack, work_dir: Path) -> Path:
@@ -102,3 +116,60 @@ def score(graded: dict[str, Grade], pack: Pack) -> dict:
     return {"correct": correct, "total": len(graded),
             "accuracy": correct / len(graded) if graded else 0.0,
             "per_family": per_family, "failures": failures}
+
+
+def run_external_trials(solver_cmd: str | list[str], pack: Pack, work_dir: Path, trials: int = 1) -> tuple[list[dict[str, Grade]], list[dict]]:
+    """Run an EXTERNAL solver (W11a): the subprocess sees the PUBLIC surface
+    only and writes submissions; the runner grades and SIGNS every record.
+
+    Answer isolation is the SAME structural check as the in-process path
+    (the public surface is scanned for the canary BEFORE grading).
+
+    Returns (passes, signed_records) - the records carry the executor
+    signature so the evidence gate can count them at the declared level.
+
+    Raises RuntimeError on isolation breaches / solver protocol failures.
+    """
+    if trials < 1:
+        raise ValueError("trials must be >= 1 (zero-trial runs are not runs)")
+    public = materialize_public(pack, work_dir)
+    answers = pack.answer_map()
+    passes: list[dict[str, Grade]] = []
+    signed: list[dict] = []
+    for _ in range(trials):
+        out_dir = work_dir / "submissions"
+        out_dir.mkdir(exist_ok=True)
+        env = dict(os.environ)
+        env["TRUERISE_PUBLIC_DIR"] = str(public.resolve())
+        env["TRUERISE_OUT_DIR"] = str(out_dir.resolve())
+        argv = shlex.split(solver_cmd) if isinstance(solver_cmd, str) else list(solver_cmd)
+        proc = subprocess.run(
+            argv, env=env, capture_output=True, text=True, timeout=600
+        )
+        if proc.returncode != 0:
+            raise RuntimeError(f"external solver failed ({proc.returncode}): {proc.stderr[-400:]}")
+        submission = out_dir / "submission.jsonl"
+        if not submission.exists():
+            raise RuntimeError("external solver protocol breach: no submission.jsonl")
+        row: dict[str, Grade] = {}
+        for line in submission.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            doc = json.loads(line)
+            task_id = doc["id"]
+            answer = answers[task_id]
+            g = grade(pack.task_by_id(task_id), answer, int(doc["line"]), doc["family"])
+            row[task_id] = g
+            signed.append({
+                "task_id": task_id,
+                "line_hit": g.line_hit,
+                "family_hit": g.family_hit,
+                "correct": g.correct,
+                "executor": EXECUTOR_ID,
+                "signature": executor_signature(task_id, g.line_hit, g.family_hit),
+            })
+        missing = set(answers) - set(row)
+        if missing:
+            raise RuntimeError(f"external solver protocol breach: no submission for {sorted(missing)[:3]}")
+        passes.append(row)
+    return passes, signed

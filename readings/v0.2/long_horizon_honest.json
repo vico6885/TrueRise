@@ -1,0 +1,13 @@
+{
+  "answer_seal": "a5fa60cb4f0f2e324b01377f0a3b87d6f1356aadcf87f5002f858ef22bd02a7e",
+  "closed_loop_completion": {
+    "completed": 8,
+    "steps_passed_per_mille": 1000,
+    "total": 8
+  },
+  "failures": [],
+  "pack": "long_horizon v0.2 (8 chains, seed 20261116)",
+  "pack_digest": "3e06aabd844477c8fe623ef4caf687cc1cb7c34101c0b52daf25a21c7779c58c",
+  "replay": "PYTHONPATH=python/src python -c \"...generate(seed=20261116)...\" (deterministic)",
+  "solver": "reference honest pipeline (in-repo, executor-mediated)"
+}

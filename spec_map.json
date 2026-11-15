@@ -179,6 +179,15 @@
     "确定性": [
       "canonical_json_float_rule_test",
       "openai_compat_adapter_speaks_the_standard_shape"
+    ],
+    "长程闭环": [
+      "test_long_horizon_deterministic_byte_reproducible",
+      "test_long_horizon_honest_completes_all_and_skipping_fails"
+    ],
+    "外部解题器": [
+      "test_external_solver_records_are_executor_signed_at_L4",
+      "test_self_reported_external_run_is_capped_at_L0",
+      "test_external_solver_protocol_end_to_end"
     ]
   }
 }

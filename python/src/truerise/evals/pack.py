@@ -91,6 +91,12 @@ class Pack:
     def answer_map(self) -> dict[str, Answer]:
         return {a.id: a for a in self.answers}
 
+    def task_by_id(self, task_id: str) -> Task:
+        for t in self.tasks:
+            if t.id == task_id:
+                return t
+        raise KeyError(f"unknown task id: {task_id}")
+
 
 def _read_rows(path: Path) -> list[dict]:
     rows: list[dict] = []

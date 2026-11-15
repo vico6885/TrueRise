@@ -197,3 +197,105 @@ def test_classify_rules_cover_all_six_families() -> None:
     assert classify_line("    past = series[i - 1]") is None
     assert classify_line("    annual = monthly_rate * 12") is None
     assert classify_line("    kept = [x for x in rows if x.ts >= cutoff]") is None
+
+
+def _long_seed_pack(tmp_path):
+    from truerise.evals.long_horizon import generate_long_horizon_pack
+
+    return generate_long_horizon_pack(tmp_path / "long_pack", chains=4, seed=77)
+
+
+def test_long_horizon_deterministic_byte_reproducible(tmp_path):
+    """W16: same seed -> byte-identical pack files."""
+    from truerise.evals.long_horizon import generate_long_horizon_pack
+
+    a = generate_long_horizon_pack(tmp_path / "a", chains=4, seed=77)
+    b = generate_long_horizon_pack(tmp_path / "b", chains=4, seed=77)
+    assert (a.root / "long_tasks.jsonl").read_bytes() == (b.root / "long_tasks.jsonl").read_bytes()
+    assert a.pack_digest == b.pack_digest and a.answer_seal == b.answer_seal
+
+
+def test_long_horizon_honest_completes_all_and_skipping_fails(tmp_path):
+    """W16: the honest chain executes every step; a step-skipper fails even
+    with the right endpoint."""
+    pack = _long_seed_pack(tmp_path)
+
+    def honest(task):
+        from truerise.evals.long_horizon import execute_steps  # noqa: F401
+        values = []
+        prior = [task.data[0]]
+        for spec in task.steps:
+            kind, _, arg = spec.partition(":")
+            if kind == "mean_window":
+                k = int(arg)
+                window = task.data[-k:] if len(task.data) >= k else task.data
+                v = sum(window) // max(len(window), 1)
+            elif kind == "count_above":
+                v = sum(1 for x in task.data if x > int(arg))
+            elif kind == "delta":
+                v = task.data[-1] - prior[-1]
+            else:
+                v = prior[-1] * int(arg)
+            values.append(v)
+            prior.append(v)
+        return values
+
+    def skipper(task):
+        values = honest(task)
+        values[1] = 999  # wrong intermediate, endpoint may still be right
+        return values
+
+    from truerise.evals.long_horizon import run_long_horizon
+
+    summary = run_long_horizon(honest, pack, tmp_path / "work_honest")
+    assert summary["completed"] == summary["total"]
+    assert summary["steps_passed_per_mille"] == 1000
+    bad = run_long_horizon(skipper, pack, tmp_path / "work_skip")
+    assert bad["completed"] == 0, "a skipped step fails the closed loop"
+    assert bad["steps_passed_per_mille"] < 1000
+
+
+def test_external_solver_records_are_executor_signed_at_L4():
+    """W11a: an external solver's grades are signed by the RUNNER (the
+    executor), so the evidence gate counts them at the declared level."""
+    from truerise.gates import EvidenceRecord, evidence_gate
+    from truerise.evals.runner import executor_signature
+
+    sig = executor_signature("task-1", True, True)
+    assert len(sig) == 64
+    records = [
+        EvidenceRecord(source="external-solver", declared_level=4,
+                       executor_signed=True, declared_source_class="declared"),
+    ]
+    verdict = evidence_gate(records, claimed_level=4)
+    assert verdict.effective_level == 4
+    assert verdict.records_counted == 1
+
+
+def test_self_reported_external_run_is_capped_at_L0():
+    """W11a: the solver's OWN accuracy claim contributes nothing."""
+    from truerise.gates import EvidenceRecord, evidence_gate
+
+    records = [
+        EvidenceRecord(source="external-solver-self-report", declared_level=4,
+                       executor_signed=False, declared_source_class="declared"),
+    ]
+    verdict = evidence_gate(records, claimed_level=4)
+    assert verdict.effective_level == 0
+    assert verdict.records_counted == 0
+    assert any("self-report" in d["reason"] for d in verdict.downgrades)
+
+
+def test_external_solver_protocol_end_to_end(tmp_path):
+    """W11a: the reference external solver runs as a SUBPROCESS through the
+    protocol and its grades come back executor-signed."""
+    import sys
+
+    from truerise.evals.generator import generate_pack
+    from truerise.evals.runner import run_external_trials
+
+    pack = generate_pack(tmp_path / "pack", per_family=2, seed=99)
+    cmd = [sys.executable, "-m", "truerise.evals.external_solver"]
+    passes, signed = run_external_trials(cmd, pack, tmp_path / "work", trials=1)
+    assert passes and signed
+    assert all(r["executor"] == "truerise-runner" and r["signature"] for r in signed)
