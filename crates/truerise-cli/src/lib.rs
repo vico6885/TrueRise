@@ -27,6 +27,7 @@ use truerise_governance::HashChain;
 use truerise_wire::Severity;
 
 pub mod assembly;
+pub mod mcp_serve;
 
 pub use assembly::{GovernedPolicy, RunTooling};
 
@@ -684,6 +685,21 @@ pub fn cli_main(args: Vec<String>) -> i32 {
         "onboarding" => {
             onboarding();
             0
+        }
+        "mcp" => {
+            // `mcp --serve [--chain <dir>]`: zero-exposure server over stdio.
+            let serve = args.iter().any(|a| a == "--serve");
+            if !serve {
+                eprintln!("usage: truerise mcp --serve [--chain <dir>]");
+                return 2;
+            }
+            let chain_dir = args
+                .iter()
+                .position(|a| a == "--chain")
+                .and_then(|i| args.get(i + 1))
+                .map(PathBuf::from)
+                .unwrap_or_else(|| std::env::temp_dir().join("truerise_cli_mcp"));
+            mcp_serve::serve(&chain_dir)
         }
         "--help" | "-h" | "help" => {
             print_help();

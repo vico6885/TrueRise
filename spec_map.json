@@ -147,6 +147,11 @@
       "recall_row_records_scores_and_injection",
       "export_produces_one_span_per_row_and_redacts",
       "export_never_mutates_chain_digest"
+    ],
+    "MCP 运行入口": [
+      "mcp_server_default_empty_allowlist_over_stdio",
+      "client_write_class_hard_denied_before_any_server_call",
+      "mcp_calls_appear_on_the_chain"
     ]
   }
 }

@@ -879,6 +879,7 @@ dependencies = [
  "truerise-eval",
  "truerise-governance",
  "truerise-hats",
+ "truerise-mcp",
  "truerise-memory",
  "truerise-observe",
  "truerise-rsi",

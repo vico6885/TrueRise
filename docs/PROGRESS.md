@@ -104,7 +104,10 @@ HEAD at wave start: `5d38fb1` (in-flight W3 open-source wave landed as one DCO c
 | W6 observe into run | same file | `export_produces_one_span_per_row_and_redacts` (real run chain + a config row carrying an api_key -> span count == row count, secret absent, `<redacted>` present, row hashes exported), `export_never_mutates_chain_digest` (digest before == after) |
 | W6 surface | core `ContextRecall` port (loop consults before every plan turn, evidence audited either way); memory `RecallBridge` (memory gains core dep); cli RunParams.memory; run subcommand exports spans (best-effort, one-way) | recall with an EMPTY store still audits `injected: 0` - the attempt is the auditable fact |
 
-Not doing (P0 so far): Governance claim row still unmet (mcp wiring remains; the quartet is enforced).
+| W8 mcp --serve | `cargo test -p truerise-cli --test mcp_serve` | 3 passed: `mcp_server_default_empty_allowlist_over_stdio` (the REAL binary serves stdio; initialize answers identity; tools/list EMPTY by default; tools/call on a non-allowed tool errors -32602), `client_write_class_hard_denied_before_any_server_call` (a client with NO server still refuses write-class; the denial is audited), `mcp_calls_appear_on_the_chain` (mcp.jsonl carries initialize + tools/list in order, chain verifies) |
+| WIRING GATE GREEN | `python tools/check_wiring.py` | 11/11 roster crates reachable from truerise-cli - the 7-island red that W1 planted is closed; islands are a permanent CI fact, not a one-off audit |
+
+P0+P1 wiring complete. Remaining in P1: W7 (gen0->gen1 closed loop), W10 (certificate signing).
 
 ---
 
