@@ -8,6 +8,7 @@ use std::sync::Mutex;
 
 use truerise_core::{ActionPolicy, GateDecision, ToolRequest};
 use truerise_governance::{ApprovalQueue, Decision, PolicyState, PolicyTable, RequestState};
+use truerise_hats::Hat;
 use truerise_sandbox::{InProcessProvider, SandboxToolProvider};
 
 /// The read_file tool name (the only Auto-scoped tool in run defaults).
@@ -104,5 +105,45 @@ impl RunTooling {
     #[must_use]
     pub fn sandbox_path(chain_dir: &Path, rel: &str) -> PathBuf {
         chain_dir.join("sandbox").join("run").join(rel)
+    }
+}
+
+/// The tools this workspace's executor actually knows (load-time registry:
+/// a hat naming anything outside this set is REFUSED at load, not silently
+/// ignored at run time - W5).
+pub const KNOWN_TOOLS: &[&str] = &["read_file", "write_file"];
+
+/// Validate a hat's tool_subset against the known-tool registry.
+///
+/// # Errors
+/// String-typed at the CLI boundary: the subset names an unknown tool.
+pub fn validate_hat_tools(hat: &Hat) -> Result<(), String> {
+    for tool in &hat.tool_subset {
+        if !KNOWN_TOOLS.contains(&tool.as_str()) {
+            return Err(format!(
+                "unknown tool in hat {}: {tool} (known: {KNOWN_TOOLS:?})",
+                hat.name
+            ));
+        }
+    }
+    Ok(())
+}
+
+/// The hat's tool_subset as the OUTER policy gate (W5): anything outside the
+/// subset is denied before the three-state table is even consulted; inside
+/// the subset, the inner policy decides as usual.
+pub struct StackedPolicy<'a> {
+    /// The run's hat (data, not a trait).
+    pub hat: Hat,
+    /// The inner policy (the governance table + approvals).
+    pub inner: &'a dyn ActionPolicy,
+}
+
+impl ActionPolicy for StackedPolicy<'_> {
+    fn decide(&self, request: &ToolRequest) -> GateDecision {
+        if !self.hat.tool_subset.iter().any(|t| t == &request.tool) {
+            return GateDecision::Deny;
+        }
+        self.inner.decide(request)
     }
 }

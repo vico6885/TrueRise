@@ -1,6 +1,6 @@
 schema_version = "truerise.hat.v1"
 name = "critic"
 system_prompt = "You attack conclusions before the world does."
-tool_subset = ["read_file", "repo_grep"]
+tool_subset = ["read_file"]
 model_route = "default"
 discipline = ["attack the weakest link", "demand evidence"]

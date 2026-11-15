@@ -96,7 +96,11 @@ HEAD at wave start: `5d38fb1` (in-flight W3 open-source wave landed as one DCO c
 | W4 exit mapping | `grade_exit` = PASS 0 / FAIL 1 | same contract as the demo verdict; no third code introduced |
 | wiring | truerise-eval reachable from the binary | 4 islands left (rsi/hats... wait: rsi reachable since W3) -> islands: hats/memory/mcp/observe |
 
-Not doing (P0 so far): Governance claim row still unmet (hat filtering lands with W5; the budget+ratchet+policy trio is now enforced - the row flips when the last piece wires).
+| W5 hats into run | `cargo test -p truerise-cli --test hat_gate` | 3 passed: `critic_hat_denied_write_file_engineer_hat_allowed` (critic subset [read_file] -> write_file denied pre-table; engineer subset has write_file -> executed; both audited), `hat_content_hash_lands_on_chain_for_each_run` (hat.registered carries THIS hat's content_hash), `unknown_tool_in_hat_refused_at_load` (subset naming "teleport" refuses the RUN; no hat.registered row for a refused hat - validation happens BEFORE registration) |
+| W5 honest data fix | hats/*.toml | preset subsets named repo_grep/list_dir - tools the executor does NOT have; presets now name only real tools (the data must not promise more than the runtime delivers) |
+| W5 surface | RunParams (single-track assembly struct) + `--hat <path>`; hats::parse_hat split from load_hat (validate-then-register) | run chain registers the run's hat; StackedPolicy = hat subset as OUTER gate |
+
+Not doing (P0 so far): Governance claim row still unmet (the budget+ratchet+policy+hat-subset quartet is now enforced on the run path - the row flips when memory/observe/mcp complete the wiring).
 
 ---
 

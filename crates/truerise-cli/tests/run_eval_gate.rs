@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use serde_json::json;
-use truerise_cli::{ScriptRouter, grade_exit, run_books_in};
+use truerise_cli::{RunParams, ScriptRouter, grade_exit, run_books_in};
 use truerise_core::{ModelRouter, RouterError, TurnRequest, TurnResponse};
 use truerise_eval::ratchet::Baseline;
 use truerise_eval::{RunFacts, judge_run};
@@ -52,7 +52,16 @@ fn run_and_judge(
     router: &dyn ModelRouter,
     baseline: &Baseline,
 ) -> Result<truerise_eval::RunVerdict, truerise_eval::EvalError> {
-    let books = run_books_in(dir, router, None, None, "judge me", 1).expect("run completes");
+    let books = run_books_in(RunParams {
+        chain_dir: dir,
+        router,
+        hooks: None,
+        budget: None,
+        hat_toml: None,
+        goal: "judge me",
+        rounds: 1,
+    })
+    .expect("run completes");
     let chain = HashChain::open(&dir.join("run.jsonl")).expect("chain");
     let facts = RunFacts {
         finished: truerise_core::Loop::final_state(&books.transitions)

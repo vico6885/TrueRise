@@ -260,6 +260,7 @@ pub fn run_commandline(
     approvals: &[String],
     budget_units: Option<u64>,
     baseline_path: Option<&Path>,
+    hat_toml: Option<&str>,
 ) -> i32 {
     let dir = std::env::temp_dir().join("truerise_cli_run");
     std::fs::create_dir_all(&dir).ok();
@@ -279,14 +280,15 @@ pub fn run_commandline(
         provider: &tooling.provider,
     };
     let run_budget = truerise_rsi::RunBudget::new(budget_units);
-    match run_books_in(
-        &dir,
-        &router,
-        Some(hooks),
-        Some(("cli-run", &run_budget)),
+    match run_books_in(RunParams {
+        chain_dir: &dir,
+        router: &router,
+        hooks: Some(hooks),
+        budget: Some(("cli-run", &run_budget)),
+        hat_toml,
         goal,
-        1,
-    ) {
+        rounds: 1,
+    }) {
         Ok(books) => {
             println!("run complete (three books):");
             println!("  transcript entries: {}", books.transcript.len());
@@ -372,7 +374,7 @@ pub fn repl() {
             text => {
                 // Reuse the run path (single book write) - no bare-face entry.
                 let baseline = find_default_baseline();
-                let _code = run_commandline(text, &[], None, baseline.as_deref());
+                let _code = run_commandline(text, &[], None, baseline.as_deref(), None);
             }
         }
     }
@@ -443,47 +445,97 @@ pub fn direct_loop_books(goal: &str) -> Result<truerise_core::RunBooks, truerise
     run_books(goal, 1)
 }
 
+/// One governed run's assembly (single-track: everything a run can wire).
+pub struct RunParams<'a> {
+    /// Where the run's chain lives (created on demand).
+    pub chain_dir: &'a Path,
+    /// The router (scripted today; provider adapters are external projects).
+    pub router: &'a dyn truerise_core::ModelRouter,
+    /// RFC 0002 tool hooks; `None` = execution-free run (golden lock).
+    pub hooks: Option<truerise_core::ToolHooks<'a>>,
+    /// W3 budget (hat id + ledger port); `None` = unbounded.
+    pub budget: Option<(&'a str, &'a dyn truerise_core::Budget)>,
+    /// W5 hat TOML: registered on the chain + its tool_subset becomes the
+    /// OUTER policy gate; `None` = hatless run.
+    pub hat_toml: Option<&'a str>,
+    /// The run goal.
+    pub goal: &'a str,
+    /// Declared rounds.
+    pub rounds: usize,
+}
+
 /// The single governed-run implementation (single-track rule): BOTH the
-/// repl path and the run subcommand land here. ``hooks`` wire the RFC 0002
-/// enforcement chain; `None` keeps the run execution-free (byte-identical
-/// to the pre-RFC behaviour, which the golden test locks). ``budget``
-/// wires the W3 enforcement (hat id + ledger port); `None` = unbounded.
+/// repl path and the run subcommand land here.
 pub fn run_books_in(
-    chain_dir: &Path,
-    router: &dyn truerise_core::ModelRouter,
-    hooks: Option<truerise_core::ToolHooks<'_>>,
-    budget: Option<(&str, &dyn truerise_core::Budget)>,
-    goal: &str,
-    rounds: usize,
+    params: RunParams<'_>,
 ) -> Result<truerise_core::RunBooks, truerise_core::LoopError> {
+    let chain_dir = params.chain_dir;
     std::fs::create_dir_all(chain_dir).ok();
     let chain = HashChain::open(&chain_dir.join("run.jsonl"))
         .map_err(|e| truerise_core::LoopError::Sink(e.to_string()))?;
     let sink = ChainSinkBridge(&chain);
+    // W5: a run under a hat registers the hat (content hash on chain) and
+    // validates its tool_subset AT LOAD (unknown tool -> the run refuses to
+    // start; nothing is silently ignored).
+    let hat_gate = match params.hat_toml {
+        Some(hat_toml) => {
+            // Validate BEFORE registering: a refused hat leaves no chain row.
+            let hat = truerise_hats::parse_hat(hat_toml).map_err(|e| {
+                truerise_core::LoopError::Config(format!("hat refused at load: {e}"))
+            })?;
+            assembly::validate_hat_tools(&hat).map_err(truerise_core::LoopError::Config)?;
+            Some(truerise_hats::load_hat(hat_toml, &chain).map_err(|e| {
+                truerise_core::LoopError::Config(format!("hat refused at load: {e}"))
+            })?)
+        }
+        None => None,
+    };
     let config = truerise_core::LoopConfig {
         pinned_model: "scripted".into(),
         retry: truerise_core::RetryPolicy::default(),
     };
-    let mut governed = truerise_core::Loop::new(router, config, &sink);
-    if let Some(hooks) = hooks {
-        governed = governed.with_tools(hooks);
+    {
+        let mut governed = truerise_core::Loop::new(params.router, config, &sink);
+        if let Some((hat, budget)) = params.budget {
+            governed = governed.with_budget(hat, budget);
+        }
+        match (params.hooks, hat_gate.as_ref()) {
+            (Some(hooks), Some(hat)) => {
+                let stacked = assembly::StackedPolicy {
+                    hat: hat.clone(),
+                    inner: hooks.policy,
+                };
+                governed
+                    .with_tools(truerise_core::ToolHooks {
+                        policy: &stacked,
+                        provider: hooks.provider,
+                    })
+                    .run(params.goal, params.rounds)
+            }
+            (Some(hooks), None) => governed.with_tools(hooks).run(params.goal, params.rounds),
+            (None, _) => governed.run(params.goal, params.rounds),
+        }
     }
-    if let Some((hat, budget)) = budget {
-        governed = governed.with_budget(hat, budget);
-    }
-    governed.run(goal, rounds)
 }
 
 /// Shared run core used by BOTH the repl adapter and the direct path
 /// (single-track: there is exactly one governed run implementation).
-/// Execution-free and unbounded-budget: no hooks wired on this path.
+/// Execution-free, unbounded-budget, hatless: the golden-locked baseline.
 pub fn run_books(
     goal: &str,
     rounds: usize,
 ) -> Result<truerise_core::RunBooks, truerise_core::LoopError> {
     let dir = std::env::temp_dir().join("truerise_cli_run");
     let router = ScriptRouter::plain("scripted");
-    run_books_in(&dir, &router, None, None, goal, rounds)
+    run_books_in(RunParams {
+        chain_dir: &dir,
+        router: &router,
+        hooks: None,
+        budget: None,
+        hat_toml: None,
+        goal,
+        rounds,
+    })
 }
 
 /// Print the three-books summary (shared formatting for run/repl).
@@ -572,7 +624,35 @@ pub fn cli_main(args: Vec<String>) -> i32 {
                 found.unwrap_or(None)
             };
             let baseline = explicit_baseline.or_else(find_default_baseline);
-            run_commandline(&goal, &approvals, budget_units, baseline.as_deref())
+            let hat_toml: Option<String> = {
+                let mut it = args.iter();
+                let mut found = None;
+                while let Some(arg) = it.next() {
+                    if arg == "--hat" {
+                        match it.next() {
+                            Some(p) => match std::fs::read_to_string(p) {
+                                Ok(toml_text) => found = Some(Some(toml_text)),
+                                Err(e) => {
+                                    eprintln!("usage error: cannot read hat {p}: {e}");
+                                    return 2;
+                                }
+                            },
+                            None => {
+                                eprintln!("usage error: --hat needs a path to a hat TOML");
+                                return 2;
+                            }
+                        }
+                    }
+                }
+                found.unwrap_or(None)
+            };
+            run_commandline(
+                &goal,
+                &approvals,
+                budget_units,
+                baseline.as_deref(),
+                hat_toml.as_deref(),
+            )
         }
         "repl" => {
             repl();

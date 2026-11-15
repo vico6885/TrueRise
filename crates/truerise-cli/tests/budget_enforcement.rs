@@ -8,7 +8,7 @@ use std::sync::Mutex;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use serde_json::json;
-use truerise_cli::{ScriptRouter, run_books_in};
+use truerise_cli::{RunParams, ScriptRouter, run_books_in};
 use truerise_core::LoopError;
 use truerise_governance::HashChain;
 use truerise_rsi::RunBudget;
@@ -45,8 +45,16 @@ fn budget_exhaustion_halts_run_at_step_n() {
     let budget = RunBudget::new(Some(2)); // quota: 2 units
     // 3 requested rounds: rounds 0 and 1 consume 1 unit each; round 2 must
     // NEVER start (its plan call must not happen).
-    let err = run_books_in(&dir, &router, None, Some(("halt-test", &budget)), "goal", 3)
-        .expect_err("over budget stops the run");
+    let err = run_books_in(RunParams {
+        chain_dir: &dir,
+        router: &router,
+        hooks: None,
+        budget: Some(("halt-test", &budget)),
+        hat_toml: None,
+        goal: "goal",
+        rounds: 3,
+    })
+    .expect_err("over budget stops the run");
     assert!(matches!(err, LoopError::Budget { ref hat } if hat == "halt-test"));
 
     // The stop is on the chain (a stop nobody can see is a note, not a gate).
@@ -76,24 +84,26 @@ fn budget_is_shared_across_hats_not_sharded() {
     let router = ScriptRouter::plain("scripted");
     let unbounded = RunBudget::new(None);
     let dir_a = temp_dir("shared_a");
-    run_books_in(
-        &dir_a,
-        &router,
-        None,
-        Some((hat_a.as_str(), &unbounded)),
-        "goal",
-        2,
-    )
+    run_books_in(RunParams {
+        chain_dir: &dir_a,
+        router: &router,
+        hooks: None,
+        budget: Some((hat_a.as_str(), &unbounded)),
+        hat_toml: None,
+        goal: "goal",
+        rounds: 2,
+    })
     .expect("run a");
     let dir_b = temp_dir("shared_b");
-    run_books_in(
-        &dir_b,
-        &router,
-        None,
-        Some((hat_b.as_str(), &unbounded)),
-        "goal",
-        1,
-    )
+    run_books_in(RunParams {
+        chain_dir: &dir_b,
+        router: &router,
+        hooks: None,
+        budget: Some((hat_b.as_str(), &unbounded)),
+        hat_toml: None,
+        goal: "goal",
+        rounds: 1,
+    })
     .expect("run b");
 
     let ledger = truerise_rsi::BudgetLedger::global();

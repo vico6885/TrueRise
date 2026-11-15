@@ -63,7 +63,12 @@ impl Hat {
 /// # Errors
 /// [`HatError::Malformed`] / [`HatError::UnsupportedSchema`] on bad input;
 /// [`HatError::Chain`] when the chain refuses the alignment event.
-pub fn load_hat(toml_text: &str, chain: &truerise_governance::HashChain) -> Result<Hat, HatError> {
+/// Parse + validate a hat WITHOUT touching the chain (the boundary may
+/// validate further - e.g. the tool registry - BEFORE registering).
+///
+/// # Errors
+/// [`HatError::Malformed`] / [`HatError::UnsupportedSchema`] on bad input.
+pub fn parse_hat(toml_text: &str) -> Result<Hat, HatError> {
     let hat: Hat = toml::from_str(toml_text).map_err(|e| HatError::Malformed(e.to_string()))?;
     if hat.schema_version != "truerise.hat.v1" {
         return Err(HatError::UnsupportedSchema(hat.schema_version));
@@ -73,6 +78,16 @@ pub fn load_hat(toml_text: &str, chain: &truerise_governance::HashChain) -> Resu
             "name and system_prompt are required".into(),
         ));
     }
+    Ok(hat)
+}
+
+/// Load a hat from raw TOML + align its content hash into the audit chain.
+///
+/// # Errors
+/// [`HatError::Malformed`] / [`HatError::UnsupportedSchema`] on bad input;
+/// [`HatError::Chain`] when the chain refuses the alignment event.
+pub fn load_hat(toml_text: &str, chain: &truerise_governance::HashChain) -> Result<Hat, HatError> {
+    let hat = parse_hat(toml_text)?;
     chain
         .append(
             "hat.registered",

@@ -8,7 +8,7 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use serde_json::json;
-use truerise_cli::{GovernedPolicy, RunTooling, ScriptRouter, run_books_in};
+use truerise_cli::{GovernedPolicy, RunParams, RunTooling, ScriptRouter, run_books_in};
 use truerise_core::{
     Loop, LoopConfig, ModelRouter, RouterError, ToolHooks, TurnRequest, TurnResponse,
 };
@@ -67,7 +67,16 @@ fn run(
         policy,
         provider: &provider.provider,
     };
-    run_books_in(dir, router, Some(hooks), None, "write the report", 1).expect("run completes");
+    run_books_in(RunParams {
+        chain_dir: dir,
+        router,
+        hooks: Some(hooks),
+        budget: None,
+        hat_toml: None,
+        goal: "write the report",
+        rounds: 1,
+    })
+    .expect("run completes");
 }
 
 #[test]
@@ -167,7 +176,16 @@ fn no_hooks_means_no_execution_surface() {
     let router = ScriptRouter::tool_calling("scripted");
     // The envelope is in the act payload, but with no hooks wired it is
     // PLAIN TEXT - it must parse as nothing and execute as nothing.
-    let books = truerise_cli::run_books_in(&dir, &router, None, None, "goal", 1).expect("run");
+    let books = truerise_cli::run_books_in(RunParams {
+        chain_dir: &dir,
+        router: &router,
+        hooks: None,
+        budget: None,
+        hat_toml: None,
+        goal: "goal",
+        rounds: 1,
+    })
+    .expect("run");
     assert!(!RunTooling::sandbox_path(&dir, "report.md").exists());
     assert_eq!(books.audit_rows, books.transitions.len(), "no tool rows");
     let chain = HashChain::open(&dir.join("run.jsonl")).expect("chain");
