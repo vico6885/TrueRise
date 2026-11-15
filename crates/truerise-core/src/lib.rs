@@ -13,6 +13,7 @@ pub mod compaction;
 pub mod errors;
 pub mod loop_;
 pub mod mode;
+pub mod recall;
 pub mod router;
 pub mod state_machine;
 pub mod timecore;
@@ -23,6 +24,7 @@ pub use compaction::{CompactionError, Entry, Level, PreCompactEvent, compact, to
 pub use errors::{CoreError, DataConsistency, ModeViolation, RiskGate, StaleFence, TimeLeak};
 pub use loop_::{AuditSink, Loop, LoopConfig, LoopError, RunBooks, ToolHooks};
 pub use mode::{ExecutionGrant, Mode, ModeSet};
+pub use recall::{ContextRecall, RecallEvidence};
 pub use router::{
     ModelRouter, RetryPolicy, RouterError, TurnRequest, TurnResponse, backoff_ms, check_pinned,
 };

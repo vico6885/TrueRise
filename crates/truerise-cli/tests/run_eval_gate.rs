@@ -58,6 +58,7 @@ fn run_and_judge(
         hooks: None,
         budget: None,
         hat_toml: None,
+        memory: None,
         goal: "judge me",
         rounds: 1,
     })

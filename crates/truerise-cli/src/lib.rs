@@ -280,12 +280,21 @@ pub fn run_commandline(
         provider: &tooling.provider,
     };
     let run_budget = truerise_rsi::RunBudget::new(budget_units);
+    // W6: the default run consults an EMPTY recall store - the attempt (and
+    // its emptiness) is audited either way. Embedders inject a real bridge
+    // through RunParams.memory.
+    let recall_bridge = truerise_memory::RecallBridge::new(
+        truerise_memory::InMemoryBackend::new(),
+        truerise_memory::Weights::default(),
+        3,
+    );
     match run_books_in(RunParams {
         chain_dir: &dir,
         router: &router,
         hooks: Some(hooks),
         budget: Some(("cli-run", &run_budget)),
         hat_toml,
+        memory: Some(&recall_bridge),
         goal,
         rounds: 1,
     }) {
@@ -319,6 +328,13 @@ pub fn run_commandline(
                             "none"
                         }
                     );
+                    // W6: one-way span export (best-effort; the chain stays
+                    // the authority - export NEVER mutates it).
+                    let out = dir.join("observe").join("spans.jsonl");
+                    match truerise_observe::export_jsonl(&dir.join("run.jsonl"), &out) {
+                        Ok(n) => println!("  observe spans:      {n} (one-way export)"),
+                        Err(e) => eprintln!("  observe export failed (non-fatal): {e}"),
+                    }
                     grade_exit(&verdict)
                 }
                 Err(e) => {
@@ -458,6 +474,9 @@ pub struct RunParams<'a> {
     /// W5 hat TOML: registered on the chain + its tool_subset becomes the
     /// OUTER policy gate; `None` = hatless run.
     pub hat_toml: Option<&'a str>,
+    /// W6 context recall (evidence audited per plan turn); `None` = no
+    /// memory participation.
+    pub memory: Option<&'a dyn truerise_core::ContextRecall>,
     /// The run goal.
     pub goal: &'a str,
     /// Declared rounds.
@@ -499,6 +518,9 @@ pub fn run_books_in(
         if let Some((hat, budget)) = params.budget {
             governed = governed.with_budget(hat, budget);
         }
+        if let Some(memory) = params.memory {
+            governed = governed.with_memory(memory);
+        }
         match (params.hooks, hat_gate.as_ref()) {
             (Some(hooks), Some(hat)) => {
                 let stacked = assembly::StackedPolicy {
@@ -533,6 +555,7 @@ pub fn run_books(
         hooks: None,
         budget: None,
         hat_toml: None,
+        memory: None,
         goal,
         rounds,
     })

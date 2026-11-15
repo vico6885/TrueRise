@@ -100,7 +100,11 @@ HEAD at wave start: `5d38fb1` (in-flight W3 open-source wave landed as one DCO c
 | W5 honest data fix | hats/*.toml | preset subsets named repo_grep/list_dir - tools the executor does NOT have; presets now name only real tools (the data must not promise more than the runtime delivers) |
 | W5 surface | RunParams (single-track assembly struct) + `--hat <path>`; hats::parse_hat split from load_hat (validate-then-register) | run chain registers the run's hat; StackedPolicy = hat subset as OUTER gate |
 
-Not doing (P0 so far): Governance claim row still unmet (the budget+ratchet+policy+hat-subset quartet is now enforced on the run path - the row flips when memory/observe/mcp complete the wiring).
+| W6 memory into run | `cargo test -p truerise-cli --test run_memory_observe` | `recall_row_records_scores_and_injection`: memory.recall row per plan turn (injected ids + per-mille INTEGER scores - float rule), the BM25-matching record ranks FIRST (fusion semantics: every record scores via recency/importance; the test asserts dominance, not exclusivity), the plan payload carries the recalled context |
+| W6 observe into run | same file | `export_produces_one_span_per_row_and_redacts` (real run chain + a config row carrying an api_key -> span count == row count, secret absent, `<redacted>` present, row hashes exported), `export_never_mutates_chain_digest` (digest before == after) |
+| W6 surface | core `ContextRecall` port (loop consults before every plan turn, evidence audited either way); memory `RecallBridge` (memory gains core dep); cli RunParams.memory; run subcommand exports spans (best-effort, one-way) | recall with an EMPTY store still audits `injected: 0` - the attempt is the auditable fact |
+
+Not doing (P0 so far): Governance claim row still unmet (mcp wiring remains; the quartet is enforced).
 
 ---
 

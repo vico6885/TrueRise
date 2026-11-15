@@ -11,6 +11,7 @@ use std::sync::Mutex;
 use crate::budget::Budget;
 use crate::compaction::Entry;
 use crate::errors::CoreError;
+use crate::recall::{ContextRecall, RecallEvidence};
 use crate::router::{ModelRouter, RetryPolicy, RouterError, TurnRequest, backoff_ms, check_pinned};
 use crate::state_machine::{Event, Machine, State, TransitionLog};
 use crate::tool::{ActionPolicy, GateDecision, ToolProvider, ToolRequest, parse_tool_call};
@@ -92,6 +93,7 @@ pub struct Loop<'a> {
     sink: &'a dyn AuditSink,
     tools: Option<ToolHooks<'a>>,
     budget: Option<(&'a str, &'a dyn Budget)>,
+    memory: Option<&'a dyn ContextRecall>,
     transcript: Mutex<Vec<Entry>>,
     transitions: Mutex<Vec<TransitionLog>>,
     audit_rows: Mutex<usize>,
@@ -106,6 +108,7 @@ impl<'a> Loop<'a> {
             sink,
             tools: None,
             budget: None,
+            memory: None,
             transcript: Mutex::new(Vec::new()),
             transitions: Mutex::new(Vec::new()),
             audit_rows: Mutex::new(0),
@@ -127,6 +130,14 @@ impl<'a> Loop<'a> {
     #[must_use]
     pub fn with_budget(mut self, hat: &'a str, budget: &'a dyn Budget) -> Self {
         self.budget = Some((hat, budget));
+        self
+    }
+
+    /// Wire context recall (W6): before every plan turn the port is
+    /// consulted; the evidence (or its absence) is audited either way.
+    #[must_use]
+    pub fn with_memory(mut self, memory: &'a dyn ContextRecall) -> Self {
+        self.memory = Some(memory);
         self
     }
 
@@ -313,7 +324,40 @@ impl<'a> Loop<'a> {
             // W3: every round consumes one unit BEFORE any model call -
             // "over budget stops the run" is the minimum Governance proof.
             self.consume_budget(1, "round")?;
-            plan_payload = self.call("plan", &format!("{goal} [round {round}]"))?;
+            // W6: recall context for the plan (evidence audited either way;
+            // scores as per-mille integers - the float rule).
+            let mut plan_query = format!("{goal} [round {round}]");
+            if let Some(memory) = &self.memory {
+                let evidence: Option<RecallEvidence> = memory.recall_for(goal);
+                match evidence {
+                    Some(ev) => {
+                        self.audit(
+                            "memory.recall",
+                            "info",
+                            &serde_json::json!({
+                                "injected": ev.ids.len(),
+                                "ids": ev.ids,
+                                "scores_per_mille": ev.scores_per_mille
+                            }),
+                        )?;
+                        plan_query = format!(
+                            "recall context:
+{}
+
+{plan_query}",
+                            ev.context
+                        );
+                    }
+                    None => {
+                        self.audit(
+                            "memory.recall",
+                            "info",
+                            &serde_json::json!({ "injected": 0, "ids": [], "scores_per_mille": [] }),
+                        )?;
+                    }
+                }
+            }
+            plan_payload = self.call("plan", &plan_query)?;
             self.record(State::Running, Event::Plan, State::Planned)?;
             self.transcript
                 .lock()

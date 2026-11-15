@@ -142,6 +142,11 @@
       "critic_hat_denied_write_file_engineer_hat_allowed",
       "hat_content_hash_lands_on_chain_for_each_run",
       "unknown_tool_in_hat_refused_at_load"
+    ],
+    "记忆与观测进运行路径": [
+      "recall_row_records_scores_and_injection",
+      "export_produces_one_span_per_row_and_redacts",
+      "export_never_mutates_chain_digest"
     ]
   }
 }

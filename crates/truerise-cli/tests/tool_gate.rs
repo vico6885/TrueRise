@@ -73,6 +73,7 @@ fn run(
         hooks: Some(hooks),
         budget: None,
         hat_toml: None,
+        memory: None,
         goal: "write the report",
         rounds: 1,
     })
@@ -182,6 +183,7 @@ fn no_hooks_means_no_execution_surface() {
         hooks: None,
         budget: None,
         hat_toml: None,
+        memory: None,
         goal: "goal",
         rounds: 1,
     })

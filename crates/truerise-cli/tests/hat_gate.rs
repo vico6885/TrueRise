@@ -42,6 +42,7 @@ fn run_with_hat(dir: &std::path::Path, hat_toml: &str) -> Result<usize, String> 
         hooks: Some(hooks),
         budget: None,
         hat_toml: Some(hat_toml),
+        memory: None,
         goal: "write the report",
         rounds: 1,
     }) {

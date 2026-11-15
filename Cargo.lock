@@ -879,6 +879,8 @@ dependencies = [
  "truerise-eval",
  "truerise-governance",
  "truerise-hats",
+ "truerise-memory",
+ "truerise-observe",
  "truerise-rsi",
  "truerise-sandbox",
  "truerise-wire",
@@ -949,6 +951,7 @@ name = "truerise-memory"
 version = "0.2.0-dev.0"
 dependencies = [
  "serde",
+ "truerise-core",
 ]
 
 [[package]]

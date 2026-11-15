@@ -197,6 +197,56 @@ pub fn recall(
     Ok(scored)
 }
 
+/// The loop-facing recall bridge (W6): binds any backend + fusion weights
+/// to the core `ContextRecall` port. Deterministic: recall sorts by score
+/// then id; scores leave as per-mille integers (no floats on the wire).
+pub struct RecallBridge {
+    backend: InMemoryBackend,
+    weights: Weights,
+    top_k: usize,
+}
+
+impl RecallBridge {
+    /// Bridge over ``backend`` with fusion ``weights``, injecting at most
+    /// ``top_k`` records.
+    #[must_use]
+    pub fn new(backend: InMemoryBackend, weights: Weights, top_k: usize) -> Self {
+        Self {
+            backend,
+            weights,
+            top_k,
+        }
+    }
+}
+
+impl truerise_core::ContextRecall for RecallBridge {
+    fn recall_for(&self, query: &str) -> Option<truerise_core::RecallEvidence> {
+        let recalled = recall(&self.backend, query, &self.weights).ok()?;
+        if recalled.is_empty() {
+            return None;
+        }
+        let picked: Vec<(Record, f32)> = recalled.into_iter().take(self.top_k).collect();
+        let ids: Vec<String> = picked.iter().map(|(r, _)| r.id.clone()).collect();
+        let scores_per_mille: Vec<i64> = picked
+            .iter()
+            .map(|(_, s)| (*s * 1000.0).round() as i64)
+            .collect();
+        let context = picked
+            .iter()
+            .map(|(r, _)| format!("- {}: {}", r.id, r.text))
+            .collect::<Vec<_>>()
+            .join(
+                "
+",
+            );
+        Some(truerise_core::RecallEvidence {
+            ids,
+            scores_per_mille,
+            context,
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #![allow(clippy::unwrap_used, clippy::expect_used)]
