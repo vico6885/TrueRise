@@ -15,13 +15,17 @@ pub mod mode;
 pub mod router;
 pub mod state_machine;
 pub mod timecore;
+pub mod tool;
 
 pub use compaction::{CompactionError, Entry, Level, PreCompactEvent, compact, total_tokens};
 pub use errors::{CoreError, DataConsistency, ModeViolation, RiskGate, StaleFence, TimeLeak};
-pub use loop_::{AuditSink, Loop, LoopConfig, LoopError, RunBooks};
+pub use loop_::{AuditSink, Loop, LoopConfig, LoopError, RunBooks, ToolHooks};
 pub use mode::{ExecutionGrant, Mode, ModeSet};
 pub use router::{
     ModelRouter, RetryPolicy, RouterError, TurnRequest, TurnResponse, backoff_ms, check_pinned,
 };
 pub use state_machine::{Event, Machine, State, TransitionLog, transition};
 pub use timecore::{FoldWindow, TimeSlice, any_overlap};
+pub use tool::{
+    ActionPolicy, GateDecision, ToolError, ToolOutcome, ToolProvider, ToolRequest, parse_tool_call,
+};

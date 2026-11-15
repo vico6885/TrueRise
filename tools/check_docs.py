@@ -19,6 +19,7 @@ Exit codes: 0 = documentation contract holds, 1 = violations listed,
 from __future__ import annotations
 
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -85,8 +86,20 @@ def check_pairing(problems: list[str]) -> None:
 
 
 def all_markdown() -> list[Path]:
-    return [p for p in REPO.rglob("*.md")
-            if ".git" not in p.parts and "target" not in p.parts]
+    """TRACKED markdown only (git ls-files). The gate judges the repository,
+    not the developer's scratch directory: untracked references and ignored
+    runtime output are out of scope - which is exactly what CI sees anyway
+    (a fresh checkout carries no untracked files)."""
+    proc = subprocess.run(
+        ["git", "ls-files", "*.md"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(f"git ls-files failed: {proc.stderr.strip()[:200]}")
+    return [REPO / line for line in proc.stdout.splitlines() if line.strip()]
 
 
 def check_links(problems: list[str]) -> None:

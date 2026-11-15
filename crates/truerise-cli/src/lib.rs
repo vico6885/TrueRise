@@ -11,7 +11,7 @@
 //   an OS keyring; the config stores nothing sensitive).
 
 use std::io::{BufRead, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use sha2::{Digest, Sha256};
 
@@ -25,6 +25,10 @@ pub fn hex_digest(out: impl AsRef<[u8]>) -> String {
 }
 use truerise_governance::HashChain;
 use truerise_wire::Severity;
+
+pub mod assembly;
+
+pub use assembly::{GovernedPolicy, RunTooling};
 
 // truerise-cli library surface (the binary is a thin IO shell over this). the REPL is an IO adapter over
 // THESE functions only (spec §6.5 single-track ruling) - the golden test
@@ -130,8 +134,31 @@ pub fn demo_chain_path() -> PathBuf {
 
 /// A scripted router: answers as the pinned model without any network (the
 /// real ModelRouter providers are external projects; the port is the contract).
+/// With ``tool_call`` set, the act turn emits the RFC 0002 tool envelope
+/// instead of plain text (the governed demo of the enforcement chain).
 pub struct ScriptRouter {
     model: String,
+    tool_call: bool,
+}
+
+impl ScriptRouter {
+    /// Plain-text scripted router (no tool envelope).
+    #[must_use]
+    pub fn plain(model: &str) -> Self {
+        Self {
+            model: model.into(),
+            tool_call: false,
+        }
+    }
+
+    /// Tool-requesting scripted router (act turns carry the envelope).
+    #[must_use]
+    pub fn tool_calling(model: &str) -> Self {
+        Self {
+            model: model.into(),
+            tool_call: true,
+        }
+    }
 }
 
 impl truerise_core::ModelRouter for ScriptRouter {
@@ -139,9 +166,16 @@ impl truerise_core::ModelRouter for ScriptRouter {
         &self,
         request: &truerise_core::TurnRequest,
     ) -> Result<truerise_core::TurnResponse, truerise_core::RouterError> {
+        let payload = if self.tool_call && request.tag == "act" {
+            // One deterministic scripted action: write the run report under
+            // the sandbox fence. The policy decides whether it happens.
+            r#"{"truerise_tool":{"tool":"write_file","args":{"path":"report.md","content":"scripted report body"}}}"#.to_string()
+        } else {
+            format!("scripted response for: {}", request.payload)
+        };
         Ok(truerise_core::TurnResponse {
             model: self.model.clone(),
-            payload: format!("scripted response for: {}", request.payload),
+            payload,
         })
     }
 }
@@ -170,33 +204,39 @@ impl truerise_core::AuditSink for ChainSinkBridge<'_> {
     }
 }
 
-/// The `run --goal` subcommand: one governed run, three books printed.
-pub fn run_commandline(goal: &str) {
+/// The `run --goal` subcommand: one governed run over the FULL assembly
+/// (scripted router + governance policy + fenced sandbox executor, RFC 0002).
+/// Returns the process exit code (0 run completed / 1 run failed).
+pub fn run_commandline(goal: &str, approvals: &[String]) -> i32 {
     let dir = std::env::temp_dir().join("truerise_cli_run");
     std::fs::create_dir_all(&dir).ok();
-    let chain = match HashChain::open(&dir.join("run.jsonl")) {
-        Ok(c) => c,
+    let tooling = match RunTooling::new(&dir) {
+        Ok(t) => t,
         Err(e) => {
-            eprintln!("run: chain unavailable: {e}");
-            return;
+            eprintln!("run: tool assembly refused (fail-closed): {e}");
+            return 1;
         }
     };
-    let sink = ChainSinkBridge(&chain);
-    let router = ScriptRouter {
-        model: "scripted".into(),
+    for scope in approvals {
+        tooling.policy.approve(scope);
+    }
+    let router = ScriptRouter::tool_calling("scripted");
+    let hooks = truerise_core::ToolHooks {
+        policy: &tooling.policy,
+        provider: &tooling.provider,
     };
-    let config = truerise_core::LoopConfig {
-        pinned_model: "scripted".into(),
-        retry: truerise_core::RetryPolicy::default(),
-    };
-    match truerise_core::Loop::new(&router, config, &sink).run(goal, 1) {
+    match run_books_in(&dir, &router, Some(hooks), goal, 1) {
         Ok(books) => {
             println!("run complete (three books):");
             println!("  transcript entries: {}", books.transcript.len());
             println!("  transitions:        {}", books.transitions.len());
             println!("  audit rows:         {}", books.audit_rows);
+            0
         }
-        Err(e) => eprintln!("run failed: {e}"),
+        Err(e) => {
+            eprintln!("run failed: {e}");
+            1
+        }
     }
 }
 
@@ -238,7 +278,7 @@ pub fn repl() {
             }
             text => {
                 // Reuse the run path (single book write) - no bare-face entry.
-                run_commandline(text);
+                let _code = run_commandline(text, &[]);
             }
         }
     }
@@ -309,25 +349,42 @@ pub fn direct_loop_books(goal: &str) -> Result<truerise_core::RunBooks, truerise
     run_books(goal, 1)
 }
 
+/// The single governed-run implementation (single-track rule): BOTH the
+/// repl path and the run subcommand land here. ``hooks`` wire the RFC 0002
+/// enforcement chain; `None` keeps the run execution-free (byte-identical
+/// to the pre-RFC behaviour, which the golden test locks).
+pub fn run_books_in(
+    chain_dir: &Path,
+    router: &dyn truerise_core::ModelRouter,
+    hooks: Option<truerise_core::ToolHooks<'_>>,
+    goal: &str,
+    rounds: usize,
+) -> Result<truerise_core::RunBooks, truerise_core::LoopError> {
+    std::fs::create_dir_all(chain_dir).ok();
+    let chain = HashChain::open(&chain_dir.join("run.jsonl"))
+        .map_err(|e| truerise_core::LoopError::Sink(e.to_string()))?;
+    let sink = ChainSinkBridge(&chain);
+    let config = truerise_core::LoopConfig {
+        pinned_model: "scripted".into(),
+        retry: truerise_core::RetryPolicy::default(),
+    };
+    let mut governed = truerise_core::Loop::new(router, config, &sink);
+    if let Some(hooks) = hooks {
+        governed = governed.with_tools(hooks);
+    }
+    governed.run(goal, rounds)
+}
+
 /// Shared run core used by BOTH the repl adapter and the direct path
 /// (single-track: there is exactly one governed run implementation).
+/// Execution-free: no tool hooks are wired on this path.
 pub fn run_books(
     goal: &str,
     rounds: usize,
 ) -> Result<truerise_core::RunBooks, truerise_core::LoopError> {
     let dir = std::env::temp_dir().join("truerise_cli_run");
-    std::fs::create_dir_all(&dir).ok();
-    let chain = HashChain::open(&dir.join("run.jsonl"))
-        .map_err(|e| truerise_core::LoopError::Sink(e.to_string()))?;
-    let sink = ChainSinkBridge(&chain);
-    let router = ScriptRouter {
-        model: "scripted".into(),
-    };
-    let config = truerise_core::LoopConfig {
-        pinned_model: "scripted".into(),
-        retry: truerise_core::RetryPolicy::default(),
-    };
-    truerise_core::Loop::new(&router, config, &sink).run(goal, rounds)
+    let router = ScriptRouter::plain("scripted");
+    run_books_in(&dir, &router, None, goal, rounds)
 }
 
 /// Print the three-books summary (shared formatting for run/repl).
@@ -360,8 +417,25 @@ pub fn cli_main(args: Vec<String>) -> i32 {
                 .and_then(|i| args.get(i + 1))
                 .cloned()
                 .unwrap_or_else(|| "(no goal given)".into());
-            run_commandline(&goal);
-            0
+            // Repeated --approve <tool>: records approvals on file BEFORE the
+            // run (the only transition into ask-allowed; RFC 0002).
+            let mut approvals: Vec<String> = Vec::new();
+            let mut idx = 0;
+            while idx < args.len() {
+                if args[idx] == "--approve" {
+                    match args.get(idx + 1) {
+                        Some(tool) => approvals.push(tool.clone()),
+                        None => {
+                            eprintln!("usage error: --approve needs a tool name");
+                            return 2;
+                        }
+                    }
+                    idx += 2;
+                } else {
+                    idx += 1;
+                }
+            }
+            run_commandline(&goal, &approvals)
         }
         "repl" => {
             repl();

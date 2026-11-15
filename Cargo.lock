@@ -877,6 +877,7 @@ dependencies = [
  "sha2",
  "truerise-core",
  "truerise-governance",
+ "truerise-sandbox",
  "truerise-wire",
 ]
 
@@ -972,7 +973,9 @@ dependencies = [
 name = "truerise-sandbox"
 version = "0.2.0-dev.0"
 dependencies = [
+ "serde_json",
  "thiserror",
+ "truerise-core",
 ]
 
 [[package]]

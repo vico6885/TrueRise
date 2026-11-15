@@ -12,6 +12,7 @@ use crate::compaction::Entry;
 use crate::errors::CoreError;
 use crate::router::{ModelRouter, RetryPolicy, RouterError, TurnRequest, backoff_ms, check_pinned};
 use crate::state_machine::{Event, Machine, State, TransitionLog};
+use crate::tool::{ActionPolicy, GateDecision, ToolProvider, ToolRequest, parse_tool_call};
 
 /// The audit sink port (core side). The governance chain implements it in
 /// its own crate (no core->governance dependency; hexagonal ports rule).
@@ -57,6 +58,15 @@ pub struct LoopConfig {
     pub retry: RetryPolicy,
 }
 
+/// The loop's tool hooks (RFC 0002): policy decides, provider executes.
+/// Absent hooks = no execution ever (plain-text act payloads stay plain).
+pub struct ToolHooks<'a> {
+    /// The three-state policy for tool requests.
+    pub policy: &'a dyn ActionPolicy,
+    /// The fenced executor for allowed requests.
+    pub provider: &'a dyn ToolProvider,
+}
+
 /// The three books, all populated by a run.
 #[derive(Debug)]
 pub struct RunBooks {
@@ -73,6 +83,7 @@ pub struct Loop<'a> {
     router: &'a dyn ModelRouter,
     config: LoopConfig,
     sink: &'a dyn AuditSink,
+    tools: Option<ToolHooks<'a>>,
     transcript: Mutex<Vec<Entry>>,
     transitions: Mutex<Vec<TransitionLog>>,
     audit_rows: Mutex<usize>,
@@ -85,10 +96,20 @@ impl<'a> Loop<'a> {
             router,
             config,
             sink,
+            tools: None,
             transcript: Mutex::new(Vec::new()),
             transitions: Mutex::new(Vec::new()),
             audit_rows: Mutex::new(0),
         }
+    }
+
+    /// Wire tool hooks (RFC 0002): act payloads may then request executions,
+    /// gated by the policy and fenced by the provider. Without hooks nothing
+    /// ever executes.
+    #[must_use]
+    pub fn with_tools(mut self, hooks: ToolHooks<'a>) -> Self {
+        self.tools = Some(hooks);
+        self
     }
 
     /// One router call with retry/backoff (retryable only) + pinning check.
@@ -118,24 +139,106 @@ impl<'a> Loop<'a> {
         ))
     }
 
+    /// Append one audit event + move the audit-row counter (books 2/3 move
+    /// together: EVERY audit row lands through here).
+    fn audit(
+        &self,
+        kind: &str,
+        severity: &str,
+        detail: &serde_json::Value,
+    ) -> Result<usize, LoopError> {
+        let rows = self
+            .sink
+            .append(kind, severity, detail)
+            .map_err(LoopError::Sink)?;
+        *self.audit_rows.lock().unwrap_or_else(|p| p.into_inner()) = rows;
+        Ok(rows)
+    }
+
     /// Record one transition + audit event (books 2 and 3 move together).
     fn record(&self, from: State, event: Event, to: State) -> Result<(), LoopError> {
         self.transitions
             .lock()
             .unwrap_or_else(|p| p.into_inner())
             .push(TransitionLog { from, event, to });
-        let rows = self
-            .sink
-            .append(
-                "loop.transition",
-                "info",
-                &serde_json::json!({
-                    "from": from.as_str(), "event": event.as_str(), "to": to.as_str()
-                }),
-            )
-            .map_err(LoopError::Sink)?;
-        *self.audit_rows.lock().unwrap_or_else(|p| p.into_inner()) = rows;
+        self.audit(
+            "loop.transition",
+            "info",
+            &serde_json::json!({
+                "from": from.as_str(), "event": event.as_str(), "to": to.as_str()
+            }),
+        )?;
         Ok(())
+    }
+
+    /// The RFC 0002 enforcement chain for one parsed tool request:
+    /// decide -> execute -> audit -> observation text. Denial is an audited
+    /// outcome (the run continues); only a broken audit sink aborts the run.
+    fn execute_tool(
+        &self,
+        hooks: &ToolHooks<'_>,
+        request: &ToolRequest,
+    ) -> Result<String, LoopError> {
+        self.audit(
+            "tool.request",
+            "info",
+            &serde_json::json!({ "tool": request.tool }),
+        )?;
+        let observation = match hooks.policy.decide(request) {
+            GateDecision::Deny => {
+                self.audit(
+                    "tool.denied",
+                    "warn",
+                    &serde_json::json!({ "tool": request.tool, "reason": "policy_deny" }),
+                )?;
+                format!("tool {} denied by policy", request.tool)
+            }
+            GateDecision::NeedsApproval => {
+                self.audit(
+                    "tool.denied",
+                    "warn",
+                    &serde_json::json!({ "tool": request.tool, "reason": "approval_required" }),
+                )?;
+                format!("tool {} requires approval; not executed", request.tool)
+            }
+            GateDecision::Allow => match hooks.provider.execute(request) {
+                Ok(outcome) => {
+                    // The capability level is the executor's return value,
+                    // never a declared one (RFC 0002 acceptance test).
+                    self.audit(
+                        "tool.executed",
+                        "info",
+                        &serde_json::json!({
+                            "tool": request.tool,
+                            "capability": outcome.capability,
+                            "code": outcome.code
+                        }),
+                    )?;
+                    self.transcript
+                        .lock()
+                        .unwrap_or_else(|p| p.into_inner())
+                        .push(Entry {
+                            role: "tool".into(),
+                            text: outcome.stdout.clone(),
+                            tokens: total_estimate(&outcome.stdout),
+                        });
+                    outcome.stdout
+                }
+                Err(err) => {
+                    self.audit(
+                        "tool.denied",
+                        "warn",
+                        &serde_json::json!({
+                            "tool": request.tool,
+                            "reason": "sandbox_refused",
+                            "detail": err.to_string()
+                        }),
+                    )?;
+                    format!("tool {} refused by the sandbox: {err}", request.tool)
+                }
+            },
+        };
+        Ok(observation)
     }
 
     /// A minimal run: RunStart -> (Plan -> Act -> Observe)x rounds -> verdict.
@@ -181,7 +284,15 @@ impl<'a> Loop<'a> {
 
             let act_payload = self.call("act", &plan_payload)?;
             self.record(State::Planned, Event::Act, State::Acting)?;
-            let obs_payload = self.call("observe", &act_payload)?;
+            // RFC 0002: an act payload carrying the tool envelope goes
+            // through the enforcement chain; its outcome is the observation.
+            let mut observation = act_payload.clone();
+            if let Some(hooks) = &self.tools {
+                if let Some(request) = parse_tool_call(&act_payload) {
+                    observation = self.execute_tool(hooks, &request)?;
+                }
+            }
+            let obs_payload = self.call("observe", &observation)?;
             self.record(State::Acting, Event::Observe, State::Observing)?;
             self.transcript
                 .lock()

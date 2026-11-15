@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "tool_request.v1",
+  "title": "TrueRise tool-call envelope (RFC 0002)",
+  "type": "object",
+  "description": "The act-payload envelope a model may emit to request one tool execution. The loop parses this shape only when tool hooks are wired; everything else is plain text and never executes.",
+  "properties": {
+    "truerise_tool": {
+      "type": "object",
+      "properties": {
+        "tool": {
+          "type": "string",
+          "description": "Tool name (e.g. write_file / read_file); anything outside the sandbox's action set is refused"
+        },
+        "args": {
+          "type": "object",
+          "description": "Tool arguments; string-valued (paths are fenced by the sandbox provider)"
+        }
+      },
+      "required": ["tool", "args"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["truerise_tool"],
+  "additionalProperties": false
+}

@@ -5,9 +5,11 @@
 pub mod conformance;
 pub mod inprocess;
 pub mod provider;
+pub mod tool_provider;
 
 pub use conformance::{ConformanceReport, ProbeFact, self_check};
 pub use inprocess::{InProcessProvider, declared_capabilities, next_id};
 pub use provider::{
     CapabilityBits, CapabilityLevel, ExecutionOutput, SandboxError, SandboxHandle, SandboxProvider,
 };
+pub use tool_provider::SandboxToolProvider;

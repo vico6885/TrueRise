@@ -7,5 +7,11 @@
       "severity": ["debug", "info", "warn", "error"]
     },
     "additionalProperties": false
+  },
+  "tool_request.v1.schema": {
+    "fields": ["truerise_tool"],
+    "required": ["truerise_tool"],
+    "additionalProperties": false
   }
 }
+

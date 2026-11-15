@@ -121,6 +121,12 @@
     "口号": [
       "claim_gate_red_means_the_word_leaves_the_title",
       "claim_terms_map_term_to_command_test_artifact"
+    ],
+    "工具执行": [
+      "tool_denied_by_policy_writes_no_side_effect",
+      "ask_requires_approval_on_file_before_execution",
+      "execution_lands_capability_level_on_chain",
+      "sandbox_refused_escape_is_recorded_as_denial"
     ]
   }
 }

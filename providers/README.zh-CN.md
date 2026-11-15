@@ -10,15 +10,14 @@
 | `SandboxProvider` | `crates/truerise-sandbox/src/provider.rs` | 三区必失探针（逃逸 / 超卖 / 残留）+ `truerise-eval` 判词 |
 | `ModelRouter` | `crates/truerise-core/src/router.rs` | 回合钉定：来自非钉定模型的响应使整回合作废（`foreign_model_voids_the_round`） |
 | `MemoryBackend` | `crates/truerise-memory/src/lib.rs` | 融合权重、确定性与同分破平测试 |
+| `ToolProvider` + `ActionPolicy` | `crates/truerise-core/src/tool.rs`（RFC 0002） | `crates/truerise-cli/tests/tool_gate.rs`：Deny=审计性拒绝零副作用；Ask=批准须落盘；能力等级=执行器返回值；围栏逃逸=审计性拒绝 |
 | `ResourcePolicy` | `crates/truerise-governance/src/resource_policy.rs` | 三道闸按序；未知策略一律拒绝 |
 
-> **关于第四端口的定稿口径。** 施工规格点名了第四个端口 trait
-> `ToolProvider`。本工作区实现的是**三个端口 trait + 一个策略端口**，工具暴露改由
-> 三样已有机制承担：帽里的 `tool_subset`（数据，`crates/truerise-hats`）、
-> 三态策略（`Auto`/`Ask`/`Deny`，批准须落盘）、`truerise-mcp`（默认零暴露 +
-> 写类硬拒）。文档因此陈述**已实现契约**，不复述规格意图。
-> 日后真要引入 `ToolProvider` trait，那是走 RFC 的**新增能力**
-> （`docs/rfc/README.md`），不是改文档能解决的事。
+> **第四端口已经 RFC 0002 落地**（`docs/rfc/0002-tool-execution-port.md`）。
+> `ToolProvider` 定义在 `truerise-core`，由带围栏的 `SandboxToolProvider`
+> （`truerise-sandbox`）实现，在边界装配（`crates/truerise-cli/src/assembly.rs`）
+> 并受 `ActionPolicy` 三态判定约束。未接钩子的 run 不执行任何东西（缺省拒）。
+> 帽的 `tool_subset` 与 `truerise-mcp` 仍按原语义承担工具面的过滤与对外暴露。
 
 要新增提供方，请按 [`../docs/provider_conformance.zh-CN.md`](../docs/provider_conformance.zh-CN.md)：
 实现端口、跑 `self_check`、公开报告、开 issue。

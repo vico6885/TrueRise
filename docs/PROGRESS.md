@@ -67,6 +67,30 @@ The history door caught this document's own first draft: 4 hits (3 in commit tex
 
 ---
 
+## P0 — wiring + claim gates + tool execution port (W1/W12/W2, 2026-11-16)
+
+HEAD at wave start: `5d38fb1` (in-flight W3 open-source wave landed as one DCO commit first). Copy stop-bleed landed as `164ed1d` (README/zh sandbox claim qualified; onboarding step 3 says planned) BEFORE any new surface.
+
+| Item | Command | Result |
+|---|---|---|
+| copy stop-bleed | `git show 164ed1d --stat` | README.md + README.zh-CN.md sandbox sentence qualified ("every executed action must flow through the sandbox port; until tool wiring lands no code executes at all"); cli onboarding step 3 -> "(planned - see docs/PROGRESS.md)" |
+| W1 wiring gate | `python tools/check_wiring.py` (fresh) | RED by design: exactly 7 islands (eval/rsi/hats/memory/mcp/observe/sandbox); `--selftest` proves the gate bites BOTH directions (roster==closure green; roster+truerise-eval red) |
+| W1 CI + Makefile | `.github/workflows/ci.yml` job `wiring`; `make wiring`; `make verify` | selftest runs BEFORE the check in CI; spec_map row "接线" with 2 named identifiers |
+| W12 claim gate | `python tools/check_claim_terms.py` | 0 met / 5 unmet (Harness/Governance/Verifiable/Recursive Self-Improvement/Deterministic) - title-vs-capability gap is now CI-visible; negative selftest: planting the full slogan in the README H1 turns the gate red (proven once, recorded here) |
+| W12 registry | `claim_terms.json` | every term carries command + named test + artifact even while unmet ("任一为空即红" enforced by the gate) |
+| RFC 0002 | `docs/rfc/0002-tool-execution-port.md` | tool execution port RFC: motivation/alternatives/wire-compat/migration + named tests; honest single-maintainer approval + open external-review invitation |
+| W2 tool port | `cargo test -p truerise-core --lib` | `envelope_parses_only_the_exact_shape`: the `{"truerise_tool":...}` envelope is the ONLY executable shape; plain text never parses |
+| W2 sandbox executor | `cargo test -p truerise-sandbox` | writes land inside the fence with capability `full` (executor's own value); escape refused with zero side effects; non-string args refused |
+| W2 governed run | `cargo test -p truerise-cli --test tool_gate` | 5 passed: deny = audited no-op (`tool_denied_by_policy_writes_no_side_effect`), ask = approval on file (`ask_requires_approval_on_file_before_execution`), capability = sandbox return value on chain (`execution_lands_capability_level_on_chain`), fence escape = audited denial (`sandbox_refused_escape_is_recorded_as_denial`), no-hooks = execution-free (golden lock intact) |
+| W2 wire surface | `python tools/lint_schemas.py` | 2 schemas aligned: `tool_request.v1.schema.json` registered in INDEX (additive; audit_event.v2 untouched) |
+| docs alignment | providers/README{,.zh-CN}.md, docs/arch.md, docs/rfc/README.md | three-port wording -> four ports (ToolProvider + ActionPolicy landed via RFC 0002); the old "decided position" block replaced by the landing record |
+| docs gate scope | `tools/check_docs.py` | judges TRACKED markdown only (git ls-files) - CI parity; untracked developer scratch no longer turns local gates red |
+| workspace | `cargo test --workspace` | 111 passed 0 failed; clippy -D warnings clean; fmt clean |
+
+Not doing (P0 so far): Harness claim row stays unmet (judging lands with W4); run subcommand exit code still 0 on success (verdict-grade exit lands with W4).
+
+---
+
 ## W3 — Anti-Cheat Bench (truerise.evals) + open-source construction wave (2026-11-15)
 
 HEAD at wave start: `123f3c5`. All gates re-run at wave end (see the gate matrix below).

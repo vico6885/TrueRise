@@ -15,3 +15,7 @@ workspace = true
 
 [dependencies]
 thiserror = "2.0.21"
+truerise-core = { version = "0.2.0-dev.0", path = "../truerise-core" }
+
+[dev-dependencies]
+serde_json = "1.0.154"
