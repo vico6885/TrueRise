@@ -2,9 +2,17 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-**The integrity-evaluation layer for agentic claims** — a task-pack bench
-where cheating is caught mechanically, a claim certificate a stranger can
-recompute offline, and a Rust runtime foundation underneath it.
+**Harness Governance for Verifiable Recursive Self-Improvement** — every
+verifiable noun in that title is held to the evidence by a CI gate
+(`tools/check_claim_terms.py`: command + named test + committed artifact,
+5/5 currently met).
+
+Concretely: **the integrity-evaluation layer for agentic claims** — a
+task-pack bench where cheating is caught mechanically, a claim certificate
+a stranger can recompute offline (model steps pinned AND taped), and a
+Rust runtime foundation underneath it where one RSI generation runs end to
+end: propose -> hash-bound human approval -> apply -> re-evaluate ->
+ratchet -> rollback on regression, all recomputable offline.
 
 > One sentence: every "our agent improved X%" claim should carry a
 > certificate a third party can recompute. This repository ships the bench,
@@ -16,13 +24,14 @@ TrueRise —— **智能体声明的评测诚信层**：作弊被机器抓住的
 ## 60 seconds
 
 ```bash
-cargo test --workspace                  # 101 Rust tests, zero warnings
+cargo test --workspace                  # 153 Rust tests, zero warnings
 python -m pip install -e python/
-python -m pytest python/tests -q        # 25 tests
+python -m pytest python/tests -q        # 40 tests
 python -m truerise evals demo           # honest PASS, cheater FAIL, mutator FAIL
 python -m truerise demo --replay        # offline recomputation of a verdict
 cargo run -p truerise-cli -- demo       # the same walkthrough in Rust
 python tools/check_dual_impl.py         # cross-certification: Rust == Python, or red
+python -m truerise.demo --replay        # the SAME walkthrough replayed offline
 ```
 
 ## The pain points, and the command that proves each catch
@@ -81,13 +90,13 @@ Technical report: [`docs/report/anti_cheat_bench_v0.1.md`](docs/report/anti_chea
 
 ## Status & governance
 
-M0-M5 waves complete (spec-mapped gates, 23 spec rows / 67 identifiers,
-machine-checked); W3 (the bench) recorded in `docs/PROGRESS.md`.
+M0-M5 + P0-P3 complete (spec-mapped gates, 40 rows / 121 identifiers,
+machine-checked; 153 Rust + 40 Python tests). The wave-by-wave evidence
+lives in `docs/PROGRESS.md`; the forward plan in `ROADMAP.md`.
 
-- Security: see `SECURITY.md`. Every executed action must flow through the
-  sandbox port (tool-execution wiring is landing in the current wave —
-  until it does, no code executes in this repository at all, so there is
-  nothing to sandbox); secrets never enter the repository, argv, or logs.
+- Security: see `SECURITY.md`. Every executed action flows through the
+  sandbox port and lands on the audit chain with the executor's capability
+  level (RFC 0002); secrets never enter the repository, argv, or logs.
 - Contributing: DCO sign-off + IP-clean declarations
   (`CONTRIBUTING.md`); task-pack contributions are data-licensed
   CC-BY-4.0 (`LICENSE-DATA.md`).

@@ -153,6 +153,25 @@ Not doing (P2): the committed tape/keystones remain unsigned until a release sig
 
 ---
 
+## P3 — the ecosystem surface + release hardening (W13/W15/W18/W11b, 2026-11-16)
+
+HEAD at wave start: `b23fab4`.
+
+| Item | Command | Result |
+|---|---|---|
+| W13a Python SDK | pytest test_sdk.py | 8 named tests: the zero-dependency `truerise.sdk` (Session/Policy/ApprovalQueue/Budget/Ratchet) mirrors the Rust contracts as a CONSUMER; fingerprint/seal/prereg/evidence re-exported from their single sources |
+| W13b native backend | `cargo check -p truerise-py` + pytest | the PyO3 cdylib (`truerise_native`) compiles as a workspace member; THIN bindings only (chain append/verify, ratchet); optional wheel (python-native/pyproject.toml, abi3-py310); CI native-wheels job on three OS; the SDK probe + parity test skip cleanly when the wheel is absent |
+| W13b file-length compliance | `python tools/lint_file_length.py` | all 86 code files <= 600 lines (loop tests -> tests/loop_gate.rs; cli splits: demo.rs / interactive.rs / baseline.rs) |
+| W15 integrations | smoke both examples | langgraph_harness.py + openai_agents_harness.py run WITHOUT the frameworks installed (guarded imports); docs/integrations.md (bilingual): MCP -> SDK -> external protocol, and the deliberate non-goals |
+| W15 OTel tier | `cargo test -p truerise-observe --features otel` | `export_spans_via_otlp_feature`: REAL spans from chain rows (stdout exporter in-feature; OTLP at the boundary); no global tracer state; one-way (digest unchanged); secrets redacted; CI checks the feature compiles |
+| W18 hardening | grep the workflows | actions/checkout @ 11bd7190... (v4.2.2) + actions/setup-python @ a26af69b... (v5) SHA-pinned in BOTH workflows (fetched from the GitHub API, not guessed); CITATION.cff + ROADMAP.md; RELEASING status updated |
+| W11b external reading | env probe | NO model API key on this machine - the protocol is one command away (`run_external_trials("<solver>", pack, ...)`); ROADMAP.md item 1 owns the operational step; the README Limitations honestly still says "no external model run yet" |
+| title | `python tools/check_claim_terms.py` | 5 met / 0 unmet - the README H1 now carries the FULL formal title, enforced by the claim gate |
+
+Not doing (P3): per-framework shims; a second judging authority; any auto-apply path; improvement-magnitude promises (ROADMAP non-goals, stable).
+
+---
+
 ## W3 — Anti-Cheat Bench (truerise.evals) + open-source construction wave (2026-11-15)
 
 HEAD at wave start: `123f3c5`. All gates re-run at wave end (see the gate matrix below).

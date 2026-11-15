@@ -6,6 +6,44 @@ publications (the Rust core is the authoritative implementation).
 
 ## [0.2.0-dev.0] - unreleased
 
+### Added (P0-P3 construction waves, 2026-11-16)
+
+- Tool execution port (RFC 0002): `ActionPolicy` + `ToolProvider` in core,
+  the fenced `SandboxToolProvider`, the governed run path
+  (decide -> execute -> audit; capability = the executor's value; denial is
+  an audited outcome; no hooks = nothing executes).
+- Budget enforcement: the `Budget` port stops a live run (round + tool
+  consumption; exhaustion audited, exit 1); rsi `RunBudget` binds the
+  singleton ledger.
+- Run verdicts: `judge_run` / `judge_tasks` from the judging authority
+  (RunVerdict has no public constructor); baseline ratchet on the run path;
+  `grade_exit` keeps PASS=0/FAIL=1.
+- Hats on the run path: `--hat` registers the content hash + layers the
+  tool_subset as the OUTER policy gate (unknown tool refuses the run).
+- Memory + observe on the run path: `ContextRecall` port (audited evidence,
+  per-mille scores), one-way span export.
+- MCP server as a process (`mcp --serve`, zero exposure by default, every
+  call on the chain).
+- RSI closed loop (RFC 0003): the approval-gated apply path, generation
+  lineage, byte-deterministic certificates (`readings/v0.2/`), offline
+  replay; injected regression rolls back with the reason on the chain.
+- Certificate signing identity: ed25519 sign-on-issue + `verify --cert`
+  (unsigned = unverified, never silent trust).
+- Significance: exact integer McNemar (p = k/2^n); unequal-cost refused;
+  discordant floor voids claims; wired into the certificates.
+- OpenAI-compatible provider adapter + the recording/replay TAPE
+  (committed readings replay offline); `trace_digest` in tape headers.
+- The canonical-JSON float rule (Rust + Python write gates refuse floats);
+  `docs/determinism.md` (three scoped claims + the honest boundary).
+- Long-horizon closed-loop task family (v0.2) + the external-solver
+  protocol (executor-signed grades; self-report capped L0).
+- Python SDK (`truerise.sdk`) + the PyO3 native backend
+  (`truerise-native`, optional); integration patterns (LangGraph /
+  OpenAI Agents SDK) + OTel span projection (`otel` feature).
+- Gates: wiring (islands are a permanent red), claim terms (the title is
+  held to the evidence ledger, 5/5 met), action SHAs pinned.
+
+
 ### Added (M0 — repository scaffold)
 
 - Workspace with 12 `truerise-*` crates (skeletons, `publish = false`).

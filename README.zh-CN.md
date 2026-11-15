@@ -9,9 +9,9 @@
 ## 60 秒
 
 ```bash
-cargo test --workspace                  # 101 个 Rust 测试，零告警
+cargo test --workspace                  # 153 个 Rust 测试，零告警
 python -m pip install -e python/
-python -m pytest python/tests -q        # 25 个测试
+python -m pytest python/tests -q        # 40 个测试
 python -m truerise evals demo           # 诚实运行 PASS，作弊运行 FAIL，改标准运行 FAIL
 python -m truerise demo --replay        # 判词的离线重算
 cargo run -p truerise-cli -- demo       # 同一套走查的 Rust 版
@@ -66,9 +66,9 @@ python tools/check_dual_impl.py         # 双实现互证：Rust 与 Python 判�
 
 ## 状态与治理
 
-M0–M5 五波完成（规格映射闸门机器核对，23 行行为规格 / 67 个具名标识符）；W3（基准门面）记录在 `docs/PROGRESS.md`。
+M0–M5 与 P0–P3 完成（规格映射闸门机器核对，40 行行为规格 / 121 个具名标识符；153 个 Rust 测试 + 40 个 Python 测试）。逐波证据在 `docs/PROGRESS.md`，前进计划在 `ROADMAP.md`。
 
-- 安全：见 `SECURITY.md`。一切被执行的动作必须经沙箱端口（工具执行接线正在本波次落地——落地前本仓库不存在任何代码执行，因此暂无对象可沙箱）；密钥永不进入仓库、argv 与日志。
+- 安全：见 `SECURITY.md`。一切被执行的动作都经沙箱端口、以执行器返回的能力等级落审计链（RFC 0002）；密钥永不进入仓库、argv 与日志。
 - 贡献：DCO 签名 + 来源清洁声明（`CONTRIBUTING.md`）；题包贡献按数据许可走 CC-BY-4.0（`LICENSE-DATA.md`）。
 - 仓库形态与依赖方向：[`docs/topology.md`](docs/topology.md)。
 - 命令与开关的单一权威页：[`docs/cli.md`](docs/cli.md)（[中文版](docs/cli.zh-CN.md)）。

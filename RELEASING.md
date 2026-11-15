@@ -71,3 +71,18 @@ CI 的本地对齐点（CI 额外只多 cargo-deny、SBOM、MSRV 1.85、criterio
 本地转录），再打 tag 触发 cargo-dist，然后按叶子优先逐个 crate 发布，`publish = false` 只在
 真正发布它的那个 commit 里翻。最后对外宣布时，第一段永远是 60 秒命令块与 `readings/v0.1/`，
 **不宣布任何没有落盘产物的数字**。
+
+## Status after the P0-P3 construction waves (2026-11-16)
+
+- A/B/C/D (org URL / badges / issue links / CODEOWNERS): still blocked on
+  the GitHub org decision - unchanged, account-side.
+- E (crates.io `truerise*`): APPROVED (occupy), execution at first publish.
+- F (PyPI `truerise` / `truerise-native`): the second package name now
+  exists (python-native/pyproject.toml); register BOTH at publish.
+- G (trademark manual check): unchanged (account-side).
+- H (external solver protocol): IMPLEMENTED (W11a: run_external_trials +
+  executor-signed records); the first public-model reading is operational
+  (an API key + a solver script honouring the contract) - see ROADMAP.md.
+- NEW since this file was written: action SHAs are pinned (W18);
+  CITATION.cff + ROADMAP.md exist; the claim gate holds the README title
+  to the evidence ledger (5/5 met).

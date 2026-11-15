@@ -8,7 +8,8 @@ jobs:
   fmt-clippy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - # actions/checkout v4.2.2, SHA-pinned (W18: third-party tags can be re-pointed)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       # rustup reads rust-toolchain.toml (unpinned: tracks stable); the MSRV
       # floor is enforced by the dedicated `msrv` job below, not by this file.
       - run: cargo fmt --all -- --check
@@ -21,7 +22,8 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - # actions/checkout v4.2.2, SHA-pinned (W18: third-party tags can be re-pointed)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - run: cargo check --workspace --all-targets
       - run: cargo check -p truerise-observe --features otel
       - run: cargo test --workspace
@@ -29,8 +31,9 @@ jobs:
   python:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - # actions/checkout v4.2.2, SHA-pinned (W18: third-party tags can be re-pointed)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
       - run: python -m pip install -e python/
@@ -44,7 +47,8 @@ jobs:
   msrv:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - # actions/checkout v4.2.2, SHA-pinned (W18: third-party tags can be re-pointed)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - run: rustup toolchain install 1.85 --profile minimal
       - run: cargo +1.85 check --workspace --all-targets
 
@@ -53,8 +57,9 @@ jobs:
   cross-cert:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - # actions/checkout v4.2.2, SHA-pinned (W18: third-party tags can be re-pointed)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
       - run: python -m pip install -e python/
@@ -68,7 +73,8 @@ jobs:
   wiring:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - # actions/checkout v4.2.2, SHA-pinned (W18: third-party tags can be re-pointed)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - run: python3 tools/check_wiring.py --selftest
       - run: python3 tools/check_wiring.py
 
@@ -80,8 +86,9 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - # actions/checkout v4.2.2, SHA-pinned (W18: third-party tags can be re-pointed)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
       - name: build the native wheel (maturin)
@@ -98,7 +105,8 @@ jobs:
   deny:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - # actions/checkout v4.2.2, SHA-pinned (W18: third-party tags can be re-pointed)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - run: cargo install cargo-deny@0.20.2 --locked
       - run: cargo deny check
       - run: python3 tools/lint_deny_isolation.py
@@ -106,7 +114,8 @@ jobs:
   leak-gates:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - # actions/checkout v4.2.2, SHA-pinned (W18: third-party tags can be re-pointed)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
       - name: workspace door (= naming gate)
@@ -119,7 +128,8 @@ jobs:
   governance-gates:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - # actions/checkout v4.2.2, SHA-pinned (W18: third-party tags can be re-pointed)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
       - run: python3 tools/lint_schemas.py
@@ -130,7 +140,8 @@ jobs:
   timesafety:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - # actions/checkout v4.2.2, SHA-pinned (W18: third-party tags can be re-pointed)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: "timesafety: four vectors ENFORCED since M1 (declaration + enforcing tests asserted; never skippable)"
         run: python3 tools/check_leakguard_skeleton.py
 
@@ -139,14 +150,16 @@ jobs:
   claim-terms:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - # actions/checkout v4.2.2, SHA-pinned (W18: third-party tags can be re-pointed)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - run: python3 tools/check_claim_terms.py
 
   docs:
     needs: [claim-terms]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - # actions/checkout v4.2.2, SHA-pinned (W18: third-party tags can be re-pointed)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       # Documentation contract: bilingual pairing registered in
       # tools/check_docs.py, relative links, and every tools/<script>.py or
       # `python -m truerise*` invocation a document cites must exist.
@@ -156,7 +169,8 @@ jobs:
   benchmark:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - # actions/checkout v4.2.2, SHA-pinned (W18: third-party tags can be re-pointed)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - run: cargo bench --workspace -- --save-baseline main
       # 20% regression comparison activates once the `main` baseline exists
       # (first default-branch run saves it; later runs compare with critcmp).
@@ -172,7 +186,8 @@ jobs:
   sbom:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - # actions/checkout v4.2.2, SHA-pinned (W18: third-party tags can be re-pointed)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - run: cargo install cargo-cyclonedx@0.5.10 --locked
       - run: cargo cyclonedx --format json --spec-version 1.5
       - run: python3 tools/check_sbom.py

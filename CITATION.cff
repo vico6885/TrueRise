@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+title: "TrueRise: Harness Governance for Verifiable Recursive Self-Improvement"
+message: >-
+  If you use TrueRise, please cite the repository. Every claim in the
+  paper you write must carry the same kind of recomputable certificate
+  this project ships - the bench protocol (docs/anti_cheat_bench.md)
+  defines what counts as evidence.
+type: software
+authors:
+  - name: vico
+    email: vico@users.noreply.github.com
+# TODO(first tag): the repository URL follows the GitHub org decision (RELEASING.md item A)
+repository-code: "https://github.com/truerise/TrueRise"
+abstract: >-
+  A task-pack bench where cheating is caught mechanically, a claim
+  certificate a stranger can recompute offline, and a Rust runtime
+  foundation underneath it. One generation of recursive self-improvement
+  (propose -> human approval -> apply -> re-evaluate -> ratchet ->
+  rollback on regression) ships as a recomputable certificate; model
+  steps are pinned and taped, so every committed reading replays offline
+  without keys or network.
+keywords:
+  - agent-harness
+  - evaluation-integrity
+  - recursive-self-improvement
+  - audit-chain
+  - reproducibility
+license: Apache-2.0 OR MIT
+version: 0.2.0-dev.0
+date-released: "2026-11-16"

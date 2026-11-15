@@ -10,7 +10,8 @@ jobs:
   dist:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - # actions/checkout v4.2.2, SHA-pinned (W18: third-party tags can be re-pointed)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - run: cargo install cargo-dist --locked
       - run: cargo dist build --output-format=json > dist.json
       - name: assert artifacts exist
