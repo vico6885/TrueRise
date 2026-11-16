@@ -47,12 +47,22 @@ cargo run -p truerise-cli -- <命令>
 | 命令 | 效果 |
 |---|---|
 | `demo [--honest]` | 同一套三场景走查的 Rust 版 |
-| `run --goal <文本>` | 一次受治理的最小运行：转写记录 + 状态转移流 + 审计行同时生成且彼此一致 |
+| `run --goal <文本>` | 一次完全受治理的运行：脚本化模型 + 经沙箱端口的工具执行（RFC 0002）+ 预算（W3）+ 由判定权威出具的判词（W4）。打印三账；退出码携带判词 |
+| `run --approve <tool>` | 在 run 之前把批准落盘（进入 ask-allowed 的唯一路径；可重复） |
+| `run --budget <n>` | 每帽配额（轮次 + 工具单位）；超预算停止运行并以 `1` 退出 |
+| `run --baseline <path>` | 判词用的棘轮基线（默认 `baselines/run_scores.json`，自 cwd 向上查找） |
+| `run --hat <toml>` | 以帽运行：内容哈希入链，`tool_subset` 成为外层策略门；子集里的未知工具在加载期即拒绝运行 |
+| `evolve --demo --approve <hash>` | 一代 RSI（RFC 0003）：提案 -> 哈希绑定批准 -> 应用 -> 重评 -> 棘轮 -> 证书；`--inject-regression` 演示回滚；`--tape <path>` 录制每次模型调用 |
+| `evolve --replay --cert <path>` | 离线复算世代证书（退出 0 = 逐字节一致；被篡改的证书会被拒绝） |
+| `verify --cert <path> [--issuer-key <hex>]` | 校验证书签名（ed25519）；未签名的证书报告 `unverified issuer` 并以 `1` 退出——绝不静默当真 |
+| `mcp --serve [--chain <dir>]` | 经 stdio 起默认零暴露的 MCP server；每次调用都落链 |
 | `repl` | 交互壳；斜杠命令 `/demo`、`/audit`、`/quit`、`/exit` |
 | `onboarding` | 首次运行向导；写 `config.toml`，**永不落任何密钥**（只走环境变量或系统钥匙串） |
 | `help`、`--help`、`-h` | 子命令清单 |
 
 不给任何参数即进入 `repl`。未知命令打印帮助并以 `2` 退出。
+签名/校验的密钥只走环境变量（`TRUERISE_SIGNING_KEY` / `TRUERISE_TRUSTED_KEY`）；
+provider 密钥同理（`TRUERISE_API_KEY`）。
 
 ### 退出码是被互证锁住的契约的一部分
 

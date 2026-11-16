@@ -20,9 +20,9 @@ version, so a fresh clone builds without toolchain negotiation.
 
 ```bash
 git clone <this repository> && cd truerise
-cargo test --workspace           # 101 passed, 0 failed, zero warnings
+cargo test --workspace           # 153 passed, 0 failed, zero warnings
 python -m pip install -e python/
-python -m pytest python/tests -q # 25 passed
+python -m pytest python/tests -q # 40 passed
 ```
 
 ## 3. First verdict (the 60-second walkthrough)
@@ -123,12 +123,25 @@ python tools/check_dual_impl.py
 ```bash
 cargo run -p truerise-cli -- demo
 cargo run -p truerise-cli -- demo --honest
-cargo run -p truerise-cli -- run --goal "inspect the audit chain"
+cargo run -p truerise-cli -- run --goal "inspect the audit chain"   # tools + budget + verdict
 cargo run -p truerise-cli -- repl          # slash commands; same books as the direct path
 cargo run -p truerise-cli --example integrity_walkthrough
 ```
 
-## 9. Where to go next
+## 9. One RSI generation, recomputed offline
+
+```bash
+cargo run -p truerise-cli -- evolve --replay --cert readings/v0.2/gen1_certificate.json
+# replay: certificate recomputes identically (verdict PASS, failures 0)
+```
+
+The certificate was produced by a REAL governed run (propose -> hash-bound
+human approval -> apply -> re-evaluate -> ratchet), embeds both skill
+contents, and replays without keys or network. Tamper with one byte of it
+and the replay refuses. The full protocol:
+[`rfc/0003-generation-certificate-and-apply.md`](rfc/0003-generation-certificate-and-apply.md).
+
+## 10. Where to go next
 
 | I want to… | Read |
 |---|---|

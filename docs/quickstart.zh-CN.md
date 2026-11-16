@@ -18,7 +18,7 @@
 
 ```bash
 git clone <本仓库> && cd truerise
-cargo test --workspace           # 101 passed, 0 failed，零告警
+cargo test --workspace           # 153 passed, 0 failed，零告警
 python -m pip install -e python/
 python -m pytest python/tests -q # 25 passed
 ```
@@ -116,12 +116,23 @@ python tools/check_dual_impl.py
 ```bash
 cargo run -p truerise-cli -- demo
 cargo run -p truerise-cli -- demo --honest
-cargo run -p truerise-cli -- run --goal "inspect the audit chain"
+cargo run -p truerise-cli -- run --goal "inspect the audit chain"   # 工具 + 预算 + 判词
 cargo run -p truerise-cli -- repl          # 斜杠命令；产出与直连路径逐字段相同
 cargo run -p truerise-cli --example integrity_walkthrough
 ```
 
-## 9. 接下来读什么
+## 9. 一代 RSI，离线复算
+
+```bash
+cargo run -p truerise-cli -- evolve --replay --cert readings/v0.2/gen1_certificate.json
+# replay: certificate recomputes identically (verdict PASS, failures 0)
+```
+
+这份证书由一次真实受治理 run 产出（提案 -> 哈希绑定的人工批准 -> 应用 -> 重评 ->
+棘轮），内嵌两代技能全文，重放无需密钥、无需网络。改动证书任何一个字节，重放即拒。
+完整协议见 [`rfc/0003-generation-certificate-and-apply.md`](rfc/0003-generation-certificate-and-apply.md)。
+
+## 10. 接下来读什么
 
 | 我想…… | 读这里 |
 |---|---|

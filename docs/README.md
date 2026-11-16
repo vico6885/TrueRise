@@ -45,8 +45,8 @@ maintainers to approve).
 
 User-facing documents ship as a pair: `name.md` (English, authoritative) and
 `name.zh-CN.md` (简体中文, same structure and same numbers). Each pair cross-links
-in its header. Design notes (`arch`, `governance`, `timesafety`, `topology`)
-carry both languages inline in one file.
+in its header. Design notes (`arch`, `governance`, `timesafety`, `topology`,
+`determinism`, `integrations`) carry both languages inline in one file.
 
 The pairing is machine-checked: `python tools/check_docs.py` fails CI when a
 registered document loses its counterpart, when a header link is missing, or

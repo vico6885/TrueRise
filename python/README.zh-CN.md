@@ -2,13 +2,14 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-TrueRise 的 Python 侧：60 秒诚信走查（`truerise.demo`）与 Anti-Cheat Bench
-（`truerise.evals`）。不需要网络、不需要 API 密钥、不需要 GPU。**验收判据是判词随输入
+TrueRise 的 Python 侧：60 秒诚信走查（`truerise.demo`）、Anti-Cheat Bench
+（`truerise.evals`）、长程闭环题包、外部解题器协议，以及零依赖 SDK
+（`truerise.sdk`）。不需要网络、不需要 API 密钥、不需要 GPU。**验收判据是判词随输入
 移动** —— 没有任何写死的东西，且退出码承载判词。
 
 ```bash
 python -m pip install -e python/          # 在仓库根目录执行
-python -m pytest python/tests -q          # 25 个测试
+python -m pytest python/tests -q          # 40 个测试
 ```
 
 ## `truerise demo` —— 三个作弊场景，各自被抓
@@ -43,9 +44,53 @@ python -m truerise evals run --mutate
 协议：[`../docs/anti_cheat_bench.zh-CN.md`](../docs/anti_cheat_bench.zh-CN.md)。
 怎么写题包：[`../docs/task_pack_guide.zh-CN.md`](../docs/task_pack_guide.zh-CN.md)。
 
+## 长程闭环题包
+
+多步确定性流水线，终态可机判；只有**每一步**都与封存值一致才算闭环完成
+（跳步拿到正确终值也是 FAIL——考的是闭环，不是终点）：
+
+```python
+from truerise.evals.long_horizon import generate_long_horizon_pack, run_long_horizon
+
+pack = generate_long_horizon_pack(out_dir, chains=8, seed=20261116)  # 字节级可复现
+summary = run_long_horizon(my_solver, pack, work_dir)                # 只有整数
+```
+
+## 外部解题器（单文件契约）
+
+任何读取 `TRUERISE_PUBLIC_DIR`、向 `TRUERISE_OUT_DIR` 写 `submission.jsonl`
+的程序都能被基准评测；由 runner 判卷并对每条记录做**执行器签名**
+（解题器自己的准确率声明是自报，封顶 L0）：
+
+```python
+from truerise.evals.runner import run_external_trials
+
+passes, signed = run_external_trials(["python", "my_solver.py"], pack, work_dir)
+```
+
+协议参考实现：`truerise/evals/external_solver.py`。
+
+## SDK（治理面，纯 Python、零依赖）
+
+```python
+from truerise.sdk import (                                # 与 Rust 契约互为镜像
+    Session, Policy, ApprovalQueue, Budget, Ratchet,
+    Fingerprint, seal_thresholds, prereg_diff, evidence_gate,
+)
+```
+
+`Session` 就是受治理的运行环：三账同时记，工具请求走 RFC 0002 的
+判定 -> 执行 -> 审计链，纯文本永不执行。可选的原生加速后端
+`truerise-native`（PyO3 轮子）与纯 Python 路径语义一致——`native_available()`
+探测，缺了不影响任何功能。
+
 ## 库面
 
 ```python
+from truerise.sdk import (                                # 受治理 harness 的 Python 面
+    Session, Policy, ApprovalQueue, Budget, Ratchet,
+    Fingerprint, seal_thresholds, prereg_diff, evidence_gate,
+)
 from truerise.evals import (
     Task, Answer, Pack, load_pack, generate_pack,          # 题包协议
     Grade, grade,                                           # 判卷
