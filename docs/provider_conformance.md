@@ -99,7 +99,7 @@ Open an issue from the `feature_request` template and attach:
 4. the license of everything you link.
 
 The maintainer records accepted providers in
-[`PROGRESS.md`](PROGRESS.md) with the commit each verdict was measured at.
+`CHANGELOG.md` with the commit each verdict was measured at.
 This process is deliberately thin while the project has one maintainer; the
 conformance verdict — not the listing — is the thing that carries trust.
 

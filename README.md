@@ -32,6 +32,8 @@ python -m truerise demo --replay        # offline recomputation of a verdict
 cargo run -p truerise-cli -- demo       # the same walkthrough in Rust
 python tools/check_dual_impl.py         # cross-certification: Rust == Python, or red
 python -m truerise.demo --replay        # the SAME walkthrough replayed offline
+cargo run -p truerise-cli -- evolve --replay --cert readings/v0.2/gen1_certificate.json
+                                        # one RSI generation, recomputed OFFLINE
 ```
 
 ## The pain points, and the command that proves each catch
@@ -58,8 +60,9 @@ the certificate schema is open for review as
 
 | Piece | Scope | License |
 |---|---|---|
-| `truerise` (Python) | the 60-second demo + `truerise.evals` Anti-Cheat Bench (task packs, sealed answers, certificates) | Apache-2.0 / MIT |
-| `truerise` (Rust, 12 crates) | contracts and judging authority: hash-chain audit, three-state policy, sandbox port, conformance judge, ratchet, fingerprints, MCP (zero exposure), observe | Apache-2.0 / MIT |
+| `truerise` (Python) | the 60-second demo + `truerise.evals` Anti-Cheat Bench + the zero-dependency SDK (`truerise.sdk`) + long-horizon closed-loop packs + the external-solver protocol | Apache-2.0 / MIT |
+| `truerise` (Rust, 13 crates) | contracts and judging authority: hash-chain audit, three-state policy + sandbox port + tool execution (RFC 0002), conformance judge, ratchet, the RSI closed loop (RFC 0003), MCP (zero exposure), observe, the PyO3 binding shell | Apache-2.0 / MIT |
+| `truerise-native` (PyO3 wheel) | OPTIONAL accelerator over the same crates; the pure-Python SDK is the complete fallback | Apache-2.0 / MIT |
 | task packs (data) | generated fixtures + sealed answers | CC-BY-4.0 (`LICENSE-DATA.md`) |
 
 ## Reference readings (committed, recomputable)
@@ -75,9 +78,11 @@ Technical report: [`docs/report/anti_cheat_bench_v0.1.md`](docs/report/anti_chea
 ## Limitations (read before citing)
 
 - **No external model run yet.** Every reading above comes from our own
-  reference solvers. One public model through the external-solver protocol
-  is the registered next step (`docs/PROGRESS.md`) — until it lands, treat
-  the bench as a harness demo, not a leaderboard.
+  reference solvers. The external-solver protocol itself has landed
+  (`run_external_trials`, executor-signed records); what is missing is the
+  operational step — one public model behind a solver honouring the
+  contract (`ROADMAP.md` item 1). Until that reading lands, treat the bench
+  as a harness demo, not a leaderboard.
 - **The internal production deployment is not in this repository.** The same
   contracts run in a real production system under a separate
   source-available license; it stays out of this workspace by design
@@ -92,7 +97,7 @@ Technical report: [`docs/report/anti_cheat_bench_v0.1.md`](docs/report/anti_chea
 
 M0-M5 + P0-P3 complete (spec-mapped gates, 40 rows / 121 identifiers,
 machine-checked; 153 Rust + 40 Python tests). The wave-by-wave evidence
-lives in `docs/PROGRESS.md`; the forward plan in `ROADMAP.md`.
+lives in `CHANGELOG.md`; the forward plan in `ROADMAP.md`.
 
 - Security: see `SECURITY.md`. Every executed action flows through the
   sandbox port and lands on the audit chain with the executor's capability

@@ -94,7 +94,8 @@ from truerise.evals import load_pack, run_bench
 from pathlib import Path
 
 # The sealed bar. Currently defined in truerise/__main__.py as
-# DEFAULT_THRESHOLDS; a library-level export is tracked in PROGRESS.md, so
+# the CLI's DEFAULT_THRESHOLDS; library callers pass their own map (and
+# seal it first), so
 # until then pass the map explicitly.
 SEALED = {"min_accuracy": 0.8, "claim_p": 0.05}
 
@@ -110,10 +111,11 @@ Reference solvers shipped for self-test: `HonestSolver`, `CheaterSolver`
 (best-of-N over hidden trials), `MutatorSolver` (re-claims after moving
 thresholds), `SelfReporter` (claims without executor-signed records).
 
-**What an external model run still needs** (registered in
-[`PROGRESS.md`](PROGRESS.md), not yet built): an external-solver protocol with
-prompt/answer isolation and a recorded fingerprint. Until it lands, published
-readings are reference-solver readings — the README says so plainly.
+**What an external model run still needs**: the protocol has landed
+(`runner.run_external_trials`, prompt/answer isolation, executor-signed
+records); what is missing is one public model behind a contract-honouring
+solver (`ROADMAP.md` item 1). Until then, published readings are
+reference-solver readings — the README says so plainly.
 
 ## 6. Checklist before you open the PR
 

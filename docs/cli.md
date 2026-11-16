@@ -50,12 +50,23 @@ cargo run -p truerise-cli -- <command>
 | Command | Effect |
 |---|---|
 | `demo [--honest]` | the same three-scenario walkthrough, Rust edition |
-| `run --goal <text>` | a governed minimal run: transcript + state-transition log + audit rows populated and mutually consistent |
+| `run --goal <text>` | a FULLY governed run: scripted model + tool execution through the sandbox port (RFC 0002) + budget (W3) + a judged verdict (W4). Three books printed; exit code carries the verdict |
+| `run --approve <tool>` | record an approval ON FILE before the run (the only transition into ask-allowed; repeatable) |
+| `run --budget <n>` | per-hat quota (rounds + tool units); over budget stops the run with exit `1` |
+| `run --baseline <path>` | ratchet baseline for the verdict (default: `baselines/run_scores.json`, walked up from cwd) |
+| `run --hat <toml>` | run under a hat: content hash registered on the chain, `tool_subset` becomes the OUTER policy gate; an unknown tool in the subset refuses the run at load |
+| `evolve --demo --approve <hash>` | one RSI generation (RFC 0003): propose -> hash-bound approval -> apply -> re-evaluate -> ratchet -> certificate; `--inject-regression` demonstrates the rollback; `--tape <path>` records every model call |
+| `evolve --replay --cert <path>` | recompute a generation certificate OFFLINE (exit 0 = identical; a tampered cert is refused) |
+| `verify --cert <path> [--issuer-key <hex>]` | verify a certificate signature (ed25519); an unsigned cert reports `unverified issuer` and exits `1` — never silent trust |
+| `mcp --serve [--chain <dir>]` | the zero-exposure MCP server over stdio; every call lands on the chain |
 | `repl` | interactive shell; slash commands `/demo`, `/audit`, `/quit`, `/exit` |
 | `onboarding` | first-run wizard; writes `config.toml` and **never stores a key** (env or OS keyring only) |
 | `help`, `--help`, `-h` | subcommand list |
 
 No argument at all starts the `repl`. Unknown command prints help and exits `2`.
+Keys for the signing/verify pair live in the environment ONLY
+(`TRUERISE_SIGNING_KEY` / `TRUERISE_TRUSTED_KEY`); provider keys likewise
+(`TRUERISE_API_KEY`).
 
 ### Exit codes are part of the certified contract
 

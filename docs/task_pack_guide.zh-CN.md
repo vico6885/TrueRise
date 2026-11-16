@@ -78,7 +78,7 @@ from truerise.evals import load_pack, run_bench
 from pathlib import Path
 
 # 封盘阈值。目前定义在 truerise/__main__.py 的 DEFAULT_THRESHOLDS，
-# 提升到库级导出已登记在 PROGRESS.md；在那之前请显式传入这张表。
+# 库级调用请显式传入自己的阈值表（并先封印）；CLI 才有默认表。
 SEALED = {"min_accuracy": 0.8, "claim_p": 0.05}
 
 cert, summary = run_bench(
@@ -92,7 +92,9 @@ print(cert.verdict, cert.reasons)
 仓内自带的参考解题器：`HonestSolver`、`CheaterSolver`（藏分母的 best-of-N）、
 `MutatorSolver`（改完阈值再重新声明）、`SelfReporter`（没有执行器签名就宣称结论）。
 
-**外部模型跑分还缺什么**（已登记在 [`PROGRESS.md`](PROGRESS.md)，尚未实现）：一套带题面/答案隔离、并记录指纹的外部解题器协议。在它落地前，公开读数都是参考解题器读数 —— README 已直说这点。
+**外部模型跑分还缺什么**：协议已落地（`runner.run_external_trials`，题面/答案隔离 + 执行器签名）；
+缺的是一个公开模型接到该协议上（`ROADMAP.md` 第 1 项）。在那之前，公开读数都是参考解题器读数
+—— README 已直说这点。
 
 ## 6. 开 PR 前的自检
 

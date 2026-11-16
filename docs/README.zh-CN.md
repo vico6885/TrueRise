@@ -31,7 +31,7 @@
 | [`provider_conformance.zh-CN.md`](provider_conformance.zh-CN.md) | 一个沙箱提供方 + 它的判定结论 |
 | [`rfc/README.md`](rfc/README.md) | 端口 trait 与 wire 破坏性变更必须先立 RFC |
 | [`../RELEASING.md`](../RELEASING.md) | 发布清单，以及卡住首个 tag 的那几项决定（文末含中文段） |
-| [`PROGRESS.md`](PROGRESS.md) | 逐波交付记录与门禁证据 |
+| [`../ROADMAP.md`](../ROADMAP.md) | 已交付内容（以证据背书）与下一步 |
 
 RFC 以英文为权威文本：中文只是阅读辅助，被评审并批准的是英文文件 ——
 `docs/rfc/README.md` 要求维护者批准的正是那份英文件。

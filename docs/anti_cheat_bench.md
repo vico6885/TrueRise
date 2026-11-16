@@ -95,18 +95,18 @@ key). Level 3 (same-family safe twins, direction discrimination) is v0.2.
 reference solver scored 100/120 with ALL 20 misses in one family — the bug
 was in the solver's rule (a regex required an index token after `mu`), not in
 the pack. The miss inventory is exactly what surfaced it; fixed and re-run to
-120/120. First-run reading preserved in the construction log
-(`docs/PROGRESS.md`, W3 wave).
+120/120. First-run reading preserved in the delivery record
+(`CHANGELOG.md`).
 
 ## 7. Roadmap
 
 - v0.2: level-3 same-family twins (direction discrimination); pack scaling
   beyond 6 templates; per-family difficulty curves.
-- External solver protocol: subprocess runner + sandbox conformance gate
-  (`truerise-sandbox` self-check) so third-party solvers run in a certified
-  sandbox with executor-signed records.
+- External solver protocol: LANDED — `runner.run_external_trials` runs a
+  subprocess solver against the public surface and executor-signs every
+  grade record (a solver's own claims cap at L0).
 - Second judge: a second independent judge produces `judge_agreement` (κ)
   records — judge divergence is publishable data.
-- Real external model runs: the pending credibility step (see PROGRESS
-  pending list) — one public model through the external solver protocol,
-  readings committed under `readings/`.
+- Real external model runs: the pending credibility step (see
+  `ROADMAP.md` item 1) — one public model behind a solver honouring the
+  contract, readings committed under `readings/`.

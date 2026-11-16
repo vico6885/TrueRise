@@ -22,6 +22,8 @@ the document is a defect — open an issue.
 | [`governance.md`](governance.md) | audit hash chain as the single authority, three-state policy, approvals, deletion gates |
 | [`timesafety.md`](timesafety.md) | the four leak vectors and the tests that enforce each |
 | [`topology.md`](topology.md) | repository topology, dependency direction, license isolation rules |
+| [`determinism.md`](determinism.md) | the three scoped determinism claims + the honest boundary (pinned + taped model steps, the float rule) |
+| [`integrations.md`](integrations.md) | the three ecosystem surfaces: MCP, the Python SDK, the external-solver protocol |
 | [`report/anti_cheat_bench_v0.1.md`](report/anti_cheat_bench_v0.1.md) | the v0.1 measurements and what they do NOT show |
 
 ## Contribute
@@ -33,7 +35,7 @@ the document is a defect — open an issue.
 | [`provider_conformance.md`](provider_conformance.md) | a sandbox provider + its conformance verdict |
 | [`rfc/README.md`](rfc/README.md) | port-trait and wire-schema changes require an RFC |
 | [`../RELEASING.md`](../RELEASING.md) | release checklist plus the decisions that block the first tag |
-| [`PROGRESS.md`](PROGRESS.md) | wave-by-wave delivery record with gate evidence |
+| [`../ROADMAP.md`](../ROADMAP.md) | what shipped (evidence-backed) and what is next |
 
 RFCs are English-authoritative: a translation is a reading aid, the reviewed
 text is the English file (that is what `docs/rfc/README.md` requires
@@ -54,6 +56,6 @@ when a document references a path that does not exist.
 
 | Surface | Path |
 |---|---|
-| Committed reference readings | `readings/v0.1/*.json` |
+| Committed reference readings | `readings/v0.1/*.json`, `readings/v0.2/*.json` (+ the evolve tape) |
 | Certificate format under review | `rfc/0001-claim-certificate.md` |
 | Gate commands (all runnable locally) | `../Makefile` `gates` target, `.github/workflows/ci.yml` |

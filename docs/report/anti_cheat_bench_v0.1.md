@@ -78,7 +78,7 @@ The Rust/Python cross-certification gate passes both modes on this machine
 scored 100/120 with ALL 20 misses concentrated in one family — a real bug in
 the solver's rule (a regex required an index token after the statistic name),
 not in the pack. The miss inventory is exactly what surfaced it; the fix and
-the re-run are recorded in `docs/PROGRESS.md` (W3 wave). We publish the
+the re-run are recorded in `CHANGELOG.md`. We publish the
 process because a bench that never shows its own misses is selling the same
 unfalsifiability it exists to remove.
 
@@ -89,10 +89,10 @@ unfalsifiability it exists to remove.
   of truth). v0.1 demonstrates the CATCH machinery, not detector strength;
   harder packs (same-family safe twins, direction discrimination) are v0.2.
 - **No external model run yet.** Every reading above is from our own
-  reference solvers. The pending credibility step — one public model through
-  the external-solver protocol, readings committed — is registered in
-  `docs/PROGRESS.md` and must land before any third-party claim of
-  adoption.
+  reference solvers. The external-solver protocol has landed; the pending
+  credibility step — one public model behind a contract-honouring solver,
+  readings committed — is owned by `ROADMAP.md` item 1 and must land before
+  any third-party claim of adoption.
 - **In-process evidence is capped.** Reference solvers run in-process;
   their records are executor-signed by the runner but the v0.1 evidence
   ladder treats deeper execution (sandboxed subprocesses) as the v0.2 path

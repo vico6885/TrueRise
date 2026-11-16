@@ -88,7 +88,7 @@ cargo cyclonedx --format json --spec-version 1.5 && python tools/check_sbom.py
 3. crate 路径或仓库 URL，
 4. 你所链接每一个组件的许可。
 
-维护者把被接受的提供方记进 [`PROGRESS.md`](PROGRESS.md)（该文件以英文记录测量证据），并注明
+维护者把被接受的提供方记进 [`CHANGELOG.md`](../CHANGELOG.md)（注明每条判词的测量 commit），并注明
 每个判词的测量 commit。项目只有一位维护者，所以这套流程刻意保持简陋 ——
 **承载信任的是一致性判词，不是那份清单。**
 

@@ -61,8 +61,8 @@ from truerise.demo import run_demo, replay                 # 走查
 `corrected significance`。行为契约（判词翻转、离线重算、证书哈希）逐字段等价 ——
 这个等价正是 `tools/check_dual_impl.py` 拿去与 Rust 实现对比的东西。
 
-## 待办一项
+## 已知缺口
 
-封盘阈值表（`DEFAULT_THRESHOLDS`）目前定义在 `src/truerise/__main__.py`，而不是由
-`truerise.evals` 导出。库调用方现在需显式传入；提升到库级导出已登记在
-[`../docs/PROGRESS.md`](../docs/PROGRESS.md)。
+封盘阈值表（`DEFAULT_THRESHOLDS`）目前定义在 `src/truerise/__main__.py`（CLI 侧），
+而非由 `truerise.evals` 导出。库调用方需显式传入阈值表——这本来就是推荐的契约：
+阈值应由调用方在跑之前封印（`truerise.gates.seal_thresholds`）。

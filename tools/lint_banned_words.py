@@ -25,6 +25,7 @@ any change goes through normal PR review.
 from __future__ import annotations
 
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -86,13 +87,34 @@ def build_pattern(words: list[str]) -> re.Pattern[str]:
     return re.compile("|".join(parts), re.IGNORECASE)
 
 
+def tracked_files() -> list:
+    """TRACKED files only (git ls-files). The workspace door judges the
+    repository, not the developer's scratch directory (ignored runtime
+    output and untracked local references are out of scope) - exactly what
+    a fresh CI checkout carries. The HISTORY door (lint_git_history.py)
+    still scans every git object for depth."""
+    proc = subprocess.run(
+        ["git", "ls-files", "-z"],
+        cwd=REPO,
+        capture_output=True,
+    )
+    if proc.returncode != 0:
+        raise RuntimeError("git ls-files failed - fail-closed")
+    out = []
+    for raw in proc.stdout.split(b"\x00"):
+        if not raw:
+            continue
+        out.append(REPO / raw.decode("utf-8", "replace"))
+    return out
+
+
 def main() -> int:
     words = load_config()
     pattern = build_pattern(words)
     exempt_abs = [str((REPO / p).resolve()) for p in EXEMPT_PATHS]
     hits: list[str] = []
     scanned = 0
-    for path in sorted(REPO.rglob("*")):
+    for path in sorted(tracked_files()):
         if not path.is_file():
             continue
         rel = path.relative_to(REPO)

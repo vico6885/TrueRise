@@ -54,7 +54,7 @@ publications (the Rust core is the authoritative implementation).
 - License isolation: cargo-deny whitelist excludes the legacy Python-edition
   license (BSL-1.1) and copyleft GPL/AGPL, machine-asserted in CI.
 - Governance docs: README, CONTRIBUTING (IP-clean declarations), SECURITY,
-  GOVERNANCE, CODE_OF_CONDUCT, PROGRESS.
+  GOVERNANCE, CODE_OF_CONDUCT.
 
 ### Added (M1 — wire + platform + core)
 

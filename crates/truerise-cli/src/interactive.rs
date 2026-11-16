@@ -61,7 +61,9 @@ pub fn onboarding() {
     println!("  1. pick a provider: openai-compatible / anthropic / custom base_url");
     println!("  2. put your key in the environment (TRUERISE_API_KEY) or an OS keyring");
     println!("     - argv and config files are forbidden for keys");
-    println!("  3. tool execution through the sandbox port (planned - see docs/PROGRESS.md)");
+    println!(
+        "  3. tool execution runs through the sandbox port (write_file is Ask by default: unapproved writes are audited, never executed)"
+    );
     let sample = "[provider]\nkind = \"openai-compatible\"\nbase_url = \"https://example.invalid/v1\"\nmodel_route = \"default\"\n\n# NO keys here: TRUERISE_API_KEY env or OS keyring only.\n";
     if std::fs::write(&config_path, sample).is_ok() {
         println!("wrote config.toml (provider skeleton; no secrets). Set TRUERISE_API_KEY next.");

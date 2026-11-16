@@ -53,7 +53,12 @@ the literals are not published anywhere in the repository.
   (full history + reflog) for the same tokens, and enforces a blob-count
   floor (`tools/history_floor.json`) — any history rewrite that destroys
   objects fails the gate. Never amend or rewrite pushed commits outside
-  the deletion three-gate protocol (recorded in `docs/PROGRESS.md`).
+  the deletion three-gate protocol (see `GOVERNANCE.md`): an explicit,
+  recorded maintainer approval, a single amend commit replacing the
+  offending content, and a reflog/gc expulsion with the pre-prune snapshot
+  retained OUTSIDE the repository (in-repo retention would trip this very
+  gate). The blob-count floor in `tools/history_floor.json` is the
+  technical control that keeps the no-prune commitment verifiable.
 
 Both gates are fail-closed: an empty or corrupt token list is a red gate,
 not a skipped check.

@@ -25,11 +25,11 @@ they are listed instead of guessed:
 | A | `repository` / `homepage` in `[workspace.package]` and each crate manifest | the GitHub org and repo slug are not decided yet — inventing a URL would make published crates point at a location nobody owns |
 | B | CI badge URLs in `README.md` / `README.zh-CN.md` | same reason; snippet template below |
 | C | `.github/ISSUE_TEMPLATE/config.yml` contact links | `about` entries require absolute URLs |
-| D | `.github/CODEOWNERS` handle resolution | handle is provisional (tracked in `docs/PROGRESS.md`); an unresolved file silently stops reviewer routing, so verify on the first real PR |
+| D | `.github/CODEOWNERS` handle resolution | the handle is provisional; an unresolved file silently stops reviewer routing, so verify on the first real PR |
 | E | crates.io name squatting decision (`truerise` + `truerise-*`) | one-way action: registration is not reversible in practice |
 | F | PyPI `truerise` / `truerise-evals` registration | same asymmetry |
 | G | Trademark database manual check | still open from M0 |
-| H | `python -m truerise evals` external-solver protocol | must land before any adoption claim (`docs/PROGRESS.md`) |
+| H | the first third-party model reading through the external-solver protocol | the protocol has LANDED (`run_external_trials`, executor-signed records); the reading itself is an operational step owned by `ROADMAP.md` item 1 — no adoption claim before it |
 
 Badge snippet to paste once the remote exists (EN and CN READMEs, under the title):
 
@@ -42,8 +42,8 @@ Badge snippet to paste once the remote exists (EN and CN READMEs, under the titl
 ## Publish order
 
 1. push `main`, confirm CI green (the first authoritative run of the whole
-   chain happens here — until then every gate result in `docs/PROGRESS.md` is
-   a local transcription).
+   chain happens here — until then every gate result is a local
+   transcription).
 2. tag `v0.2.0` → `release.yml` runs `cargo dist build` (five targets,
    shell/powershell installers, SHA256).
 3. `cargo publish` leaf-first: `truerise-wire`, `truerise-platform`,
@@ -67,8 +67,7 @@ CI 的本地对齐点（CI 额外只多 cargo-deny、SBOM、MSRV 1.85、criterio
 占名、商标核查。这些**不能就地猜** —— 尤其是包名与 URL：注册不可逆，把 crate 发布到一个
 无人拥有的地址，比不发布更糟。所以它们列成阻塞项，等决定而非编造。
 
-发布顺序要点：先 push 让 CI 第一次真跑（在此之前 `docs/PROGRESS.md` 里的每条门禁结果都只是
-本地转录），再打 tag 触发 cargo-dist，然后按叶子优先逐个 crate 发布，`publish = false` 只在
+发布顺序要点：先 push 让 CI 第一次真跑（在此之前每条门禁结果都只是本地转录），再打 tag 触发 cargo-dist，然后按叶子优先逐个 crate 发布，`publish = false` 只在
 真正发布它的那个 commit 里翻。最后对外宣布时，第一段永远是 60 秒命令块与 `readings/v0.1/`，
 **不宣布任何没有落盘产物的数字**。
 
