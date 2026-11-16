@@ -134,6 +134,7 @@ fn evaluate_generation(
                 memory: None,
                 goal: &format!("solve {id}: {goal}"),
                 rounds: 1,
+                pinned_model: None,
             });
             let passed = match books {
                 Ok(books) => books

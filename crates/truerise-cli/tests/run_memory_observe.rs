@@ -64,6 +64,7 @@ fn recall_row_records_scores_and_injection() {
         memory: Some(&bridge),
         goal: "analyse the fold window",
         rounds: 1,
+        pinned_model: None,
     })
     .expect("run completes");
 
@@ -110,6 +111,7 @@ fn export_produces_one_span_per_row_and_redacts() {
         memory: Some(&bridge),
         goal: "goal",
         rounds: 1,
+        pinned_model: None,
     })
     .expect("run completes");
     // A configuration row carrying a secret-looking key (the export must
@@ -157,6 +159,7 @@ fn export_never_mutates_chain_digest() {
         memory: None,
         goal: "goal",
         rounds: 1,
+        pinned_model: None,
     })
     .expect("run completes");
     let chain_path = dir.join("run.jsonl");

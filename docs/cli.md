@@ -55,6 +55,7 @@ cargo run -p truerise-cli -- <command>
 | `run --budget <n>` | per-hat quota (rounds + tool units); over budget stops the run with exit `1` |
 | `run --baseline <path>` | ratchet baseline for the verdict (default: `baselines/run_scores.json`, walked up from cwd) |
 | `run --hat <toml>` | run under a hat: content hash registered on the chain, `tool_subset` becomes the OUTER policy gate; an unknown tool in the subset refuses the run at load |
+| `run --provider openai\|anthropic --model <id>` | a REAL model behind the same governed port (budget/policy/verdict unchanged). `--provider-url <u>` targets local vLLM/Ollama/proxies. Keys env-only (`TRUERISE_API_KEY` / `ANTHROPIC_API_KEY`); a missing key fails closed. The run PINS to the model id, and the provider's own response echo backs the pinning check |
 | `evolve --demo --approve <hash>` | one RSI generation (RFC 0003): propose -> hash-bound approval -> apply -> re-evaluate -> ratchet -> certificate; `--inject-regression` demonstrates the rollback; `--tape <path>` records every model call |
 | `evolve --replay --cert <path>` | recompute a generation certificate OFFLINE (exit 0 = identical; a tampered cert is refused) |
 | `verify --cert <path> [--issuer-key <hex>]` | verify a certificate signature (ed25519); an unsigned cert reports `unverified issuer` and exits `1` — never silent trust |

@@ -52,6 +52,7 @@ fn budget_exhaustion_halts_run_at_step_n() {
         budget: Some(("halt-test", &budget)),
         hat_toml: None,
         memory: None,
+        pinned_model: None,
         goal: "goal",
         rounds: 3,
     })
@@ -92,6 +93,7 @@ fn budget_is_shared_across_hats_not_sharded() {
         budget: Some((hat_a.as_str(), &unbounded)),
         hat_toml: None,
         memory: None,
+        pinned_model: None,
         goal: "goal",
         rounds: 2,
     })
@@ -104,6 +106,7 @@ fn budget_is_shared_across_hats_not_sharded() {
         budget: Some((hat_b.as_str(), &unbounded)),
         hat_toml: None,
         memory: None,
+        pinned_model: None,
         goal: "goal",
         rounds: 1,
     })

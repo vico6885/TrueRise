@@ -43,6 +43,7 @@ fn run_with_hat(dir: &std::path::Path, hat_toml: &str) -> Result<usize, String> 
         budget: None,
         hat_toml: Some(hat_toml),
         memory: None,
+        pinned_model: None,
         goal: "write the report",
         rounds: 1,
     }) {

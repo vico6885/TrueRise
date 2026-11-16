@@ -33,6 +33,10 @@ publications (the Rust core is the authoritative implementation).
   discordant floor voids claims; wired into the certificates.
 - OpenAI-compatible provider adapter + the recording/replay TAPE
   (committed readings replay offline); `trace_digest` in tape headers.
+- Anthropic Messages API adapter (`run --provider anthropic --model <id>`,
+  optional `--provider-url` for local proxies); shared HTTP status
+  classification (429/5xx retryable, 4xx fatal) across both adapters; the
+  provider's own model echo backs the round-pinning check.
 - The canonical-JSON float rule (Rust + Python write gates refuse floats);
   `docs/determinism.md` (three scoped claims + the honest boundary).
 - Long-horizon closed-loop task family (v0.2) + the external-solver

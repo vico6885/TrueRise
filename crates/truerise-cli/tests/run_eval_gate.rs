@@ -59,6 +59,7 @@ fn run_and_judge(
         budget: None,
         hat_toml: None,
         memory: None,
+        pinned_model: None,
         goal: "judge me",
         rounds: 1,
     })

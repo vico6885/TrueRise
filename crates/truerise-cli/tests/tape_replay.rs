@@ -39,6 +39,7 @@ fn same_tape_replays_identical_digest() {
         memory: None,
         goal: "analyse the fold window",
         rounds: 1,
+        pinned_model: None,
     })
     .expect("recorded run");
 
@@ -62,6 +63,7 @@ fn same_tape_replays_identical_digest() {
         memory: None,
         goal: "analyse the fold window",
         rounds: 1,
+        pinned_model: None,
     })
     .expect("replayed run");
 
@@ -175,6 +177,7 @@ fn readings_ship_tapes_and_replay_offline() {
         memory: None,
         goal,
         rounds: 1,
+        pinned_model: None,
     })
     .expect("the first taped call replays");
     assert!(

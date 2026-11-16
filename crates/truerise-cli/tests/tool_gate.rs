@@ -74,6 +74,7 @@ fn run(
         budget: None,
         hat_toml: None,
         memory: None,
+        pinned_model: None,
         goal: "write the report",
         rounds: 1,
     })
@@ -184,6 +185,7 @@ fn no_hooks_means_no_execution_surface() {
         budget: None,
         hat_toml: None,
         memory: None,
+        pinned_model: None,
         goal: "goal",
         rounds: 1,
     })

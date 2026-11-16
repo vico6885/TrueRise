@@ -42,8 +42,11 @@ title to the same standard - 5/5 verifiable nouns currently met).
 3. **Signed readings at scale**: a release signing key ceremony (W10's
    `verify` is ready; today's committed artifacts honestly report
    unverified_issuer).
-4. **Anthropic adapter + streaming**: a second provider adapter behind the
-   same `ModelRouter` port (the tape does not care which one).
+4. **~~Anthropic adapter~~** DONE (2026-11-16): both adapters behind the
+   same `ModelRouter` port, selectable via `run --provider openai|anthropic
+   --model <id> [--provider-url <url>]` (keys env-only; the provider's own
+   model echo backs the pinning check; 429/5xx classified retryable).
+   Streaming remains open when a user asks for it.
 5. **First public tag**: crates.io + PyPI occupation (RELEASING.md A-H),
    cargo-dist five-platform artifacts, release-signed certificates.
 

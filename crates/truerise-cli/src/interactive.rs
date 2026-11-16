@@ -44,7 +44,7 @@ pub fn repl() {
             text => {
                 // Reuse the run path (single book write) - no bare-face entry.
                 let baseline = find_default_baseline();
-                let _code = run_commandline(text, &[], None, baseline.as_deref(), None);
+                let _code = run_commandline(text, &[], None, baseline.as_deref(), None, None);
             }
         }
     }

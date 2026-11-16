@@ -13,7 +13,6 @@
 use std::path::{Path, PathBuf};
 
 use truerise_governance::HashChain;
-use truerise_wire::Severity;
 
 pub mod assembly;
 pub mod baseline;
@@ -22,13 +21,19 @@ pub mod evolve_cmd;
 pub mod identity;
 pub mod interactive;
 pub mod mcp_serve;
+pub mod provider_anthropic;
+pub mod provider_choice;
+pub mod provider_common;
 pub mod provider_openai;
+pub mod router_assembly;
 pub mod tape;
 
 pub use assembly::{GovernedPolicy, RunTooling};
 pub use baseline::{find_default_baseline, grade_exit};
 pub use demo::{demo_scenarios, run_demo};
 pub use interactive::{onboarding, repl, repl_turn};
+pub use provider_choice::{ProviderKind, ProviderSpec, build_provider_router};
+pub use router_assembly::{ChainSinkBridge, ScriptRouter};
 
 // truerise-cli library surface (the binary is a thin IO shell over this). the REPL is an IO adapter over
 // THESE functions only (spec §6.5 single-track ruling) - the golden test
@@ -51,89 +56,19 @@ pub fn print_help() {
 // run: minimal governed run (three books) with a scripted router
 // ---------------------------------------------------------------------------
 
-/// A scripted router: answers as the pinned model without any network (the
-/// real ModelRouter providers are external projects; the port is the contract).
-/// With ``tool_call`` set, the act turn emits the RFC 0002 tool envelope
-/// instead of plain text (the governed demo of the enforcement chain).
-pub struct ScriptRouter {
-    model: String,
-    tool_call: bool,
-}
-
-impl ScriptRouter {
-    /// Plain-text scripted router (no tool envelope).
-    #[must_use]
-    pub fn plain(model: &str) -> Self {
-        Self {
-            model: model.into(),
-            tool_call: false,
-        }
-    }
-
-    /// Tool-requesting scripted router (act turns carry the envelope).
-    #[must_use]
-    pub fn tool_calling(model: &str) -> Self {
-        Self {
-            model: model.into(),
-            tool_call: true,
-        }
-    }
-}
-
-impl truerise_core::ModelRouter for ScriptRouter {
-    fn route(
-        &self,
-        request: &truerise_core::TurnRequest,
-    ) -> Result<truerise_core::TurnResponse, truerise_core::RouterError> {
-        let payload = if self.tool_call && request.tag == "act" {
-            // One deterministic scripted action: write the run report under
-            // the sandbox fence. The policy decides whether it happens.
-            r#"{"truerise_tool":{"tool":"write_file","args":{"path":"report.md","content":"scripted report body"}}}"#.to_string()
-        } else {
-            format!("scripted response for: {}", request.payload)
-        };
-        Ok(truerise_core::TurnResponse {
-            model: self.model.clone(),
-            payload,
-        })
-    }
-}
-
-/// AuditSink bridge: the governance chain as the loop's audit port (this
-/// bridge lives HERE, at the boundary, keeping core free of governance).
-pub struct ChainSinkBridge<'a>(pub &'a HashChain);
-
-impl truerise_core::AuditSink for ChainSinkBridge<'_> {
-    fn append(
-        &self,
-        kind: &str,
-        severity: &str,
-        detail: &serde_json::Value,
-    ) -> Result<usize, String> {
-        let sev = match severity {
-            "warn" => Severity::Warn,
-            "error" => Severity::Error,
-            "debug" => Severity::Debug,
-            _ => Severity::Info,
-        };
-        self.0
-            .append(kind, sev, detail, None)
-            .map(|_| self.0.len())
-            .map_err(|e| e.to_string())
-    }
-}
-
 /// The `run --goal` subcommand: one governed run over the FULL assembly
-/// (scripted router + governance policy + fenced sandbox executor, RFC 0002;
-/// budget enforced per W3; the run ends with a judged verdict per W4).
-/// Returns the process exit code (0 PASS / 1 FAIL or failed run - a budget
-/// stop IS a failure, never a note).
+/// (scripted router by default; `--provider` swaps in a REAL model behind
+/// the same port - OpenAI-compatible or Anthropic Messages API - with the
+/// run pinned to the requested model id). Budget enforced per W3; the run
+/// ends with a judged verdict per W4. Exit codes: 0 PASS / 1 FAIL or
+/// failed run / 2 usage error.
 pub fn run_commandline(
     goal: &str,
     approvals: &[String],
     budget_units: Option<u64>,
     baseline_path: Option<&Path>,
     hat_toml: Option<&str>,
+    provider: Option<&ProviderSpec>,
 ) -> i32 {
     let dir = std::env::temp_dir().join("truerise_cli_run");
     std::fs::create_dir_all(&dir).ok();
@@ -147,7 +82,25 @@ pub fn run_commandline(
     for scope in approvals {
         tooling.policy.approve(scope);
     }
-    let router = ScriptRouter::tool_calling("scripted");
+    // Provider selection: a REAL model behind the same port, or the
+    // scripted assembly when none is given (the default stays offline).
+    let owned_router: Box<dyn truerise_core::ModelRouter>;
+    let pinned: String;
+    if let Some(spec) = provider {
+        let (router, model) = match build_provider_router(spec) {
+            Ok(pair) => pair,
+            Err(e) => {
+                eprintln!("run: {e}");
+                return 1;
+            }
+        };
+        owned_router = router;
+        pinned = model;
+    } else {
+        owned_router = Box::new(ScriptRouter::tool_calling("scripted"));
+        pinned = "scripted".to_string();
+    };
+    let router = &*owned_router;
     let hooks = truerise_core::ToolHooks {
         policy: &tooling.policy,
         provider: &tooling.provider,
@@ -163,13 +116,14 @@ pub fn run_commandline(
     );
     match run_books_in(RunParams {
         chain_dir: &dir,
-        router: &router,
+        router,
         hooks: Some(hooks),
         budget: Some(("cli-run", &run_budget)),
         hat_toml,
         memory: Some(&recall_bridge),
         goal,
         rounds: 1,
+        pinned_model: Some(&pinned),
     }) {
         Ok(books) => {
             println!("run complete (three books):");
@@ -250,6 +204,9 @@ pub struct RunParams<'a> {
     pub goal: &'a str,
     /// Declared rounds.
     pub rounds: usize,
+    /// The pinned model for the WHOLE run (round pinning); `None` = the
+    /// scripted assembly's "scripted".
+    pub pinned_model: Option<&'a str>,
 }
 
 /// The single governed-run implementation (single-track rule): BOTH the
@@ -279,7 +236,7 @@ pub fn run_books_in(
         None => None,
     };
     let config = truerise_core::LoopConfig {
-        pinned_model: "scripted".into(),
+        pinned_model: params.pinned_model.unwrap_or("scripted").to_string(),
         retry: truerise_core::RetryPolicy::default(),
     };
     {
@@ -327,6 +284,7 @@ pub fn run_books(
         memory: None,
         goal,
         rounds,
+        pinned_model: None,
     })
 }
 
@@ -416,6 +374,13 @@ pub fn cli_main(args: Vec<String>) -> i32 {
                 found.unwrap_or(None)
             };
             let baseline = explicit_baseline.or_else(find_default_baseline);
+            let provider = match provider_choice::parse_provider_args(&args) {
+                Ok(p) => p,
+                Err(usage) => {
+                    eprintln!("usage error: {usage}");
+                    return 2;
+                }
+            };
             let hat_toml: Option<String> = {
                 let mut it = args.iter();
                 let mut found = None;
@@ -444,6 +409,7 @@ pub fn cli_main(args: Vec<String>) -> i32 {
                 budget_units,
                 baseline.as_deref(),
                 hat_toml.as_deref(),
+                provider.as_ref(),
             )
         }
         "repl" => {

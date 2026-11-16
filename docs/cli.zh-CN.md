@@ -52,6 +52,7 @@ cargo run -p truerise-cli -- <命令>
 | `run --budget <n>` | 每帽配额（轮次 + 工具单位）；超预算停止运行并以 `1` 退出 |
 | `run --baseline <path>` | 判词用的棘轮基线（默认 `baselines/run_scores.json`，自 cwd 向上查找） |
 | `run --hat <toml>` | 以帽运行：内容哈希入链，`tool_subset` 成为外层策略门；子集里的未知工具在加载期即拒绝运行 |
+| `run --provider openai\|anthropic --model <id>` | 同一治理端口后接**真实模型**（预算/策略/判词不变）。`--provider-url <u>` 指向本地 vLLM/Ollama/代理。密钥只走环境变量（`TRUERISE_API_KEY` / `ANTHROPIC_API_KEY`）；缺钥即拒绝。运行钉定到模型 id，且 provider 自报的回显参与钉定校验 |
 | `evolve --demo --approve <hash>` | 一代 RSI（RFC 0003）：提案 -> 哈希绑定批准 -> 应用 -> 重评 -> 棘轮 -> 证书；`--inject-regression` 演示回滚；`--tape <path>` 录制每次模型调用 |
 | `evolve --replay --cert <path>` | 离线复算世代证书（退出 0 = 逐字节一致；被篡改的证书会被拒绝） |
 | `verify --cert <path> [--issuer-key <hex>]` | 校验证书签名（ed25519）；未签名的证书报告 `unverified issuer` 并以 `1` 退出——绝不静默当真 |

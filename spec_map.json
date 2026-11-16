@@ -201,6 +201,11 @@
     ],
     "OTel 导出": [
       "export_spans_via_otlp_feature"
+    ],
+    "Provider 适配器": [
+      "anthropic_adapter_speaks_the_messages_shape",
+      "provider_error_classification_matches_the_retry_contract",
+      "run_with_provider_routes_through_the_real_adapter"
     ]
   }
 }

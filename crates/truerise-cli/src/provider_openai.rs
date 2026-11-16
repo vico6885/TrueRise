@@ -58,10 +58,7 @@ impl ModelRouter for OpenAICompatRouter {
             req = req.set("Authorization", &format!("Bearer {key}"));
         }
         let response = req.send_json(&body).map_err(|e| match e {
-            ureq::Error::Status(code, _) => RouterError::Fatal(format!("provider http {code}")),
-            ureq::Error::Transport(t) if t.kind() == ureq::ErrorKind::HTTP => {
-                RouterError::Fatal(format!("provider transport: {t}"))
-            }
+            ureq::Error::Status(code, _) => crate::provider_common::classify_status(code),
             _other => RouterError::Unavailable,
         })?;
         let doc: serde_json::Value = response
@@ -76,8 +73,14 @@ impl ModelRouter for OpenAICompatRouter {
             .ok_or_else(|| {
                 RouterError::Fatal("provider response: missing choices[0].message.content".into())
             })?;
+        // The provider's OWN echo of the model id backs the pinning check.
+        let model = doc
+            .get("model")
+            .and_then(|m| m.as_str())
+            .unwrap_or(&self.model)
+            .to_string();
         Ok(TurnResponse {
-            model: self.model.clone(),
+            model,
             payload: content.to_string(),
         })
     }
@@ -152,8 +155,7 @@ mod tests {
         (addr, handle)
     }
 
-    const REPLY: &str =
-        r#"{"choices":[{"message":{"role":"assistant","content":"canned answer"}}]}"#;
+    const REPLY: &str = r#"{"model":"test-model","choices":[{"message":{"role":"assistant","content":"canned answer"}}]}"#;
 
     #[test]
     fn openai_compat_adapter_speaks_the_standard_shape() {
