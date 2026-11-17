@@ -220,14 +220,3 @@ fn replay_verifies_the_completion_ledger() {
     );
 }
 
-fn token_json(seal: &str, h0_decision: &str) -> String {
-    let decisions = [
-        r#"{"item_id":"m0","decision":"accept"}"#,
-        r#"{"item_id":"m1","decision":"accept"}"#,
-        r#"{"item_id":"m2","decision":"accept"}"#,
-    ];
-    format!(
-        r#"{{"contract_sealed_hash":"{seal}","decisions":[{},{{"item_id":"h0","decision":"{h0_decision}"}}]}}"#,
-        decisions.join(",")
-    )
-}
