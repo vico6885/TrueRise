@@ -4,6 +4,7 @@
 pub mod fingerprint;
 pub mod judge;
 pub mod ratchet;
+pub mod derivable;
 pub mod run_verdict;
 pub mod significance;
 

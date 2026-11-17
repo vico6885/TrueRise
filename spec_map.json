@@ -297,6 +297,14 @@
       "inconclusive_cannot_be_promoted_to_pass",
       "grade_exit_maps_three_verdicts_to_three_codes",
       "inconclusive_exit_code_distinct"
+    ],
+    "重算闸": [
+      "derivable_claim_is_recomputed_not_judged",
+      "value_must_trace_to_artifact_field",
+      "contradicted_claim_blocks_promotion",
+      "count_is_recomputed_from_the_array_itself",
+      "difference_recomputes_both_operands",
+      "any_unsupported_claim_blocks_the_whole_set"
     ]
   }
 }
