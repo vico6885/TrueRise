@@ -62,10 +62,8 @@ pub fn print_help() {
 
 /// The `run --goal` subcommand: one governed run over the FULL assembly
 /// (scripted router by default; `--provider` swaps in a REAL model behind
-/// the same port - OpenAI-compatible or Anthropic Messages API - with the
-/// run pinned to the requested model id). Budget enforced per W3; the run
-/// ends with a judged verdict per W4. Exit codes: 0 PASS / 1 FAIL or
-/// failed run / 2 usage error.
+/// the same port). Budget per W3; judged verdict per W4. Exit codes:
+/// 0 PASS / 1 FAIL or failed run / 2 usage error.
 pub fn run_commandline(
     goal: &str,
     approvals: &[String],
@@ -307,7 +305,7 @@ pub fn run_books(
     })
 }
 
-/// Print the three-books summary (shared formatting for run/repl).
+/// Shared run/repl summary (three books).
 pub fn print_books(books: &truerise_core::RunBooks) -> String {
     format!(
         "run complete (three books):
@@ -320,15 +318,13 @@ pub fn print_books(books: &truerise_core::RunBooks) -> String {
     )
 }
 
-/// The binary entry (arg dispatch; the shell below is three lines).
+/// The binary entry (arg dispatch; the shell is three lines).
 pub fn cli_main(args: Vec<String>) -> i32 {
     let cmd = args.get(1).map(String::as_str).unwrap_or("repl");
     match cmd {
         "demo" => {
-            let honest = args.iter().any(|a| a == "--honest");
-            // The verdict drives the exit code (same contract as the Python
-            // CLI): a FAIL has to be able to stop a CI lane.
-            i32::from(!demo::run_demo(honest))
+            // The verdict drives the exit code (FAIL stops a CI lane).
+            i32::from(!demo::run_demo(args.iter().any(|a| a == "--honest")))
         }
         "run" => {
             // Repeated --approve <tool>: records approvals on file BEFORE the
@@ -548,31 +544,14 @@ pub fn cli_main(args: Vec<String>) -> i32 {
                 eprintln!("usage: truerise verify --cert <path> [--issuer-key <hex>]");
                 return 2;
             };
-            // Review fix (P2): a dangling --issuer-key used to silently
-            // degrade to the env fallback - the explicit argument intent
-            // was swallowed. Usage error now.
-            let trusted = {
-                let mut found: Option<String> = None;
-                let mut it = args.iter();
-                while let Some(arg) = it.next() {
-                    if arg == "--issuer-key" {
-                        match it.next() {
-                            Some(v) if !v.starts_with("--") => {
-                                if found.is_some() {
-                                    eprintln!("usage error: --issuer-key given twice");
-                                    return 2;
-                                }
-                                found = Some(v.clone());
-                            }
-                            _ => {
-                                eprintln!("usage error: --issuer-key needs a hex key");
-                                return 2;
-                            }
-                        }
-                    }
+            let trusted = match identity::parse_issuer_key_args(&args) {
+                Ok(t) => t,
+                Err(usage) => {
+                    eprintln!("usage error: {usage}");
+                    return 2;
                 }
-                found
             };
+
             match identity::verify_certificate(&cert, trusted.as_deref()) {
                 identity::VerifyOutcome::Verified { issuer } => {
                     println!("verified: issuer {issuer}");

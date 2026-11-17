@@ -7,7 +7,7 @@
 | # | Item | Command / evidence |
 |---|---|---|
 | 1 | All gates green locally | `make verify` (fmt, clippy `-D warnings`, check, test, 9 repo gates, pytest, cross-cert) |
-| 2 | Test counts match the docs | `cargo test --workspace` = 101; `python -m pytest python/tests -q` = 25 — README and `tests/README.md` quote these numbers, so a drift is a documentation defect |
+| 2 | Test counts match the docs | run `cargo test --workspace` and `python -m pytest python/tests -q`, then compare with README and `tests/README.md` — quoted counts drift, so re-verify before trusting them |
 | 3 | Documentation contract | `python tools/check_docs.py` (bilingual pairing, links, cited commands) |
 | 4 | Packaging dry-run | `cargo package --workspace --list --offline` |
 | 5 | Supply chain | `cargo deny check` + `python tools/lint_deny_isolation.py` + `cargo cyclonedx --format json --spec-version 1.5 && python tools/check_sbom.py` |

@@ -24,7 +24,7 @@ TrueRise —— **智能体声明的评测诚信层**：作弊被机器抓住的
 ## 60 seconds
 
 ```bash
-cargo test --workspace                  # 153 Rust tests, zero warnings
+cargo test --workspace                  # 240 Rust tests, zero warnings
 python -m pip install -e python/
 python -m pytest python/tests -q        # 40 tests
 python -m truerise evals demo           # honest PASS, cheater FAIL, mutator FAIL
@@ -45,7 +45,7 @@ cargo run -p truerise-cli -- evolve --replay --cert readings/v0.2/gen1_certifica
 | model self-report as evidence | evidence ladder L0-L6; records without an executor signature contribute NOTHING | `python -m truerise demo` (reason 4: `0 executor-signed records`) |
 | cross-environment score comparison | four-part fingerprint; comparing across registries is REFUSED, self-vs-self included | `python -m truerise demo --drop-fingerprint` (integrity line appears) |
 | verdicts that cannot be re-checked | hash-chained ledger; `--replay` recomputes offline, tamper fails closed with row location | `python -m truerise demo --replay` |
-| score regression merged silently | ratchet only tightens; regression -> non-zero exit | `cargo test -p truerise-eval` (9 tests) |
+| score regression merged silently | ratchet only tightens; regression -> non-zero exit | `cargo test -p truerise-eval` (35 tests) |
 | a verdict that cannot be recorded | unrecorded verdicts are ERRORS, not warnings | `cargo test -p truerise-eval` (`judge_and_record`) |
 | reward hacking: the evaluated party edits the evaluator | conformance judging authority + sandbox must-fail probes (escape / oversell / residue) | `cargo test -p truerise-sandbox` |
 | dual implementations drifting apart | cross-certification gate: same fingerprint, same verdict, field-for-field | `python tools/check_dual_impl.py` |
@@ -95,8 +95,8 @@ Technical report: [`docs/report/anti_cheat_bench_v0.1.md`](docs/report/anti_chea
 
 ## Status & governance
 
-M0-M5 + P0-P3 complete (spec-mapped gates, 40 rows / 121 identifiers,
-machine-checked; 153 Rust + 40 Python tests). The wave-by-wave evidence
+M0-M5 + P0-P3 + W1-W18 + the G-series complete (spec-mapped gates, 54 rows / 210 identifiers,
+machine-checked; 240 Rust + 40 Python tests). The wave-by-wave evidence
 lives in `CHANGELOG.md`; the forward plan in `ROADMAP.md`.
 
 - Security: see `SECURITY.md`. Every executed action flows through the

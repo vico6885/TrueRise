@@ -12,8 +12,33 @@ pub const SIGNING_KEY_ENV: &str = "TRUERISE_SIGNING_KEY";
 /// The environment variable carrying the hex trusted issuer key (32 bytes).
 pub const TRUSTED_KEY_ENV: &str = "TRUERISE_TRUSTED_KEY";
 
-/// Load the signing key from the environment (hex seed).
-#[must_use]
+/// Parse `--issuer-key <hex>` out of the args (review fix P2: a dangling
+/// value or a duplicate is a USAGE error - the old inline parse silently
+/// degraded to the env fallback, swallowing the explicit argument).
+///
+/// # Errors
+/// A dangling `--issuer-key` (no value) or a duplicated flag.
+pub fn parse_issuer_key_args(args: &[String]) -> Result<Option<String>, String> {
+    let mut found: Option<String> = None;
+    let mut it = args.iter();
+    while let Some(arg) = it.next() {
+        if arg == "--issuer-key" {
+            match it.next() {
+                Some(v) if !v.starts_with("--") => {
+                    if found.is_some() {
+                        return Err("--issuer-key given twice".to_string());
+                    }
+                    found = Some(v.clone());
+                }
+                _ => return Err("--issuer-key needs a hex key".to_string()),
+            }
+        }
+    }
+    Ok(found)
+}
+
+/// Load the signing key from the environment (hex seed; exactly 64 hex or
+/// nothing - review fix P2 removed the silent truncation).
 pub fn load_signing_key() -> Option<SigningKey> {
     let hex = std::env::var(SIGNING_KEY_ENV).ok()?;
     // Review fix (P2): a seed longer than 64 hex used to be silently

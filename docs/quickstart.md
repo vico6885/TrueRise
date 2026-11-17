@@ -20,7 +20,7 @@ version, so a fresh clone builds without toolchain negotiation.
 
 ```bash
 git clone <this repository> && cd truerise
-cargo test --workspace           # 153 passed, 0 failed, zero warnings
+cargo test --workspace           # 240 passed, 0 failed, zero warnings
 python -m pip install -e python/
 python -m pytest python/tests -q # 40 passed
 ```
@@ -90,7 +90,7 @@ The Rust side proves the same property under concurrency and locates both
 content-hash and prev-hash tampering:
 
 ```bash
-cargo test -p truerise-governance --test chain_gate   # 6 tests, incl. 1000-append dual-writer competition
+cargo test -p truerise-governance --test chain_gate   # 8 tests, incl. 1000-append dual-writer competition
 ```
 
 ## 6. Run the bench

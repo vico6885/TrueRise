@@ -12,8 +12,9 @@ legitimately carry placeholder marks):
 
 - Rust: ``unimplemented!()`` / ``todo!()`` / ``panic!("not implemented")``
   / ``panic!("unimplemented")`` / ``panic!("TODO ...")``
-- Python (AST): functions and classes whose whole body is ``pass`` / ``...``
-  / a bare docstring, plus any ``raise NotImplementedError``
+- Python (AST): functions and classes whose body is empty after stripping
+  docstring/``...`` (pass-only, docstring-only, ellipsis-only), plus any
+  ``raise NotImplementedError``
 - empty source files (no meaningful content)
 
 An unannounced stub = a hit without a matching row in ``stub_registry.json``.
@@ -106,7 +107,11 @@ def scan_python(path: Path) -> list[tuple[int, str]]:
                     )
                 )
             ]
-            if body and all(isinstance(stmt, ast.Pass) for stmt in body):
+            # Review fix (P1): docstring-only and ellipsis-only bodies were
+            # FILTERED OUT of `body` and then the non-empty requirement
+            # skipped them - the two most idiomatic Python stub shapes
+            # escaped a gate whose docstring claims exactly them.
+            if not body or all(isinstance(stmt, ast.Pass) for stmt in body):
                 hits.append((node.lineno, "pass-only-body"))
     return hits
 

@@ -44,7 +44,9 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 REGISTRY = REPO / "test_bites_registry.json"
-TEST_FILE = re.compile(r"^crates/[^/]+/tests/[^/]+\.rs$|^tests/[^/]+\.rs$")
+# Review fix (P2): subdirectory test files (tests/common/mod.rs and any
+# deeper tree) were outside the floor - deleting them needed no approval.
+TEST_FILE = re.compile(r"^crates/[^/]+/tests/.+\.rs$|^tests/[^/]+\.rs$")
 
 
 def fail(msg: str) -> int:

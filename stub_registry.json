@@ -1,4 +1,23 @@
 {
   "_note": "Stub registry (G33): the ONLY way a stub marker may exist in a production tree (crates/*/src, python/src, python-native/src). Every row must name path/line/token AND a reason; a row whose stub no longer exists is itself a violation (fail-closed, no zombie exemptions). The reported stub_ratio (stub files / scanned production files) is the number that lands in certificates.",
-  "stubs": []
+  "stubs": [
+    {
+      "path": "python/src/truerise/evals/solvers.py",
+      "line": 54,
+      "token": "pass-only-body",
+      "reason": "documented placeholder solver (review C P2-7: zero consumers until the certify L0 path lands); kept as an API-shape placeholder"
+    },
+    {
+      "path": "python/src/truerise/evals/solvers.py",
+      "line": 105,
+      "token": "pass-only-body",
+      "reason": "documented placeholder solver (review C P2-7: zero consumers until the certify L0 path lands); kept as an API-shape placeholder"
+    },
+    {
+      "path": "python/src/truerise/evals/solvers.py",
+      "line": 112,
+      "token": "pass-only-body",
+      "reason": "documented placeholder solver (review C P2-7: zero consumers until the certify L0 path lands); kept as an API-shape placeholder"
+    }
+  ]
 }

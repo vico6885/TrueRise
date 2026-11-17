@@ -29,7 +29,10 @@ def _run_demo(args) -> int:
         v = demo_replay(args.out)
         _print_certificate(v)
         print(f"REPLAY    : {v.replay}")
-        return 0
+        # Review fix (P1): a MISMATCH verdict used to exit 0 - the one
+        # command whose whole contract is "recompute and compare" went green
+        # on disagreement.
+        return 1 if "MISMATCH" in v.verdict else 0
     perturb = {}
     for kv in args.perturb:
         k, _, val = kv.partition("=")

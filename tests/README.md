@@ -4,7 +4,7 @@
 
 Two suites, both run in CI, neither skippable.
 
-## Rust — 101 tests (`cargo test --workspace`)
+## Rust — 240 tests (`cargo test --workspace`)
 
 | Surface | What it pins |
 |---|---|
@@ -15,18 +15,22 @@ Two suites, both run in CI, neither skippable.
 | `truerise-cli/tests/exit_codes.rs` | the exit code carries the verdict (FAIL → 1, honest → 0, unknown command → 2) — a gate that cannot go red is a note |
 | unit tests in each crate | policy three states, approval never times into consent, deletion gates, ratchet only tightens, cross-environment comparison refused, budget singleton reconciliation, evolve never merges, hats content hash, MCP zero exposure and write-class denial, observe redaction, memory fusion determinism, compaction monotonicity, backoff classes |
 
-Per-behaviour mapping is machine-checked: `spec_map.json` binds 23 behaviour
-rows to 67 named test identifiers, and `python tools/lint_spec_map.py` fails
+Per-behaviour mapping is machine-checked: `spec_map.json` binds 54 behaviour
+rows to 210 named test identifiers, and `python tools/lint_spec_map.py` fails
 when a row loses its mapping or an identifier stops existing.
 
-## Python — 25 tests (`python -m pytest python/tests -q`)
+## Python — 40 tests (`python -m pytest python/tests -q`)
 
 | File | What it pins |
 |---|---|
 | `python/tests/test_demo_perturbation.py` | verdict flips with inputs; nothing hardcoded; offline replay equals the stored certificate |
 | `python/tests/test_evals_bench.py` | pack scale and taxonomy, generator determinism, public surface carries no sealed hint, canary leak fails closed, judge exact on both axes, honest PASS / cheater FAIL / mutator FAIL, tamper fails closed on replay, zero trials refused, majority cannot un-count losing trials, classification covers every family |
+| `python/tests/test_sdk.py` | the SDK surface: ledger tamper detection, policy three-state parity with Rust, budget semantics, external-solver isolation |
+| `python/tests/test_long_horizon.py` | the long-horizon closed-loop family (byte-reproducible, skip = failure) |
+| `python/tests/test_external_solver.py` | the external-solver protocol (process boundary, output parsing) |
 
-Markers: `timesafety` (never skipped), `unit`, `integration`, `slow`.
+Markers: none registered in `pyproject.toml` (the marker list that used to
+live here described an aspiration, not the code - removed).
 
 ## What is NOT tested here
 

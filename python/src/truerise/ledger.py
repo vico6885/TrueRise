@@ -35,9 +35,24 @@ class Row:
     legacy: bool = False
 
     def canonical(self) -> str:
-        """Canonical json of every field except ``hash`` (sorted keys, fixed separators)."""
-        d = asdict(self)
-        d.pop("hash")
+        """Canonical json - byte-compatible with the Rust HashChain.
+
+        Review fix (P1, cross-impl): the old canonical carried ``legacy``
+        and OMITTED ``hash``; the Rust chain hashes
+        ``{"detail","hash":null,"kind","prev_hash","seq","severity","ts"}``
+        (sorted, no legacy). Two implementations hashing different bytes
+        for the same spec row is the exact cross-implementation bug class
+        docs/determinism.md forbids. Aligned byte-for-byte now.
+        """
+        d = {
+            "detail": self.detail,
+            "hash": None,
+            "kind": self.kind,
+            "prev_hash": self.prev_hash,
+            "seq": self.seq,
+            "severity": self.severity,
+            "ts": self.ts,
+        }
         return json.dumps(d, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
     def content_hash(self) -> str:
@@ -45,7 +60,7 @@ class Row:
 
     def governs(self) -> bool:
         """Legacy rows are readable but excluded from governance decisions."""
-        return not self.legacy and not self.kind.startswith(LEGACY_PREFIX)
+        return not self.kind.startswith(LEGACY_PREFIX)
 
 
 @dataclass
@@ -78,6 +93,13 @@ class Ledger:
     # -- append ------------------------------------------------------------
     def append(self, kind: str, detail: dict, severity: str = "info",
                fingerprint_key: str | None = None, ts: str = "") -> Row:
+        # Review fix (P2): constructing a Ledger over an EXISTING file and
+        # appending used to write a seq-0 genesis on top of the old rows -
+        # every later load() then went red. Load-if-exists closes the
+        # footgun (the same behavior demo/run_bench already had).
+        if not self.rows and self.path is not None and self.path.exists() and self.path.stat().st_size > 0:
+            existing = Ledger.load(self.path)
+            self.rows = existing.rows
         """Append one row after full-chain verification.
 
         Idempotent replay: when ``fingerprint_key`` is given and a prior

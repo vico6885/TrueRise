@@ -88,7 +88,14 @@ def evidence_gate(records: list[EvidenceRecord], claimed_level: int) -> Evidence
             )
             continue
         counted += 1
-        capped = rec.declared_level
+        # Review fix (P2): declared_level was UNBOUNDED - a record claiming
+        # L99 sailed through as proven=99 (the L0-L6 contract dead letter).
+        capped = min(rec.declared_level, MAX_LEVEL)
+        if rec.declared_level > MAX_LEVEL:
+            downgrades.append(
+                {"source": rec.source, "reason": f"declared level exceeds the L0-L6 scale, capped at L{MAX_LEVEL}",
+                 "declared": rec.declared_level, "effective": capped}
+            )
         if rec.declared_source_class != "declared" and capped > UNDECLARED_CEILING:
             capped = UNDECLARED_CEILING
             downgrades.append(

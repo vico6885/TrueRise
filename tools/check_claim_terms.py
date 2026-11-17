@@ -130,7 +130,10 @@ def main() -> int:
 # Negation markers that make an allowlist line a boundary sentence instead of
 # a promise. The line must contain one of these for the allowlist entry to be
 # accepted (machine-checked: an allowlisted promise is not a boundary).
-NEGATION = re.compile(r"不|未|无|别|non-|not |never |no |don'?t |does not |cannot ")
+# Review fix (P2): the old list missed the most natural Chinese negation
+# (没/并非/从不) and ACCEPTED the double-negative 无不 (= everywhere/always,
+# an affirmative smuggling itself through the "无" hit).
+NEGATION = re.compile(r"不|未|没|无(?!不)|并非|从不|别|non-|not |never |no |don'?t |does not |cannot ")
 
 
 def check_promise_grades(doc: dict, surfaces: list[str], problems: list[str]) -> None:
