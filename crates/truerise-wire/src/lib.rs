@@ -6,4 +6,9 @@
 //! participates in governance decisions (mirrors the ledger's `governs()`).
 
 pub mod audit_event;
+pub mod intent_contract;
 pub use audit_event::{AuditEventV1, AuditEventV2, Severity};
+pub use intent_contract::{
+    AcceptanceItem, AcceptanceKind, Adjudication, AdjudicationDecision, ContractError,
+    IntentContractV1, IntentToken, MACHINE_CHECK_FLOOR,
+};

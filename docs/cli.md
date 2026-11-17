@@ -51,6 +51,8 @@ cargo run -p truerise-cli -- <command>
 |---|---|
 | `demo [--honest]` | the same three-scenario walkthrough, Rust edition |
 | `run --goal <text>` | a FULLY governed run: scripted model + tool execution through the sandbox port (RFC 0002) + budget (W3) + a judged verdict (W4). Three books printed; exit code carries the verdict |
+| `run --intent <contract.toml>` | run under an intent contract (G32): the contract is validated, SEALED (SHA-256 over its canonical JSON), and the seal lands on the run chain as `intent.seal`. The contract goal replaces `--goal`. A contract with no acceptance items, an unknown item kind, or fewer than 3 machine-checkable items is refused with exit `2` (it runs, but it can never certify completion) |
+| `run --intent-token <token.json>` | present the user's PER-ITEM adjudication token (one accept/reject/edit per acceptance item, bound to the sealed hash). A token that skips an item or names a different hash is refused with exit `2`. Without a token the banner and the chain row state `adjudicated: no` — the contract cannot certify completion |
 | `run --approve <tool>` | record an approval ON FILE before the run (the only transition into ask-allowed; repeatable) |
 | `run --budget <n>` | per-hat quota (rounds + tool units); over budget stops the run with exit `1` |
 | `run --baseline <path>` | ratchet baseline for the verdict (default: `baselines/run_scores.json`, walked up from cwd) |

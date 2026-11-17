@@ -1,17 +1,58 @@
 {
   "_description": "Alignment index: each entry (any key except those starting with '_') is a spec-level expectation set keyed by schema file stem. The gate compares the schema FILE CONTENT against these expectations (fields / required / enums / additionalProperties) - never mere file existence.",
   "audit_event.v2.schema": {
-    "fields": ["seq", "ts", "kind", "severity", "detail", "prev_hash", "hash"],
-    "required": ["seq", "prev_hash", "hash"],
+    "fields": [
+      "seq",
+      "ts",
+      "kind",
+      "severity",
+      "detail",
+      "prev_hash",
+      "hash"
+    ],
+    "required": [
+      "seq",
+      "prev_hash",
+      "hash"
+    ],
     "enums": {
-      "severity": ["debug", "info", "warn", "error"]
+      "severity": [
+        "debug",
+        "info",
+        "warn",
+        "error"
+      ]
     },
     "additionalProperties": false
   },
   "tool_request.v1.schema": {
-    "fields": ["truerise_tool"],
-    "required": ["truerise_tool"],
+    "fields": [
+      "truerise_tool"
+    ],
+    "required": [
+      "truerise_tool"
+    ],
+    "additionalProperties": false
+  },
+  "intent_contract.v1.schema": {
+    "fields": [
+      "contract_version",
+      "goal",
+      "acceptance_items",
+      "non_goals",
+      "exclusions",
+      "sealed_hash"
+    ],
+    "required": [
+      "contract_version",
+      "goal",
+      "acceptance_items"
+    ],
+    "enums": {
+      "contract_version": [
+        "v1"
+      ]
+    },
     "additionalProperties": false
   }
 }
-

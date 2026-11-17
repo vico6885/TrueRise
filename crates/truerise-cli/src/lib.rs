@@ -19,6 +19,7 @@ pub mod baseline;
 pub mod demo;
 pub mod evolve_cmd;
 pub mod identity;
+pub mod intent_cmd;
 pub mod interactive;
 pub mod mcp_serve;
 pub mod provider_anthropic;
@@ -312,12 +313,32 @@ pub fn cli_main(args: Vec<String>) -> i32 {
             i32::from(!demo::run_demo(honest))
         }
         "run" => {
-            let goal = args
+            let mut goal = args
                 .iter()
                 .position(|a| a == "--goal")
                 .and_then(|i| args.get(i + 1))
                 .cloned()
                 .unwrap_or_else(|| "(no goal given)".into());
+            // G32: an intent contract, when given, is loaded, validated,
+            // SEALED and (optionally) adjudicated BEFORE the run; a refused
+            // contract exits 2 - the goal never proceeds unanchored.
+            let intent_seal = match intent_cmd::load_intent(&args) {
+                Ok(seal) => seal,
+                Err(usage) => {
+                    eprintln!("usage error: {usage}");
+                    return 2;
+                }
+            };
+            if let Some(seal) = &intent_seal {
+                goal = seal.goal.clone();
+                intent_cmd::print_intent_banner(seal);
+                let dir = std::env::temp_dir().join("truerise_cli_run");
+                if let Err(e) = intent_cmd::record_intent_on_chain(&dir, seal) {
+                    eprintln!("run: {e}");
+                    return 1;
+                }
+            }
+
             // Repeated --approve <tool>: records approvals on file BEFORE the
             // run (the only transition into ask-allowed; RFC 0002).
             let mut approvals: Vec<String> = Vec::new();

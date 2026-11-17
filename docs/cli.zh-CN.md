@@ -48,6 +48,8 @@ cargo run -p truerise-cli -- <命令>
 |---|---|
 | `demo [--honest]` | 同一套三场景走查的 Rust 版 |
 | `run --goal <文本>` | 一次完全受治理的运行：脚本化模型 + 经沙箱端口的工具执行（RFC 0002）+ 预算（W3）+ 由判定权威出具的判词（W4）。打印三账；退出码携带判词 |
+| `run --intent <contract.toml>` | 以意图合同运行（G32）：合同先验证、再**封盘**（SHA-256 覆盖其 canonical JSON），封盘哈希以 `intent.seal` 行落链。合同目标取代 `--goal`。无验收项、未知条目类别、机检项少于 3 的合同以 `2` 退出拒绝（可运行，但永远不能作为完成依据） |
+| `run --intent-token <token.json>` | 提交用户的**逐项裁定**令牌（每个验收项一条 accept/reject/edit，绑定封盘哈希）。跳过任一项或哈希不符的令牌以 `2` 退出拒绝。无令牌时横幅与链行如实标注 `adjudicated: no`——该合同不能作为完成依据 |
 | `run --approve <tool>` | 在 run 之前把批准落盘（进入 ask-allowed 的唯一路径；可重复） |
 | `run --budget <n>` | 每帽配额（轮次 + 工具单位）；超预算停止运行并以 `1` 退出 |
 | `run --baseline <path>` | 判词用的棘轮基线（默认 `baselines/run_scores.json`，自 cwd 向上查找） |

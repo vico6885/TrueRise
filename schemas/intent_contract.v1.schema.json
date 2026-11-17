@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "intent_contract.v1",
+  "title": "TrueRise intent contract (G32): sealed per-item acceptance ledger",
+  "type": "object",
+  "description": "The structured upgrade of run --goal: a goal sentence, acceptance items (each EXPLICITLY machine or human), non-goals, exclusions, and the SHA-256 seal over the canonical JSON of the bare contract. Any post-hoc edit is a different contract; a token that skips an item is not a confirmation.",
+  "properties": {
+    "contract_version": {
+      "description": "wire version; only v1 exists",
+      "enum": [
+        "v1"
+      ]
+    },
+    "goal": {
+      "type": "string",
+      "description": "the goal sentence, verbatim"
+    },
+    "acceptance_items": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "per-item finish line; every item carries id/text/kind (kind has no default)"
+    },
+    "non_goals": {
+      "type": "array",
+      "description": "explicit non-goals"
+    },
+    "exclusions": {
+      "type": "array",
+      "description": "explicit exclusions"
+    },
+    "sealed_hash": {
+      "type": "string",
+      "description": "SHA-256 hex over the canonical JSON of the bare contract"
+    }
+  },
+  "required": [
+    "contract_version",
+    "goal",
+    "acceptance_items"
+  ],
+  "additionalProperties": false
+}
