@@ -53,3 +53,9 @@ so a boundary sentence must say "does not promise", never "promises".
    verification instead.
 4. Its own integrity. The gates' bite is itself tested (mutation drills);
    an untested gate is treated as nonexistent, not as trusted.
+5. Race-free intent verification. The mid-run intent check re-reads the
+   contract file AFTER the run: a window remains where the file is edited
+   and restored DURING a slow provider call (TOCTOU). The seal-on-chain
+   row bounds the damage (any post-run divergence still surfaces); closing
+   the window fully needs an OS-level file lock on the contract, queued for
+   the write-gate batch.

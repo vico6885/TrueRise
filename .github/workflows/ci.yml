@@ -137,7 +137,14 @@ jobs:
       - run: python3 tools/check_leakguard_skeleton.py
       - run: python3 tools/lint_dco.py
       - run: python3 tools/check_stubs.py
-      - run: python3 tools/check_test_bites.py
+      # --floor against the merge base: assertion/test counts must not DROP
+      # and test-file deletions need an approved reason (review C-P1-3: the
+      # mode was dead-wired - selftest alone never enforced the floor).
+      - name: test-bite floor vs merge base
+        run: |
+          BASE="${{ github.event.pull_request.base.sha }}"
+          if [ -z "$BASE" ]; then BASE=$(git rev-parse HEAD~1); fi
+          python3 tools/check_test_bites.py --floor "$BASE"
 
   timesafety:
     runs-on: ubuntu-latest
@@ -173,16 +180,23 @@ jobs:
     steps:
       - # actions/checkout v4.2.2, SHA-pinned (W18: third-party tags can be re-pointed)
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - run: cargo bench --workspace -- --save-baseline main
-      # 20% regression comparison activates once the `main` baseline exists
-      # (first default-branch run saves it; later runs compare with critcmp).
+      # Review fix (C-P1-4): the job compared a freshly-saved baseline with
+      # ITSELF (critcmp main main) - it could never fail. The baseline is
+      # now persisted via actions/cache: a run SAVES its own `pr` baseline
+      # and compares against the cached `main` baseline from previous runs.
+      - uses: actions/cache@v4
+        with:
+          path: target/criterion
+          key: criterion-${{ github.ref_name }}
+          restore-keys: criterion-main
+      - run: cargo bench --workspace -- --save-baseline pr
       - name: baseline-backed regression check
         run: |
-          if [ -d target/criterion ]; then
-            cargo install critcmp --locked
-            critcmp main main --threshold 20 || exit 1
+          cargo install critcmp --locked
+          if critcmp main pr >/dev/null 2>&1; then
+            critcmp main pr --threshold 20 || exit 1
           else
-            echo "no saved baseline yet - this run SAVED one (compare activates next run)"
+            echo "no cached main baseline yet - this run established pr; the comparison activates once main is cached"
           fi
 
   sbom:
