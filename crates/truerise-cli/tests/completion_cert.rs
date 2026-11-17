@@ -78,6 +78,7 @@ fn binding<'a>(
     truerise_cli::completion_cert::CompletionBinding {
         intent_path: contract_path.to_path_buf(),
         report_path: report_path.map(PathBuf::from),
+        token_path: None,
     }
 }
 
@@ -217,4 +218,16 @@ fn replay_verifies_the_completion_ledger() {
         1,
         "a tampered ledger does not recompute"
     );
+}
+
+fn token_json(seal: &str, h0_decision: &str) -> String {
+    let decisions = [
+        r#"{"item_id":"m0","decision":"accept"}"#,
+        r#"{"item_id":"m1","decision":"accept"}"#,
+        r#"{"item_id":"m2","decision":"accept"}"#,
+    ];
+    format!(
+        r#"{{"contract_sealed_hash":"{seal}","decisions":[{},{{"item_id":"h0","decision":"{h0_decision}"}}]}}"#,
+        decisions.join(",")
+    )
 }

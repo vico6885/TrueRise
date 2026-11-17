@@ -33,13 +33,17 @@ impl Drop for ChainGuard {
 }
 
 /// Cross-BINARY lock around the shared run chain: a create_new spin-lock on
-/// a well-known file next to the chain, with a 60s stale takeover so a
-/// panicking holder cannot wedge CI forever.
+/// a well-known file next to the chain. Review fix (flake root cure): the
+/// deadline branch used to DELETE the live lock unconditionally - after 60s
+/// every waiter became a remover and two tests could both "hold" the lock
+/// (the revolving-door race). Now: only an AGE-STALE lock (>60s, i.e. a
+/// crashed holder) is taken over; a live contention past the deadline
+/// panics fail-fast instead of dismantling someone else's lock.
 pub fn chain_guard(tag: &str) -> ChainGuard {
     let dir = std::env::temp_dir().join("truerise_cli_run");
     std::fs::create_dir_all(&dir).expect("chain dir");
     let path = dir.join(".test_chain_lock");
-    let deadline = Instant::now() + Duration::from_secs(60);
+    let deadline = Instant::now() + Duration::from_secs(120);
     loop {
         match std::fs::OpenOptions::new()
             .write(true)
@@ -48,20 +52,23 @@ pub fn chain_guard(tag: &str) -> ChainGuard {
         {
             Ok(_) => return ChainGuard { path },
             Err(_) => {
-                let stale = std::fs::metadata(&path)
+                let age_over_60s = std::fs::metadata(&path)
                     .ok()
                     .and_then(|m| m.modified().ok())
                     .and_then(|m| m.elapsed().ok())
                     .map(|e| e.as_secs() > 60)
                     .unwrap_or(false);
-                if stale || Instant::now() > deadline {
-                    // stale holder (crashed test) or a wedged run: force
-                    // takeover - create_new is atomic, so only one racer wins
+                if age_over_60s {
+                    // a crashed holder's lock: takeover is safe
                     let _ = std::fs::remove_file(&path);
                     continue;
                 }
+                if Instant::now() > deadline {
+                    panic!(
+                        "chain lock contention past 120s (holder is alive; refusing to dismantle it) - test: {tag}"
+                    );
+                }
                 std::thread::sleep(Duration::from_millis(25));
-                let _ = tag; // named for diagnostics in stack traces
             }
         }
     }

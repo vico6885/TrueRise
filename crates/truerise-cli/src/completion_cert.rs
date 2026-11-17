@@ -22,6 +22,10 @@ pub struct CompletionBinding {
     pub intent_path: PathBuf,
     /// The completion report file (required whenever intent is given).
     pub report_path: Option<PathBuf>,
+    /// Review fix (P0): the per-item adjudication token. Human-judged items
+    /// marked `done` REQUIRE an Accept decision here; a token carrying any
+    /// Reject/Edit refuses the whole binding (G32 red line).
+    pub token_path: Option<PathBuf>,
 }
 
 /// Parse `--intent <toml>` / `--completion <json>` out of evolve args.
@@ -29,6 +33,7 @@ pub struct CompletionBinding {
 pub fn parse_completion_args(args: &[String]) -> Result<Option<CompletionBinding>, String> {
     let mut intent: Option<String> = None;
     let mut report: Option<String> = None;
+    let mut token: Option<String> = None;
     let mut idx = 0;
     while idx < args.len() {
         let arg = args[idx].as_str();
@@ -42,6 +47,17 @@ pub fn parse_completion_args(args: &[String]) -> Result<Option<CompletionBinding
                     idx += 2;
                 }
                 _ => return Err("--intent needs a path to a contract TOML".to_string()),
+            }
+        } else if arg == "--intent-token" {
+            match args.get(idx + 1) {
+                Some(p) if !p.starts_with("--") => {
+                    if token.is_some() {
+                        return Err("--intent-token given twice".to_string());
+                    }
+                    token = Some(p.clone());
+                    idx += 2;
+                }
+                _ => return Err("--intent-token needs a path to a token JSON".to_string()),
             }
         } else if arg == "--completion" {
             match args.get(idx + 1) {
@@ -62,6 +78,7 @@ pub fn parse_completion_args(args: &[String]) -> Result<Option<CompletionBinding
         Some(intent_path) => Ok(Some(CompletionBinding {
             intent_path: PathBuf::from(intent_path),
             report_path: report.map(PathBuf::from),
+            token_path: token.map(PathBuf::from),
         })),
         None => {
             if report.is_some() {
@@ -103,6 +120,50 @@ pub fn validate_binding(binding: &CompletionBinding) -> Result<serde_json::Value
     report
         .validate_against(&contract)
         .map_err(|e| format!("completion ledger refused: {e}"))?;
+    // G32 red line (review P0): the adjudication token gates HUMAN items.
+    let accepted_human: Vec<String> = match binding.token_path.as_ref() {
+        Some(token_path) => {
+            let token_text = std::fs::read_to_string(token_path)
+                .map_err(|e| format!("cannot read intent token {}: {e}", token_path.display()))?;
+            let token: truerise_wire::IntentToken = serde_json::from_str(&token_text)
+                .map_err(|e| format!("intent token is not valid JSON: {e}"))?;
+            token
+                .validate_against(&contract)
+                .map_err(|e| format!("intent token refused: {e}"))?;
+            if token
+                .decisions
+                .iter()
+                .any(|d| d.decision != truerise_wire::AdjudicationDecision::Accept)
+            {
+                return Err(
+                    "a contract with reject/edit decisions in its token cannot certify completion - redraft and reseal"
+                        .to_string(),
+                );
+            }
+            token
+                .decisions
+                .iter()
+                .map(|d| d.item_id.clone())
+                .collect()
+        }
+        None => Vec::new(),
+    };
+    for item in &contract.acceptance_items {
+        if item.kind != truerise_wire::AcceptanceKind::Human {
+            continue;
+        }
+        let Some(entry) = report.entries.iter().find(|e| e.item_id == item.id) else {
+            continue; // closure already refused missing entries
+        };
+        if let truerise_wire::CompletionStatus::Done { .. } = entry.status {
+            if !accepted_human.iter().any(|acc| acc == &item.id) {
+                return Err(format!(
+                    "human-judged item {} is marked done WITHOUT a user token - a human item is done+token or not_verified, never silently done",
+                    item.id
+                ));
+            }
+        }
+    }
     let items: Vec<serde_json::Value> = contract
         .acceptance_items
         .iter()

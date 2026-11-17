@@ -118,8 +118,17 @@ pub fn check(claim: &DerivableClaim, artifact: &Value) -> DerivableVerdict {
                     }
                 }
             }
+            // Review fix (P2): integer claims compare exactly; floats
+            // compare exactly per the module contract - an absolute EPSILON
+            // is a 1.0-scale ULP, wrong both for huge sums (false
+            // Contradicted) and for accumulated rounding (false pass).
+            let integer_match = claim
+                .asserted
+                .as_i64()
+                .map(|asserted| total.fract() == 0.0 && total == asserted as f64)
+                .unwrap_or(false);
             match claim.asserted.as_f64() {
-                Some(asserted) if (total - asserted).abs() < f64::EPSILON => {
+                Some(asserted) if integer_match || total == asserted => {
                     DerivableVerdict::Supported
                 }
                 Some(asserted) => DerivableVerdict::Contradicted {
@@ -142,7 +151,7 @@ pub fn check(claim: &DerivableClaim, artifact: &Value) -> DerivableVerdict {
                 (Some(a), Some(b)) => {
                     let diff = b - a;
                     match claim.asserted.as_f64() {
-                        Some(asserted) if (diff - asserted).abs() < f64::EPSILON => {
+                        Some(asserted) if diff == asserted => {
                             DerivableVerdict::Supported
                         }
                         Some(asserted) => DerivableVerdict::Contradicted {

@@ -199,3 +199,40 @@ kind = "machine"
     ]);
     assert_eq!(code, 0);
 }
+
+#[test]
+fn giveup_flag_without_value_is_a_usage_error() {
+    // Review fix (P0): `--intent` with no value used to silently skip the
+    // whole contract binding and record an UNANCHORED claim. Refusal now.
+    let dir = temp_dir("no_value");
+    let claim_path = dir.join("claim.json");
+    std::fs::write(&claim_path, claim_json("infeasible_within_budget", Some(GOOD_LEDGER)))
+        .expect("write claim");
+    let code = cli_main(vec![
+        "truerise".into(),
+        "giveup".into(),
+        "--ledger".into(),
+        claim_path.to_string_lossy().into(),
+        "--intent".into(), // value deliberately missing
+    ]);
+    assert_eq!(code, 2, "a dangling --intent is a usage error, not a fallback");
+}
+
+#[test]
+fn giveup_duplicated_flag_is_a_usage_error() {
+    let dir = temp_dir("dup");
+    let claim_path = dir.join("claim.json");
+    std::fs::write(&claim_path, claim_json("infeasible_within_budget", Some(GOOD_LEDGER)))
+        .expect("write claim");
+    let code = cli_main(vec![
+        "truerise".into(),
+        "giveup".into(),
+        "--ledger".into(),
+        claim_path.to_string_lossy().into(),
+        "--intent".into(),
+        dir.join("a.toml").to_string_lossy().into(),
+        "--intent".into(),
+        dir.join("b.toml").to_string_lossy().into(),
+    ]);
+    assert_eq!(code, 2, "duplicate flags are refused, never silently overridden");
+}

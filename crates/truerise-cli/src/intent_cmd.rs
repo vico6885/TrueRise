@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 use serde_json::json;
 use truerise_governance::HashChain;
 use truerise_wire::Severity;
-use truerise_wire::{IntentContractV1, IntentToken};
+use truerise_wire::{AdjudicationDecision, IntentContractV1, IntentToken};
 
 /// The outcome of a successful intent load: everything the run banner and
 /// the chain row need (the sealed contract itself stays on disk).
@@ -25,6 +25,10 @@ pub struct IntentSeal {
     pub sealed_hash: String,
     /// Whether a valid per-item adjudication token was presented.
     pub adjudicated: bool,
+    /// Review fix (P0): did the token contain any Reject/Edit decision? A
+    /// rejected contract is NOT a completion basis (G32 red line) - the run
+    /// proceeds honestly, but no certificate may ever cite it.
+    pub rejected: bool,
     /// Machine-checkable item count (the completion floor applies to this).
     pub machine_items: u32,
     /// Total acceptance items.
@@ -57,6 +61,7 @@ pub fn load_intent(args: &[String]) -> Result<Option<IntentSeal>, String> {
         .map_err(|e| format!("intent contract refused: {e}"))?
         .to_string();
     let mut adjudicated = false;
+    let mut rejected = false;
     if let Some(token_path) = token_path {
         let token_text = std::fs::read_to_string(&token_path)
             .map_err(|e| format!("cannot read intent token {token_path}: {e}"))?;
@@ -66,12 +71,17 @@ pub fn load_intent(args: &[String]) -> Result<Option<IntentSeal>, String> {
             .validate_against(&contract)
             .map_err(|e| format!("intent token refused: {e}"))?;
         adjudicated = true;
+        rejected = token
+            .decisions
+            .iter()
+            .any(|d| d.decision != AdjudicationDecision::Accept);
     }
     Ok(Some(IntentSeal {
         goal: contract.goal.clone(),
         path: PathBuf::from(path.clone()),
         sealed_hash,
         adjudicated,
+        rejected,
         machine_items: contract.machine_item_count(),
         items_total: contract.acceptance_items.len(),
     }))
@@ -89,6 +99,7 @@ pub fn record_intent_on_chain(dir: &Path, seal: &IntentSeal) -> Result<(), Strin
             &json!({
                 "sealed_hash": seal.sealed_hash,
                 "adjudicated": seal.adjudicated,
+                "rejected": seal.rejected,
                 "machine_items": seal.machine_items,
                 "items_total": seal.items_total,
             }),
@@ -108,6 +119,11 @@ pub fn print_intent_banner(seal: &IntentSeal) {
         seal.items_total,
         if seal.adjudicated { "yes" } else { "no - the contract cannot certify completion until a per-item token is presented" }
     );
+    if seal.rejected {
+        println!(
+            "  note: the token contains reject/edit decisions - this contract CANNOT certify completion (redraft and reseal)"
+        );
+    }
     if seal.machine_items < truerise_wire::MACHINE_CHECK_FLOOR {
         println!(
             "  note: {} machine-checkable items is under the floor of {} - no completion claim may cite this contract",

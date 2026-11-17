@@ -129,9 +129,20 @@ pub fn mcnemar_exact(a: &ArmResult, b: &ArmResult) -> Result<Significance, Compa
     // k / 2^n <= 1/20  <=>  20k <= 2^n.
     let smaller = b_count.min(c_count);
     let n = discordant;
+    // Review fix (P1): u128 arithmetic overflows at large discordant counts
+    // (debug: panic; release: silent wrap -> arbitrary verdict). Guard: for
+    // n >= 128, 2^n does not fit u128, so p can never be <= 1/20 - the
+    // honest verdict is NotSignificant, computed BEFORE any multiply.
+    if n >= 128 {
+        return Ok(Significance::NotSignificant {
+            discordant: n,
+            p_numerator: u128::MAX,
+            p_pow2: n,
+        });
+    }
     let k = 2u128.saturating_mul(sum_binomial_upto(n, smaller));
-    let two_pow_n = 1u128.checked_shl(n).unwrap_or(u128::MAX);
-    if u128::from(20u32) * k <= two_pow_n {
+    let two_pow_n = 1u128 << n;
+    if u128::from(20u32).checked_mul(k).map(|lhs| lhs <= two_pow_n) == Some(true) {
         Ok(Significance::Significant {
             a_better: b_count > c_count,
             discordant,
@@ -147,14 +158,23 @@ pub fn mcnemar_exact(a: &ArmResult, b: &ArmResult) -> Result<Significance, Compa
     }
 }
 
-/// sum_{i=0..=m} C(n, i) in exact integer arithmetic (Pascal's rule; u128
-/// covers n far beyond any honest paired trial count).
+/// sum_{i=0..=m} C(n, i) in exact integer arithmetic (Pascal's rule);
+/// saturates at u128::MAX when the recursion would overflow (the caller's
+/// n>=128 guard makes that path unreachable in practice, checked anyway).
 fn sum_binomial_upto(n: u32, m: u32) -> u128 {
     let mut row: u128 = 1; // C(n, 0)
     let mut total: u128 = 1;
     for i in 0..m {
-        row = row * u128::from(n - i) / u128::from(i + 1);
-        total += row;
+        // Review fix (P1): checked arithmetic - saturation is the caller's
+        // overflow signal, never a debug panic or a release wrap.
+        let next = row
+            .checked_mul(u128::from(n - i))
+            .and_then(|v| v.checked_div(u128::from(i + 1)));
+        let Some(next) = next else {
+            return u128::MAX;
+        };
+        row = next;
+        total = total.saturating_add(row);
     }
     total
 }

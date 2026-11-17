@@ -15,3 +15,6 @@ pub use judge::{AgreementStats, Verdict, judge, judge_agreement, judge_and_recor
 pub use ratchet::{Ratchet, RatchetViolation};
 pub use run_verdict::{EvalError, RunFacts, RunVerdict, judge_run, judge_tasks};
 pub use significance::{ArmResult, CompareError, DISCORDANT_FLOOR, Significance, mcnemar_exact};
+pub use derivable::{check_all, DerivableClaim, DerivableVerdict};
+pub use interception::{mode_for, Appeal, Interception, InterceptionLedger, Mode, Outcome};
+pub use stability::{certificate_row as stability_row, check as check_stability, Resample, Stability};

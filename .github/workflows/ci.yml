@@ -136,6 +136,8 @@ jobs:
       - run: python3 tools/lint_spec_map.py
       - run: python3 tools/check_leakguard_skeleton.py
       - run: python3 tools/lint_dco.py
+      - run: python3 tools/check_stubs.py
+      - run: python3 tools/check_test_bites.py
 
   timesafety:
     runs-on: ubuntu-latest

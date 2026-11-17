@@ -35,13 +35,14 @@ impl Resample {
         self.outcomes.len()
     }
 
-    /// Instability as per-mille integers (the float rule): discordant
-    /// pairs / total pairs * 1000. Exact integer arithmetic throughout.
+    /// Discordant pair count (the RAW disagreement signal). Review fix
+    /// (P1): the stability verdict keys off THIS, not the per-mille ratio
+    /// (integer division rounded a single dissent among 46 trials down to
+    /// zero and read it as Stable).
     #[must_use]
-    pub fn instability_per_mille(&self) -> u64 {
+    pub fn discordant_pairs(&self) -> u64 {
         let n = self.outcomes.len();
-        let total_pairs = n * (n - 1) / 2;
-        let mut discordant = 0usize;
+        let mut discordant = 0u64;
         for i in 0..n {
             for j in (i + 1)..n {
                 if self.outcomes[i] != self.outcomes[j] {
@@ -49,11 +50,25 @@ impl Resample {
                 }
             }
         }
-        // checked division: no manual zero guard, no panic path
-        u64::try_from(discordant * 1000)
+        discordant
+    }
+
+    /// Instability as per-mille integers (the float rule): discordant
+    /// pairs / total pairs * 1000. REPORTING ONLY - never gates.
+    #[must_use]
+    pub fn instability_per_mille(&self) -> u64 {
+        let n = self.outcomes.len();
+        let total_pairs = n * (n - 1) / 2;
+        if total_pairs == 0 {
+            return 0;
+        }
+        let scaled = usize::try_from(self.discordant_pairs())
+            .unwrap_or(usize::MAX)
+            .saturating_mul(1000);
+        u64::try_from(scaled)
             .ok()
-            .and_then(|n| n.checked_div(u64::try_from(total_pairs).ok()?))
-            .unwrap_or(0)
+            .and_then(|v| v.checked_div(u64::try_from(total_pairs).ok()?))
+            .unwrap_or(u64::MAX) // saturation reports MAX, never a fake zero
     }
 }
 
@@ -84,7 +99,10 @@ impl Stability {
 /// Check one resampled conclusion.
 #[must_use]
 pub fn check(resample: &Resample) -> Stability {
-    if resample.instability_per_mille() == 0 {
+    // Review fix (P1): ANY discordant pair makes the conclusion unsteady -
+    // the per-mille ratio is reporting only; its truncation must never
+    // downgrade a real dissent into Stability.
+    if resample.discordant_pairs() == 0 {
         Stability::Stable
     } else {
         Stability::Unstable {
@@ -152,6 +170,17 @@ mod tests {
             "one run cannot speak about stability"
         );
         assert!(Resample::new(vec![]).is_none());
+    }
+
+    #[test]
+    fn one_dissent_among_many_trials_is_never_stable() {
+        // Review fix (P1): 1 discordant pair among 1035 (n=46) truncated
+        // to 0 per-mille and read as Stable - a real dissent, now caught.
+        let mut outcomes = vec![true; 45];
+        outcomes.push(false);
+        let resample = Resample::new(outcomes).expect("46 trials");
+        assert_eq!(resample.discordant_pairs(), 45);
+        assert!(check(&resample).blocks_promotion());
     }
 
     #[test]

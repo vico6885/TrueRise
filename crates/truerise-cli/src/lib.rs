@@ -74,7 +74,10 @@ pub fn run_commandline(
     hat_toml: Option<&str>,
     provider: Option<&ProviderSpec>,
 ) -> i32 {
-    let dir = std::env::temp_dir().join("truerise_cli_run");
+    // Review fix (flake root cure): the run chain dir is THE shared dir
+    // (env-overridable) - the intent.seal row and the run's own books must
+    // land on the SAME chain, never on two divergent ledgers.
+    let dir = intent_cmd::run_chain_dir();
     std::fs::create_dir_all(&dir).ok();
     let tooling = match RunTooling::new(&dir) {
         Ok(t) => t,
@@ -282,7 +285,7 @@ pub fn run_books(
     goal: &str,
     rounds: usize,
 ) -> Result<truerise_core::RunBooks, truerise_core::LoopError> {
-    let dir = std::env::temp_dir().join("truerise_cli_run");
+    let dir = intent_cmd::run_chain_dir();
     let router = ScriptRouter::plain("scripted");
     run_books_in(RunParams {
         chain_dir: &dir,

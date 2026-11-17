@@ -87,22 +87,30 @@ pub fn record_giveup(
 /// The `giveup` subcommand handler (arg parsing lives here so lib.rs stays
 /// under the file-length floor).
 pub fn handle_command(args: &[String]) -> i32 {
-    let ledger = args
-        .iter()
-        .position(|a| a == "--ledger")
-        .and_then(|i| args.get(i + 1))
-        .map(PathBuf::from);
+    // Review fix: a missing or duplicated value must be a USAGE error, not
+    // a silent fallback - `--intent` with no value used to skip the whole
+    // contract binding and record an unanchored claim.
+    let ledger = match flag_value(args, "--ledger") {
+        Ok(v) => v,
+        Err(usage) => {
+            eprintln!("usage error: {usage}
+usage: truerise giveup --ledger <claim.json> [--intent <contract.toml>]");
+            return 2;
+        }
+    };
     let Some(ledger) = ledger else {
         eprintln!("usage: truerise giveup --ledger <claim.json> [--intent <contract.toml>]");
         return 2;
     };
-    let intent = args
-        .iter()
-        .position(|a| a == "--intent")
-        .and_then(|i| args.get(i + 1))
-        .map(PathBuf::from);
+    let intent = match flag_value(args, "--intent") {
+        Ok(v) => v.map(PathBuf::from),
+        Err(usage) => {
+            eprintln!("usage error: {usage}");
+            return 2;
+        }
+    };
     let dir = run_chain_dir();
-    match record_giveup(&dir, &ledger, intent.as_deref()) {
+    match record_giveup(&dir, Path::new(&ledger), intent.as_deref().map(Path::new)) {
         Ok(line) => {
             println!("{line}");
             0
@@ -112,6 +120,30 @@ pub fn handle_command(args: &[String]) -> i32 {
             2
         }
     }
+}
+
+/// Strict flag parsing: value required, `--`-prefixed values rejected,
+/// duplicates rejected (same semantics as intent_cmd::extract_flag).
+fn flag_value(args: &[String], flag: &str) -> Result<Option<String>, String> {
+    let mut found: Option<String> = None;
+    let mut idx = 0;
+    while idx < args.len() {
+        if args[idx] == flag {
+            match args.get(idx + 1) {
+                Some(p) if !p.starts_with("--") => {
+                    if found.is_some() {
+                        return Err(format!("{flag} given twice"));
+                    }
+                    found = Some(p.clone());
+                    idx += 2;
+                }
+                _ => return Err(format!("{flag} needs a value")),
+            }
+        } else {
+            idx += 1;
+        }
+    }
+    Ok(found)
 }
 
 /// The shared run-chain dir (overridable for tests via TRUERISE_RUN_DIR).
