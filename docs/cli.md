@@ -60,6 +60,7 @@ cargo run -p truerise-cli -- <command>
 | `run --provider openai\|anthropic --model <id>` | a REAL model behind the same governed port (budget/policy/verdict unchanged). `--provider-url <u>` targets local vLLM/Ollama/proxies. Keys env-only (`TRUERISE_API_KEY` / `ANTHROPIC_API_KEY`); a missing key fails closed. The run PINS to the model id, and the provider's own response echo backs the pinning check |
 | `evolve --demo --approve <hash>` | one RSI generation (RFC 0003): propose -> hash-bound approval -> apply -> re-evaluate -> ratchet -> certificate; `--inject-regression` demonstrates the rollback; `--tape <path>` records every model call |
 | `evolve --replay --cert <path>` | recompute a generation certificate OFFLINE (exit 0 = identical; a tampered cert is refused) |
+| `verify --bundle <path> --intent <contract.toml>` | the self-service acceptance package (G39): one expected observation per machine-checkable contract item, coverage SEALED from the contract (skipping one is a refusal). Three buckets - PASS / FAIL / NOT-VERIFIED (explicit routing, never silence); exit `0` only when everything passed. Runs on YOUR machine without this repo |
 | `verify --cert <path> [--issuer-key <hex>]` | verify a certificate signature (ed25519); an unsigned cert reports `unverified issuer` and exits `1` — never silent trust |
 | `mcp --serve [--chain <dir>]` | the zero-exposure MCP server over stdio; every call lands on the chain |
 | `repl` | interactive shell; slash commands `/demo`, `/audit`, `/quit`, `/exit` |

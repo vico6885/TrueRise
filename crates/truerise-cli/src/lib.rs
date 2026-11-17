@@ -28,6 +28,7 @@ pub mod provider_common;
 pub mod provider_openai;
 pub mod router_assembly;
 pub mod tape;
+pub mod verify_cmd;
 
 pub use assembly::{GovernedPolicy, RunTooling};
 pub use baseline::{find_default_baseline, grade_exit};
@@ -493,6 +494,34 @@ pub fn cli_main(args: Vec<String>) -> i32 {
         "verify" => {
             // `verify --cert <path> [--issuer-key <hex>]` (W10): exit 0
             // verified / 1 invalid or unverified (never silent trust).
+            // `verify --bundle <path> --intent <toml>` (G39): the self-service
+            // acceptance package - exit 0 only when EVERY observation passed.
+            let bundle = args
+                .iter()
+                .position(|a| a == "--bundle")
+                .and_then(|i| args.get(i + 1))
+                .map(PathBuf::from);
+            let intent = args
+                .iter()
+                .position(|a| a == "--intent")
+                .and_then(|i| args.get(i + 1))
+                .map(PathBuf::from);
+            if let Some(bundle) = bundle {
+                let Some(intent) = intent else {
+                    eprintln!("usage: truerise verify --bundle <path> --intent <contract.toml>");
+                    return 2;
+                };
+                return match verify_cmd::run_bundle(&bundle, &intent) {
+                    Ok(report) => {
+                        println!("{}", report.render());
+                        report.exit_code()
+                    }
+                    Err(usage) => {
+                        eprintln!("usage error: {usage}");
+                        2
+                    }
+                };
+            }
             let cert = args
                 .iter()
                 .position(|a| a == "--cert")

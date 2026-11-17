@@ -6,9 +6,11 @@
 //! participates in governance decisions (mirrors the ledger's `governs()`).
 
 pub mod audit_event;
+pub mod bundle;
 pub mod completion;
 pub mod intent_contract;
 pub use audit_event::{AuditEventV1, AuditEventV2, Severity};
+pub use bundle::{BundleError, BundleObservation, ObservationKind, VerifyBundleV1};
 pub use completion::{CompletionEntry, CompletionReportV1, CompletionStatus, NotDoneReason};
 pub use intent_contract::{
     AcceptanceItem, AcceptanceKind, Adjudication, AdjudicationDecision, ContractError,

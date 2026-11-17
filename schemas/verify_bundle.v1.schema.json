@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "verify_bundle.v1",
+  "title": "TrueRise self-service verification bundle (G39)",
+  "type": "object",
+  "description": "One expected observation per machine-checkable acceptance item, bound to the sealed intent contract hash. Coverage is sealed from the contract (skipping a machine item is a refusal); an inexecutable observation routes to the not-verified bucket, never silence. Runs on the user's machine without this repository.",
+  "properties": {
+    "contract_sealed_hash": {
+      "type": "string",
+      "description": "the sealed intent contract hash this bundle verifies"
+    },
+    "observations": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "exactly one artifact_field/file_exists observation per machine item"
+    }
+  },
+  "required": [
+    "contract_sealed_hash",
+    "observations"
+  ],
+  "additionalProperties": false
+}

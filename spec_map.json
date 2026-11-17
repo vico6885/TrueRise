@@ -248,6 +248,18 @@
       "stale_stub_allowlist_row_is_refused",
       "python_pass_only_body_is_flagged",
       "stub_ratio_is_reported"
+    ],
+    "自助验收包": [
+      "bundle_expected_observations_sealed_from_contract_items",
+      "bundle_skipping_a_machine_item_is_refused",
+      "bundle_human_items_are_never_observations",
+      "bundle_bound_to_another_contract_is_refused",
+      "bundle_duplicate_observation_is_refused",
+      "unverifiable_item_routes_to_not_verified",
+      "bundle_fail_is_a_fail_not_a_skip",
+      "bundle_runs_without_repo_checkout",
+      "bundle_passes_when_all_observations_match",
+      "bundle_rejects_wrong_contract_hash"
     ]
   }
 }

@@ -65,5 +65,16 @@
       "entries"
     ],
     "additionalProperties": false
+  },
+  "verify_bundle.v1.schema": {
+    "fields": [
+      "contract_sealed_hash",
+      "observations"
+    ],
+    "required": [
+      "contract_sealed_hash",
+      "observations"
+    ],
+    "additionalProperties": false
   }
 }
