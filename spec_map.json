@@ -206,6 +206,16 @@
       "anthropic_adapter_speaks_the_messages_shape",
       "provider_error_classification_matches_the_retry_contract",
       "run_with_provider_routes_through_the_real_adapter"
+    ],
+    "承诺分级": [
+      "c_grade_promise_phrase_never_appears_in_guarded_surfaces",
+      "promise_phrase_allowlist_line_must_carry_negation",
+      "promise_grade_rows_are_unique_per_package_aspect",
+      "promise_grade_unknown_grade_is_refused",
+      "promise_package_ids_form_a_complete_sequence",
+      "claim_gate_red_means_the_word_leaves_the_title",
+      "claim_terms_map_term_to_command_test_artifact",
+      "docs/limits.md 双语对：自指边界 + 承诺分级 + 永不承诺事项（宣称门执法措辞，闭合检查分级表）"
     ]
   }
 }

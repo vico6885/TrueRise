@@ -31,6 +31,7 @@ PAIRED = [
     "docs/README.md",
     "docs/quickstart.md",
     "docs/cli.md",
+    "docs/limits.md",
     "docs/anti_cheat_bench.md",
     "docs/task_pack_guide.md",
     "docs/provider_conformance.md",

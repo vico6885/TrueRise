@@ -47,5 +47,307 @@
       "test": "same_tape_replays_identical_digest",
       "artifact": "docs/determinism.md"
     }
-  ]
+  ],
+  "promise_grades": {
+    "_note": "Promise-grade registry (docs/limits.md): every governance backlog package G1..Gmax must appear at least once; rows are unique per (package, aspect); grade is one of A (enforceable), B (measurable), C (reducible-only). The claim gate refuses unknown grades, duplicate rows, and any gap in the package-id sequence. Enforcement wording rule: forbidden C-as-A phrases never appear in guarded_surfaces; an allowlist line is only valid when the line itself carries an explicit negation marker.",
+    "forbidden_phrases": [
+      "保证",
+      "杜绝",
+      "绝不",
+      "确保万无一失",
+      "万无一失",
+      "永不出错",
+      "坚不可摧",
+      "guarantee",
+      "prevent all",
+      "unbreakable",
+      "tamper-proof",
+      "never fails",
+      "100% reliable",
+      "100% 可靠"
+    ],
+    "allowlist": [],
+    "packages": [
+      {
+        "package": "G1",
+        "grade": "A",
+        "aspect": "缺构造效度栏时判词自动降级"
+      },
+      {
+        "package": "G2",
+        "grade": "A",
+        "aspect": "欠功效不得宣布无差异"
+      },
+      {
+        "package": "G3",
+        "grade": "A",
+        "aspect": "预注册中期分析外不得提前宣布显著"
+      },
+      {
+        "package": "G4",
+        "grade": "A",
+        "aspect": "未声明试验族即拒算校正"
+      },
+      {
+        "package": "G5",
+        "grade": "A",
+        "aspect": "近重复题默认不计入总分"
+      },
+      {
+        "package": "G6",
+        "grade": "B",
+        "aspect": "方差分解要求重复"
+      },
+      {
+        "package": "G7",
+        "grade": "A",
+        "aspect": "INCONCLUSIVE 不得晋升为 PASS"
+      },
+      {
+        "package": "G8",
+        "grade": "B",
+        "aspect": "准确率必须并列朴素基线"
+      },
+      {
+        "package": "G9",
+        "grade": "A",
+        "aspect": "无签名轨迹步骤不产生证据"
+      },
+      {
+        "package": "G10",
+        "grade": "C",
+        "aspect": "过程级侥幸判卷取决于判据质量"
+      },
+      {
+        "package": "G11",
+        "grade": "A",
+        "aspect": "脏仓库阻断终态声明"
+      },
+      {
+        "package": "G12",
+        "grade": "A",
+        "aspect": "外部解题器逃逸即整回作废"
+      },
+      {
+        "package": "G13",
+        "grade": "A",
+        "aspect": "蜜罐命中把该运行标注为不可比"
+      },
+      {
+        "package": "G14",
+        "grade": "A",
+        "aspect": "低于熵下限的题族拒收"
+      },
+      {
+        "package": "G15",
+        "grade": "A",
+        "aspect": "判分面写尝试落链并一票否决"
+      },
+      {
+        "package": "G16",
+        "grade": "A",
+        "aspect": "内鬼矩阵绕过必须转缺陷单"
+      },
+      {
+        "package": "G17",
+        "grade": "A",
+        "aspect": "跨目标版本声明即拒"
+      },
+      {
+        "package": "G18",
+        "grade": "A",
+        "aspect": "任一声明轴回退阻断晋升"
+      },
+      {
+        "package": "G19",
+        "grade": "A",
+        "aspect": "漂移停线 earned 而非可配置"
+      },
+      {
+        "package": "G20",
+        "grade": "A",
+        "aspect": "晋升必须有完成的影子窗"
+      },
+      {
+        "package": "G21",
+        "grade": "B",
+        "aspect": "每次声明附成本账"
+      },
+      {
+        "package": "G22",
+        "grade": "A",
+        "aspect": "预算不等臂对比拒绝"
+      },
+      {
+        "package": "G23",
+        "grade": "A",
+        "aspect": "篡改证书在零依赖验证器下必败"
+      },
+      {
+        "package": "G24",
+        "grade": "B",
+        "aspect": "tag 到产物摘要可复现"
+      },
+      {
+        "package": "G25",
+        "grade": "A",
+        "aspect": "可重算断言一律重算，不符即拒"
+      },
+      {
+        "package": "G26",
+        "grade": "A",
+        "aspect": "自称完成而无签名动作即拒"
+      },
+      {
+        "package": "G27",
+        "grade": "A",
+        "aspect": "不稳结论不得晋升"
+      },
+      {
+        "package": "G28",
+        "grade": "A",
+        "aspect": "未达校准门槛不得自动合并"
+      },
+      {
+        "package": "G29",
+        "grade": "A",
+        "aspect": "无支撑引用不得写入持久状态"
+      },
+      {
+        "package": "G30",
+        "grade": "A",
+        "aspect": "无权威源即无判词"
+      },
+      {
+        "package": "G31",
+        "grade": "B",
+        "aspect": "拦截器精度与召回公示"
+      },
+      {
+        "package": "G32",
+        "grade": "A",
+        "aspect": "完成声明必须逐项映射证据"
+      },
+      {
+        "package": "G33",
+        "grade": "A",
+        "aspect": "未申报桩阻断完成"
+      },
+      {
+        "package": "G34",
+        "grade": "A",
+        "aspect": "反打后仍绿的测试判为未证明"
+      },
+      {
+        "package": "G35",
+        "grade": "A",
+        "aspect": "缺缺口段不生成证书"
+      },
+      {
+        "package": "G36",
+        "grade": "A",
+        "aspect": "沉默不读作覆盖"
+      },
+      {
+        "package": "G37",
+        "grade": "A",
+        "aspect": "无令牌删减涉验收项即拒"
+      },
+      {
+        "package": "G38",
+        "grade": "B",
+        "aspect": "同轴重复纠正阻断晋升"
+      },
+      {
+        "package": "G39",
+        "grade": "A",
+        "aspect": "无法自助验证的项必须进未验证清单"
+      },
+      {
+        "package": "G40",
+        "grade": "C",
+        "aspect": "报告级红队判传播效应不判真伪"
+      },
+      {
+        "package": "G41",
+        "grade": "C",
+        "aspect": "主张与工作面相称性只提示不硬门"
+      },
+      {
+        "package": "G42",
+        "grade": "B",
+        "aspect": "净收益连续两期为负的闸降级或删除"
+      },
+      {
+        "package": "G43",
+        "grade": "B",
+        "aspect": "人工盲抽缺陷率公示"
+      },
+      {
+        "package": "G44",
+        "grade": "A",
+        "aspect": "放弃必须附搜索面账单、封盘上界与三值判词"
+      },
+      {
+        "package": "G44",
+        "grade": "C",
+        "aspect": "复核负例只证预算内不可达，不证路不存在"
+      },
+      {
+        "package": "G45",
+        "grade": "A",
+        "aspect": "闸拒绝必须产出机器可读失败原因"
+      },
+      {
+        "package": "G45",
+        "grade": "C",
+        "aspect": "反馈环提升完成率——待 G49 两臂证据"
+      },
+      {
+        "package": "G46",
+        "grade": "A",
+        "aspect": "未挂验收项的子目标被标记并默认不执行"
+      },
+      {
+        "package": "G46",
+        "grade": "C",
+        "aspect": "少做无用功的幅度——由账单实测"
+      },
+      {
+        "package": "G47",
+        "grade": "A",
+        "aspect": "死路记忆必须带支撑引用否则拒写"
+      },
+      {
+        "package": "G47",
+        "grade": "C",
+        "aspect": "跨代复用收益——由曝光账实测"
+      },
+      {
+        "package": "G48",
+        "grade": "A",
+        "aspect": "报告四段式与不可判定措辞 lint"
+      },
+      {
+        "package": "G49",
+        "grade": "B",
+        "aspect": "两臂对照实验预登记且负结果如实发布"
+      },
+      {
+        "package": "G50",
+        "grade": "A",
+        "aspect": "召回开启的运行不计入顺序校正分母"
+      },
+      {
+        "package": "G51",
+        "grade": "A",
+        "aspect": "调优曝光过的未参与调优族即拒"
+      },
+      {
+        "package": "G52",
+        "grade": "A",
+        "aspect": "登记册条目数与证书数对账"
+      }
+    ]
+  }
 }
