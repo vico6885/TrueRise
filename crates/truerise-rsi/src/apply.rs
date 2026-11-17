@@ -244,7 +244,7 @@ mod tests {
         let chain = chain(&dir);
         let mut queue = truerise_governance::ApprovalQueue::new();
         let other = content_hash(GEN0);
-        queue.request(&other);
+        let _ = queue.request(&other);
         queue.approve(&other).unwrap();
         let path = dir.join("skill.json");
         let err = apply_proposal(
@@ -267,7 +267,7 @@ mod tests {
         let chain = chain(&dir);
         let mut queue = truerise_governance::ApprovalQueue::new();
         let child_hash = content_hash(GEN1);
-        queue.request(&child_hash);
+        let _ = queue.request(&child_hash);
         queue.approve(&child_hash).unwrap();
         let path = dir.join("skill.json");
         // STALE epoch: the caller observed epoch 0, the queue moved on.
@@ -287,7 +287,7 @@ mod tests {
 
         // REVOKED approval: live-queue gate refuses.
         let mut queue2 = truerise_governance::ApprovalQueue::new();
-        queue2.request(&child_hash);
+        let _ = queue2.request(&child_hash);
         queue2.approve(&child_hash).unwrap();
         queue2.revoke(&child_hash);
         let err = apply_proposal(
@@ -312,7 +312,7 @@ mod tests {
         std::fs::write(dir.join("skill.json"), GEN0).unwrap();
         let path = dir.join("skill.json");
         let child_hash = content_hash(GEN1);
-        queue.request(&child_hash);
+        let _ = queue.request(&child_hash);
         queue.approve(&child_hash).unwrap();
         let applied = apply_proposal(
             &path,

@@ -267,7 +267,12 @@ pub fn evolve_demo(
         "close the task-4 capability gap (sealed answers only)",
         vec![("skill.json".into(), child_content.to_string())],
     );
-    queue.request(&proposal_hash);
+    // Review fix (batch 3b follow-up): an unrecorded request is an error,
+    // not a warning (the apply gate reads from THIS record).
+    if let Err(err) = queue.request(&proposal_hash) {
+        eprintln!("evolve: approval request refused: {err}");
+        return 1;
+    }
     let approved = approve == Some(proposal_hash.as_str());
     if approved {
         let _ = queue.approve(&proposal_hash);

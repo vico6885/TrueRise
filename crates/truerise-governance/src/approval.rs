@@ -137,7 +137,7 @@ mod tests {
     #[test]
     fn timeout_never_approves() {
         let mut q = ApprovalQueue::new();
-        q.request("r1");
+        let _ = q.request("r1");
         // ...time passes... (no API for implicit approval exists at all)
         assert_eq!(q.state("r1"), Some(RequestState::Pending));
         q.approve("r1").unwrap();
@@ -147,7 +147,7 @@ mod tests {
     #[test]
     fn revoked_then_approve_refused() {
         let mut q = ApprovalQueue::new();
-        q.request("r1");
+        let _ = q.request("r1");
         q.revoke("r1");
         assert!(q.approve("r1").is_err());
         assert_eq!(q.state("r1"), Some(RequestState::Revoked));

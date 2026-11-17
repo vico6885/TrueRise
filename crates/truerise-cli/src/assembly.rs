@@ -53,7 +53,14 @@ impl GovernedPolicy {
     pub fn approve(&self, scope: &str) {
         let mut queue = self.queue.lock().unwrap_or_else(|p| p.into_inner());
         if queue.state(scope).is_none() {
-            queue.request(scope);
+            // Review fix (batch 3b follow-up): request() can now refuse
+            // (duplicate id); an unrecorded approval request must not pass
+            // silently - the refusal is surfaced (best-effort print, the
+            // scope stays unapproved either way).
+            if let Err(e) = queue.request(scope) {
+                eprintln!("approval request refused: {e}");
+                return;
+            }
         }
         let _ = queue.approve(scope);
     }
