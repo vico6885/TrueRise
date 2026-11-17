@@ -230,7 +230,10 @@
       "run_rejects_intent_token_that_skips_an_item",
       "run_rejects_intent_contract_with_unknown_kind",
       "run_records_machine_floor_note_for_underfloor_contract",
-      "duplicate_item_ids_are_refused"
+      "duplicate_item_ids_are_refused",
+      "intent_changed_midrun_voids_the_run",
+      "intent_unchanged_passes_the_post_run_check",
+      "deleted_contract_after_seal_voids_the_run"
     ],
     "缺口台账": [
       "every_acceptance_item_is_done_or_not_done_or_not_verified",

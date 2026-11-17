@@ -316,32 +316,6 @@ pub fn cli_main(args: Vec<String>) -> i32 {
             i32::from(!demo::run_demo(honest))
         }
         "run" => {
-            let mut goal = args
-                .iter()
-                .position(|a| a == "--goal")
-                .and_then(|i| args.get(i + 1))
-                .cloned()
-                .unwrap_or_else(|| "(no goal given)".into());
-            // G32: an intent contract, when given, is loaded, validated,
-            // SEALED and (optionally) adjudicated BEFORE the run; a refused
-            // contract exits 2 - the goal never proceeds unanchored.
-            let intent_seal = match intent_cmd::load_intent(&args) {
-                Ok(seal) => seal,
-                Err(usage) => {
-                    eprintln!("usage error: {usage}");
-                    return 2;
-                }
-            };
-            if let Some(seal) = &intent_seal {
-                goal = seal.goal.clone();
-                intent_cmd::print_intent_banner(seal);
-                let dir = intent_cmd::run_chain_dir();
-                if let Err(e) = intent_cmd::record_intent_on_chain(&dir, seal) {
-                    eprintln!("run: {e}");
-                    return 1;
-                }
-            }
-
             // Repeated --approve <tool>: records approvals on file BEFORE the
             // run (the only transition into ask-allowed; RFC 0002).
             let mut approvals: Vec<String> = Vec::new();
@@ -427,14 +401,26 @@ pub fn cli_main(args: Vec<String>) -> i32 {
                 }
                 found.unwrap_or(None)
             };
-            run_commandline(
-                &goal,
-                &approvals,
-                budget_units,
-                baseline.as_deref(),
-                hat_toml.as_deref(),
-                provider.as_ref(),
-            )
+            // G32: the whole intent flow (load/seal/record before the run,
+            // verify-unchanged after it) lives in intent_cmd - a contract
+            // that changed mid-run voids the run (exit 1 + intent.changed).
+            let run_with = |goal: &str| {
+                run_commandline(
+                    goal,
+                    &approvals,
+                    budget_units,
+                    baseline.as_deref(),
+                    hat_toml.as_deref(),
+                    provider.as_ref(),
+                )
+            };
+            return match intent_cmd::intent_guarded_run(&args, &run_with) {
+                Ok(code) => code,
+                Err(usage) => {
+                    eprintln!("usage error: {usage}");
+                    2
+                }
+            };
         }
         "giveup" => giveup_cmd::handle_command(&args),
         "repl" => {

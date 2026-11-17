@@ -316,3 +316,94 @@ fn run_records_machine_floor_note_for_underfloor_contract() {
         "the chain row carries the machine count the floor applies to: {row}"
     );
 }
+
+const CONTRACT_EDITED: &str = r#"
+contract_version = "v1"
+goal = "the goal was quietly rewritten mid-run"
+
+[[acceptance_items]]
+id = "m0"
+text = "the ledger row exists"
+kind = "machine"
+
+[[acceptance_items]]
+id = "m1"
+text = "the verdict recomputes offline"
+kind = "machine"
+
+[[acceptance_items]]
+id = "m2"
+text = "the seal matches the recomputed hash"
+kind = "machine"
+
+[[acceptance_items]]
+id = "h0"
+text = "the rendered chart reads correctly"
+kind = "human"
+
+non_goals = ["no extra tooling"]
+exclusions = []
+"#;
+
+#[test]
+fn intent_changed_midrun_voids_the_run() {
+    let _guard = chain_guard("midrun");
+    let dir = temp_dir("midrun");
+    let contract_path = dir.join("intent.toml");
+    std::fs::write(&contract_path, contract_toml("the run starts honest", "human"))
+        .expect("write contract");
+    let args = vec![
+        "run".to_string(),
+        "--intent".to_string(),
+        contract_path.to_string_lossy().into(),
+    ];
+    // The "run" edits the contract WHILE it is running - the mid-run window
+    // a slow provider call would leave. The post-run check must void it.
+    let code = intent_cmd::intent_guarded_run(&args, &|_goal| {
+        std::fs::write(&contract_path, CONTRACT_EDITED).expect("mid-run edit");
+        0 // the run itself "succeeded"
+    })
+    .expect("flow completes");
+    assert_eq!(code, 1, "a mid-run intent change voids the run's verdict");
+    let rows = chain_rows();
+    assert!(
+        rows.lines().any(|l| l.contains("\"intent.changed\"")),
+        "the invalidation lands on the chain, visible not silent"
+    );
+}
+
+#[test]
+fn intent_unchanged_passes_the_post_run_check() {
+    let _guard = chain_guard("unchanged");
+    let dir = temp_dir("unchanged");
+    let contract_path = dir.join("intent.toml");
+    std::fs::write(&contract_path, contract_toml("the run stays honest", "human"))
+        .expect("write contract");
+    let args = vec![
+        "run".to_string(),
+        "--intent".into(),
+        contract_path.to_string_lossy().into(),
+    ];
+    let code = intent_cmd::intent_guarded_run(&args, &|_goal| 0).expect("flow completes");
+    assert_eq!(code, 0, "an unchanged contract keeps its verdict");
+}
+
+#[test]
+fn deleted_contract_after_seal_voids_the_run() {
+    let _guard = chain_guard("deleted");
+    let dir = temp_dir("deleted");
+    let contract_path = dir.join("intent.toml");
+    std::fs::write(&contract_path, contract_toml("the contract disappears", "human"))
+        .expect("write contract");
+    let args = vec![
+        "run".to_string(),
+        "--intent".into(),
+        contract_path.to_string_lossy().into(),
+    ];
+    let code = intent_cmd::intent_guarded_run(&args, &|_goal| {
+        std::fs::remove_file(&contract_path).expect("delete mid-run");
+        0
+    })
+    .expect("flow completes");
+    assert_eq!(code, 1, "a completion basis that cannot be re-derived is void");
+}

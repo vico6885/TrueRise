@@ -6,7 +6,7 @@
 //! the exact contract it was measured against. A refused contract stops the
 //! run with a usage error - an unanchored goal never silently proceeds.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use serde_json::json;
 use truerise_governance::HashChain;
@@ -19,6 +19,8 @@ use truerise_wire::{IntentContractV1, IntentToken};
 pub struct IntentSeal {
     /// The goal sentence (verbatim from the contract).
     pub goal: String,
+    /// Where the contract file lives (the post-run check re-reads it).
+    pub path: PathBuf,
     /// The computed seal (SHA-256 hex).
     pub sealed_hash: String,
     /// Whether a valid per-item adjudication token was presented.
@@ -67,6 +69,7 @@ pub fn load_intent(args: &[String]) -> Result<Option<IntentSeal>, String> {
     }
     Ok(Some(IntentSeal {
         goal: contract.goal.clone(),
+        path: PathBuf::from(path.clone()),
         sealed_hash,
         adjudicated,
         machine_items: contract.machine_item_count(),
@@ -141,4 +144,81 @@ pub fn run_chain_dir() -> std::path::PathBuf {
     std::env::var("TRUERISE_RUN_DIR")
         .map(std::path::PathBuf::from)
         .unwrap_or_else(|_| std::env::temp_dir().join("truerise_cli_run"))
+}
+
+/// G32 mid-run enforcement: re-read the contract file and re-derive its
+/// seal. Any change since the pre-run seal voids the run's completion
+/// basis - a changed intent is a NEW contract, and the run that started
+/// under the old one cannot silently keep its verdict.
+pub fn verify_intent_unchanged(intent_path: &Path, sealed_hash: &str) -> Result<(), String> {
+    let text = std::fs::read_to_string(intent_path)
+        .map_err(|e| format!("intent contract unreadable after the run ({e}) - the completion basis cannot be re-derived"))?;
+    let mut contract: IntentContractV1 = toml::from_str(&text)
+        .map_err(|e| format!("intent contract no longer parses ({e})"))?;
+    contract
+        .validate()
+        .map_err(|e| format!("intent contract no longer validates ({e})"))?;
+    contract.seal();
+    let now = contract
+        .sealed_hash()
+        .map_err(|e| format!("intent contract refused: {e}"))?;
+    if now != sealed_hash {
+        return Err(format!(
+            "intent contract CHANGED mid-run: sealed {sealed_hash}, now {now} - the run's completion basis is void"
+        ));
+    }
+    Ok(())
+}
+
+/// Record the mid-run invalidation on the chain (the voided run is visible,
+/// not silent).
+fn record_intent_changed(dir: &Path, seal: &IntentSeal, reason: &str) -> Result<(), String> {
+    let chain = HashChain::open(&dir.join("run.jsonl"))
+        .map_err(|e| format!("intent invalidation unrecordable: {e}"))?;
+    chain
+        .append(
+            "intent.changed",
+            Severity::Warn,
+            &json!({
+                "sealed_hash": seal.sealed_hash,
+                "reason": reason,
+            }),
+            None,
+        )
+        .map_err(|e| format!("intent invalidation unrecordable: {e}"))?;
+    Ok(())
+}
+
+/// The whole intent flow of one `run` invocation: load/seal/record BEFORE
+/// the run, verify-unchanged AFTER it. `run` is the governed-run closure
+/// (single-track: everything else in the run branch is untouched).
+/// `Err(usage)` = exit 2; `Ok(code)` = the run's exit code (a voided run
+/// exits 1 with the intent.changed row on the chain).
+pub fn intent_guarded_run(
+    args: &[String],
+    run: &dyn Fn(&str) -> i32,
+) -> Result<i32, String> {
+    let seal = load_intent(args)?;
+    let fallback_goal = args
+        .iter()
+        .position(|a| a == "--goal")
+        .and_then(|i| args.get(i + 1))
+        .cloned()
+        .unwrap_or_else(|| "(no goal given)".into());
+    let Some(seal) = seal else {
+        return Ok(run(&fallback_goal));
+    };
+    print_intent_banner(&seal);
+    let dir = run_chain_dir();
+    record_intent_on_chain(&dir, &seal).map_err(|e| format!("run aborted before start: {e}"))?;
+    let code = run(&seal.goal);
+    if code == 0 {
+        if let Err(reason) = verify_intent_unchanged(&seal.path, &seal.sealed_hash) {
+            // Best-effort record; the invalidation itself must still surface.
+            let _ = record_intent_changed(&dir, &seal, &reason);
+            eprintln!("run: {reason}");
+            return Ok(1);
+        }
+    }
+    Ok(code)
 }
