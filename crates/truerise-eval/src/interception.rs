@@ -89,7 +89,6 @@ pub fn mode_for(precision_published: bool) -> Mode {
 #[derive(Debug, Clone, Default)]
 pub struct InterceptionLedger {
     entries: Vec<Interception>,
-    shadow: bool,
 }
 
 impl InterceptionLedger {
@@ -97,17 +96,15 @@ impl InterceptionLedger {
     /// enforcement is EARNED by a precision account, not granted).
     #[must_use]
     pub fn new() -> Self {
-        Self {
-            entries: Vec::new(),
-            shadow: true,
-        }
+        Self { entries: Vec::new() }
     }
 
     /// Record one interception (append-only; the entry is returned so the
     /// caller can act on the outcome).
     pub fn record(&mut self, entry: Interception) -> &Interception {
+        let idx = self.entries.len();
         self.entries.push(entry);
-        self.entries.last().expect("just pushed")
+        &self.entries[idx]
     }
 
     /// The per-gate counts that G42's net-benefit ledger consumes.

@@ -49,11 +49,11 @@ impl Resample {
                 }
             }
         }
-        if total_pairs == 0 {
-            0
-        } else {
-            ((discordant * 1000) / total_pairs) as u64
-        }
+        // checked division: no manual zero guard, no panic path
+        u64::try_from(discordant * 1000)
+            .ok()
+            .and_then(|n| n.checked_div(u64::try_from(total_pairs).ok()?))
+            .unwrap_or(0)
     }
 }
 
