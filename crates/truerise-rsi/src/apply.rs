@@ -33,6 +33,12 @@ pub enum ApplyError {
     /// The snapshot write failed the epoch fence (stale epoch).
     #[error("apply refused: stale epoch (fenced write rejected)")]
     StaleEpoch,
+    /// Review fix (P1): the CURRENT file could not be READ (permissions,
+    /// non-UTF-8) - its snapshot would be a silent empty string, faking the
+    /// lineage (parent = hash of nothing) and arming a rollback that wipes
+    /// the file. Refusal instead.
+    #[error("apply refused: current file unreadable (snapshot would be fabricated): {0}")]
+    SnapshotUnreadable(String),
     /// The injected write failed (the boundary refused or io failed).
     #[error("apply refused: write failed: {0}")]
     WriteFailed(String),
@@ -122,7 +128,13 @@ pub fn apply_proposal(
     }
     // Gate 4: the fenced snapshot write (stale epoch refused - the SAME
     // fence the approval queue has used since M2).
-    let snapshot = read_or_empty(skill_path);
+    // Review fix (P1): read errors are NOT silently mapped to an empty
+    // snapshot - that fakes the lineage and arms a wiping rollback.
+    let snapshot = match std::fs::read_to_string(skill_path) {
+        Ok(text) => text,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => String::new(),
+        Err(e) => return Err(ApplyError::SnapshotUnreadable(e.to_string())),
+    };
     let parent_hash = content_hash(&snapshot);
     if queue
         .fenced_write(observed_epoch, &format!("snapshot:{parent_hash}"))
@@ -136,20 +148,35 @@ pub fn apply_proposal(
         refuse("write_failed", json!({ "error": e }));
         return Err(ApplyError::WriteFailed(e));
     }
-    chain
-        .append(
-            "evolve.apply",
-            truerise_wire::Severity::Info,
+    if let Err(e) = chain.append(
+        "evolve.apply",
+        truerise_wire::Severity::Info,
+        &json!({
+            "path": skill_path.display().to_string(),
+            "parent_hash": parent_hash,
+            "child_hash": child_hash,
+            "epoch": observed_epoch,
+            "snapshot_bytes": snapshot.len()
+        }),
+        None,
+    ) {
+        // Review fix (P1): the FILE is already written at this point - the
+        // old plain refusal lied ("nothing was written"). Compensate: roll
+        // the file back to the byte-exact snapshot, record the
+        // compensation, and only then return the refusal.
+        let _ = std::fs::write(skill_path, snapshot.as_bytes());
+        let _ = chain.append(
+            "evolve.apply_compensated",
+            truerise_wire::Severity::Error,
             &json!({
                 "path": skill_path.display().to_string(),
-                "parent_hash": parent_hash,
-                "child_hash": child_hash,
-                "epoch": observed_epoch,
-                "snapshot_bytes": snapshot.len()
+                "reason": e.to_string(),
+                "restored_bytes": snapshot.len()
             }),
             None,
-        )
-        .map_err(|e| ApplyError::Chain(e.to_string()))?;
+        );
+        return Err(ApplyError::Chain(e.to_string()));
+    }
     Ok(AppliedGeneration {
         parent_hash,
         child_hash,
@@ -183,10 +210,6 @@ pub fn rollback(
         )
         .map(|_| ())
         .map_err(|e| ApplyError::Chain(e.to_string()))
-}
-
-fn read_or_empty(path: &Path) -> String {
-    std::fs::read_to_string(path).unwrap_or_default()
 }
 
 #[cfg(test)]

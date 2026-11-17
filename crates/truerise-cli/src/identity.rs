@@ -16,6 +16,12 @@ pub const TRUSTED_KEY_ENV: &str = "TRUERISE_TRUSTED_KEY";
 #[must_use]
 pub fn load_signing_key() -> Option<SigningKey> {
     let hex = std::env::var(SIGNING_KEY_ENV).ok()?;
+    // Review fix (P2): a seed longer than 64 hex used to be silently
+    // TRUNCATED to its first 32 bytes - wrong-key signatures with no
+    // signal. Fail-closed: exactly 64 hex or nothing.
+    if hex.len() != 64 || !hex.chars().all(|c| c.is_ascii_hexdigit()) {
+        return None;
+    }
     let seed: Vec<u8> = (0..32)
         .map(|i| u8::from_str_radix(hex.get(i * 2..i * 2 + 2)?, 16).ok())
         .collect::<Option<Vec<u8>>>()?;

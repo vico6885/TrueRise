@@ -155,7 +155,14 @@ pub fn run_commandline(
                 memory_recall: true,
                 inconclusive: false,
             };
-            match truerise_eval::judge_run(&facts, &baseline::load_baseline(baseline_path), &chain)
+            let baseline_loaded = match baseline::load_baseline(baseline_path) {
+                Ok(b) => b,
+                Err(e) => {
+                    eprintln!("run: {e}");
+                    return 1;
+                }
+            };
+            match truerise_eval::judge_run(&facts, &baseline_loaded, &chain)
             {
                 Ok(verdict) => {
                     println!(
@@ -541,11 +548,31 @@ pub fn cli_main(args: Vec<String>) -> i32 {
                 eprintln!("usage: truerise verify --cert <path> [--issuer-key <hex>]");
                 return 2;
             };
-            let trusted = args
-                .iter()
-                .position(|a| a == "--issuer-key")
-                .and_then(|i| args.get(i + 1))
-                .cloned();
+            // Review fix (P2): a dangling --issuer-key used to silently
+            // degrade to the env fallback - the explicit argument intent
+            // was swallowed. Usage error now.
+            let trusted = {
+                let mut found: Option<String> = None;
+                let mut it = args.iter();
+                while let Some(arg) = it.next() {
+                    if arg == "--issuer-key" {
+                        match it.next() {
+                            Some(v) if !v.starts_with("--") => {
+                                if found.is_some() {
+                                    eprintln!("usage error: --issuer-key given twice");
+                                    return 2;
+                                }
+                                found = Some(v.clone());
+                            }
+                            _ => {
+                                eprintln!("usage error: --issuer-key needs a hex key");
+                                return 2;
+                            }
+                        }
+                    }
+                }
+                found
+            };
             match identity::verify_certificate(&cert, trusted.as_deref()) {
                 identity::VerifyOutcome::Verified { issuer } => {
                     println!("verified: issuer {issuer}");

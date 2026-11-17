@@ -55,7 +55,20 @@ pub fn load_intent(args: &[String]) -> Result<Option<IntentSeal>, String> {
     contract
         .validate()
         .map_err(|e| format!("intent contract refused: {e}"))?;
+    // Review fix (P2): if the FILE carries its own seal, recompute and
+    // MATCH it - the old code just overwrote the field, making the seal a
+    // write-only decoration (SealMismatch was dead code). Anchor: a file
+    // whose claimed seal does not match its own content is not loadable.
+    let claimed = contract.sealed_hash.clone();
     contract.seal();
+    if let Some(claimed) = claimed {
+        let recomputed = contract.sealed_hash().map_err(|e| e.to_string())?;
+        if claimed != recomputed {
+            return Err(format!(
+                "intent contract seal mismatch: file claims {claimed}, content hashes to {recomputed}"
+            ));
+        }
+    }
     let sealed_hash = contract
         .sealed_hash()
         .map_err(|e| format!("intent contract refused: {e}"))?
@@ -222,6 +235,14 @@ pub fn intent_guarded_run(
         .cloned()
         .unwrap_or_else(|| "(no goal given)".into());
     let Some(seal) = seal else {
+        // Review fix (P1): a run with NO goal and NO contract silently
+        // executed a governed run with a placeholder goal and exited 0 -
+        // an anchorless PASS. Refusal now.
+        if fallback_goal == "(no goal given)" {
+            return Err(
+                "run needs --goal <text> (or --intent <contract.toml>) - an anchorless run never starts".to_string(),
+            );
+        }
         return Ok(run(&fallback_goal));
     };
     print_intent_banner(&seal);

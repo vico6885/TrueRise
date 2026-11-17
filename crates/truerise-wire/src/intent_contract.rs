@@ -80,6 +80,8 @@ fn default_version() -> String {
 pub enum ContractError {
     /// The goal sentence is empty.
     EmptyGoal,
+    /// The wire version is not v1 (the schema enum is law on both sides).
+    UnsupportedVersion(String),
     /// No acceptance items - the contract cannot anchor anything.
     NoAcceptanceItems,
     /// An item id is empty.
@@ -131,6 +133,9 @@ impl std::fmt::Display for ContractError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::EmptyGoal => write!(f, "goal is empty - state what the user wants"),
+            Self::UnsupportedVersion(v) => {
+                write!(f, "contract_version {v} is not v1 - only the v1 wire exists")
+            }
             Self::NoAcceptanceItems => {
                 write!(f, "contract has no acceptance items - ask the user, do not assume")
             }
@@ -172,6 +177,12 @@ impl std::error::Error for ContractError {}
 impl IntentContractV1 {
     /// Structural validation (fail-closed before sealing).
     pub fn validate(&self) -> Result<(), ContractError> {
+        // Review fix (P2): the schema pins contract_version to "v1" - the
+        // Rust side used to accept "v99" silently (a cross-implementation
+        // inconsistency in a dual-impl project).
+        if self.contract_version != "v1" {
+            return Err(ContractError::UnsupportedVersion(self.contract_version.clone()));
+        }
         if self.goal.trim().is_empty() {
             return Err(ContractError::EmptyGoal);
         }

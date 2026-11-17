@@ -115,6 +115,10 @@ pub enum GiveUpError {
     /// An untried probe lacks its cheapest concrete form (the lazy-ledger
     /// tripwire: listing only doomed directions is not a search surface).
     UntriedWithoutCheapestProbe(String),
+    /// Review fix (P2): a TRIED probe with an empty result note - the old
+    /// code returned UntriedWithoutCheapestProbe, a variant whose message
+    /// pointed at the wrong kind of probe entirely.
+    TriedWithoutResult(String),
     /// An untried probe lacks its cost estimate.
     UntriedWithoutCost(String),
     /// The ledger is empty - "I tried nothing and I am out of ideas" is
@@ -148,6 +152,9 @@ impl std::fmt::Display for GiveUpError {
                 f,
                 "untried hypothesis has no cheapest concrete form: {h} (listing only doomed directions is not a search surface)"
             ),
+            Self::TriedWithoutResult(h) => {
+                write!(f, "tried hypothesis {h} carries no result note - an outcome fact is required")
+            }
             Self::UntriedWithoutCost(h) => write!(f, "untried hypothesis has no cost estimate: {h}"),
             Self::EmptyLedger => write!(f, "empty search ledger - tried nothing is not a bounded claim"),
             Self::HashMismatch { expected, found } => {
@@ -218,9 +225,7 @@ impl GiveUpClaimV1 {
             match &probe.outcome {
                 ProbeOutcome::Tried { result_note } => {
                     if result_note.trim().is_empty() {
-                        return Err(GiveUpError::UntriedWithoutCheapestProbe(
-                            probe.hypothesis.clone(),
-                        ));
+                        return Err(GiveUpError::TriedWithoutResult(probe.hypothesis.clone()));
                     }
                     tried.push(&probe.hypothesis);
                 }

@@ -75,11 +75,19 @@ pub fn parse_completion_args(args: &[String]) -> Result<Option<CompletionBinding
         }
     }
     match intent {
-        Some(intent_path) => Ok(Some(CompletionBinding {
-            intent_path: PathBuf::from(intent_path),
-            report_path: report.map(PathBuf::from),
-            token_path: token.map(PathBuf::from),
-        })),
+        Some(intent_path) => {
+            // Review fix (P2): a missing --completion is a USAGE error
+            // (exit 2), not a run failure (exit 1) - the old code conflated
+            // "user forgot the report" with "the ledger refused".
+            let Some(report_path) = report else {
+                return Err("--intent needs --completion <report.json>".to_string());
+            };
+            Ok(Some(CompletionBinding {
+                intent_path: PathBuf::from(intent_path),
+                report_path: Some(PathBuf::from(report_path)),
+                token_path: token.map(PathBuf::from),
+            }))
+        }
         None => {
             if report.is_some() {
                 Err("--completion needs --intent <contract.toml>".to_string())

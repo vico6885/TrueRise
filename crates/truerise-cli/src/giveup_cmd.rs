@@ -64,6 +64,7 @@ pub fn record_giveup(
             Severity::Info,
             &json!({
                 "verdict": verdict_name(&claim.verdict),
+                "contract_sealed_hash": claim.contract_sealed_hash,
                 "ledger": claim.ledger.as_ref().map(|l| json!({
                     "budget_bound": l.budget_bound,
                     "probes": l.probes.len(),

@@ -45,6 +45,16 @@ text = "the rendered chart reads correctly"
 kind = "human"
 "#;
 
+/// RAII guard: restores the process cwd even if the test panics.
+struct CwdGuard {
+    previous: PathBuf,
+}
+impl Drop for CwdGuard {
+    fn drop(&mut self) {
+        let _ = std::env::set_current_dir(&self.previous);
+    }
+}
+
 fn bundle_json(contract_hash: &str, base: &std::path::Path, m2_target: &str) -> String {
     use serde_json::json;
     // json! escapes the Windows backslashes in the absolute paths - a raw
@@ -213,11 +223,11 @@ fn bundle_runs_without_repo_checkout() {
         ),
     )
     .expect("write bundle");
-    let old_cwd = std::env::current_dir().expect("cwd");
+    let _cwd_guard = CwdGuard {
+        previous: std::env::current_dir().expect("cwd"),
+    };
     std::env::set_current_dir(&workdir).expect("chdir");
-    let outcome = verify_cmd::run_bundle(&bundle_path, &contract_path);
-    std::env::set_current_dir(old_cwd).expect("restore");
-    let report = outcome.expect("bundle runs from a foreign cwd");
+    let report = verify_cmd::run_bundle(&bundle_path, &contract_path).expect("bundle runs from a foreign cwd");
     // m0 fails (no verdict field in local.json) but the RUN itself is cwd-
     // independent - the point of this test is execution, not the verdict.
     assert!(

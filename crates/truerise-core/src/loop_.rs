@@ -172,8 +172,14 @@ impl<'a> Loop<'a> {
                     return Ok(resp.payload);
                 }
                 Err(e) if e.retryable() && attempt + 1 < policy.max_attempts => {
-                    let jitter = (attempt as u64) * 7; // deterministic jitter roll in tests
-                    let _ = backoff_ms(policy, attempt, jitter);
+                    // Review fix (P1): the backoff was COMPUTED and thrown
+                    // away - a 429 got max_attempts near-simultaneous
+                    // retries, amplifying exactly the rate limit it hit.
+                    // The sleep is real now; the jitter roll stays
+                    // deterministic for the tape/replay contract.
+                    let jitter = (attempt as u64) * 7;
+                    let delay = backoff_ms(policy, attempt, jitter);
+                    std::thread::sleep(std::time::Duration::from_millis(delay));
                     last_err = Some(e);
                 }
                 Err(e) => return Err(e.into()),

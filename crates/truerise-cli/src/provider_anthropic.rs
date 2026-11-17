@@ -80,10 +80,18 @@ impl ModelRouter for AnthropicRouter {
                 RouterError::Fatal("provider response: missing content[0].text".into())
             })?;
         // The provider's OWN echo of the model id backs the pinning check.
+        // Review fix (P1): a MISSING echo used to fall back to the
+        // REQUESTED model name - i.e. the pinning check silently PASSED on
+        // exactly the response that proves nothing about what answered.
+        // Fail-closed now: no echo, no turn.
         let model = doc
             .get("model")
             .and_then(|m| m.as_str())
-            .unwrap_or(&self.model)
+            .ok_or_else(|| {
+                RouterError::Fatal(
+                    "provider response: missing model echo - the pinning check requires the provider to name what answered".into(),
+                )
+            })?
             .to_string();
         Ok(TurnResponse {
             model,

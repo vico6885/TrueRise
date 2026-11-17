@@ -23,23 +23,26 @@ pub fn find_default_baseline() -> Option<PathBuf> {
 
 /// Load a ratchet baseline from a JSON file (integer metric values; the
 /// `_note` key and any non-numeric field is ignored).
-pub fn load_baseline(path: Option<&Path>) -> truerise_eval::ratchet::Baseline {
+///
+/// Review fix (P2, fail-open removal): an EXPLICIT baseline path that
+/// cannot be read or parsed used to silently degrade to an empty baseline
+/// (the ratchet gate vanished, the terminal banner still said "loaded").
+/// Explicit = load-or-error; only the ABSENT default is empty.
+pub fn load_baseline(path: Option<&Path>) -> Result<truerise_eval::ratchet::Baseline, String> {
     let Some(path) = path else {
-        return truerise_eval::ratchet::Baseline::new();
+        return Ok(truerise_eval::ratchet::Baseline::new());
     };
-    let Ok(text) = std::fs::read_to_string(path) else {
-        return truerise_eval::ratchet::Baseline::new();
+    let text = std::fs::read_to_string(path)
+        .map_err(|e| format!("baseline {} unreadable: {e}", path.display()))?;
+    let doc: serde_json::Value = serde_json::from_str(&text)
+        .map_err(|e| format!("baseline {} is not valid JSON: {e}", path.display()))?;
+    let Some(obj) = doc.as_object() else {
+        return Err(format!("baseline {} is not a JSON object", path.display()));
     };
-    let Ok(doc) = serde_json::from_str::<serde_json::Value>(&text) else {
-        return truerise_eval::ratchet::Baseline::new();
-    };
-    doc.as_object()
-        .map(|obj| {
-            obj.iter()
-                .filter_map(|(k, v)| v.as_f64().map(|x| (k.clone(), x)))
-                .collect()
-        })
-        .unwrap_or_else(truerise_eval::ratchet::Baseline::new)
+    Ok(obj
+        .iter()
+        .filter_map(|(k, v)| v.as_f64().map(|x| (k.clone(), x)))
+        .collect())
 }
 
 /// Map a judged verdict onto the exit code (G7 contract: PASS=0 / FAIL=1 /
