@@ -2,6 +2,7 @@
 //! and judge-agreement statistics (pure numbers, no authority).
 
 pub mod fingerprint;
+pub mod interception;
 pub mod judge;
 pub mod ratchet;
 pub mod derivable;

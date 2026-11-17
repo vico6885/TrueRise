@@ -305,6 +305,12 @@
       "count_is_recomputed_from_the_array_itself",
       "difference_recomputes_both_operands",
       "any_unsupported_claim_blocks_the_whole_set"
+    ],
+    "拦截台账": [
+      "interceptor_in_shadow_mode_until_precision_published",
+      "override_is_recorded_as_violation",
+      "interception_ledger_is_append_only",
+      "intercepted_claims_are_counted_per_gate"
     ]
   }
 }
