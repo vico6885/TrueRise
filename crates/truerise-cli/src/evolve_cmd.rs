@@ -167,9 +167,10 @@ fn certificate(
     verdict: Option<&truerise_eval::RunVerdict>,
     rollback_reason: Option<&str>,
     significance_json: serde_json::Value,
+    completion: Option<&serde_json::Value>,
 ) -> serde_json::Value {
     let (added, removed) = diff_stat(parent_content, child_content);
-    json!({
+    let mut cert = json!({
         "generation": 1,
         "parent": { "content_hash": content_hash(parent_content) },
         "child": { "content_hash": content_hash(child_content) },
@@ -189,7 +190,14 @@ fn certificate(
         "significance": significance_json,
         "replay": { "command": "truerise evolve --replay --cert gen1_certificate.json" },
         "contents": { "parent": parent_content, "child": child_content }
-    })
+    });
+    // G35/G36: the completion section appears ONLY when an intent contract
+    // was bound. A contract-free certificate is fine; a contract-bound one
+    // without its ledger never ships (checked before issuance).
+    if let Some(section) = completion {
+        cert["completion"] = section.clone();
+    }
+    cert
 }
 
 /// `evolve --demo`: one full generation.
@@ -202,6 +210,7 @@ pub fn evolve_demo(
     approve: Option<&str>,
     inject_regression: bool,
     tape_path: Option<&Path>,
+    completion: Option<&crate::completion_cert::CompletionBinding>,
 ) -> i32 {
     let _ = std::fs::create_dir_all(run_dir.join("skills"));
     let skill_path = run_dir.join("skills").join("skill.json");
@@ -410,6 +419,31 @@ pub fn evolve_demo(
         }
     }
 
+    // G35/G36: a generation issued under a sealed intent contract MUST
+    // carry a closing completion ledger - the certificate is REFUSED
+    // otherwise (silence is not coverage, at certificate level).
+    let completion_json = match completion {
+        Some(binding) => {
+            let section = match crate::completion_cert::validate_binding(binding) {
+                Ok(section) => section,
+                Err(reason) => {
+                    eprintln!("evolve: certificate refused: {reason}");
+                    return 1;
+                }
+            };
+            let _ = chain.append(
+                "intent.seal",
+                Severity::Info,
+                &json!({
+                    "sealed_hash": section["contract_sealed_hash"],
+                    "bound_to": "generation-1"
+                }),
+                None,
+            );
+            Some(section)
+        }
+        None => None,
+    };
     // The generation certificate (chain row carries hashes; the FILE embeds
     // the contents so replay is offline).
     let cert = certificate(
@@ -419,6 +453,7 @@ pub fn evolve_demo(
         Some(&verdict),
         rollback_reason.as_deref(),
         significance_json,
+        completion_json.as_ref(),
     );
     let cert_path = run_dir.join("gen1_certificate.json");
     // W10: sign the certificate when the issuer key is in the environment
@@ -520,6 +555,14 @@ pub fn evolve_replay(cert_path: &Path) -> i32 {
     // 3. Rollback consistency: a cert with a rollback MUST carry a FAIL.
     let rolled_back = cert["rollback"].is_string();
     ok &= (!rolled_back) || !recomputed.is_pass();
+    // 4. G35/G36: an embedded completion section must recompute offline -
+    // hash-consistent and closed against the embedded item list.
+    if cert["completion"].is_object() {
+        if let Err(reason) = crate::completion_cert::replay_completion(&cert["completion"]) {
+            eprintln!("replay: completion ledger does not recompute: {reason}");
+            ok = false;
+        }
+    }
     let _ = std::fs::remove_dir_all(&throwaway);
     if ok {
         println!(

@@ -16,6 +16,7 @@ use truerise_governance::HashChain;
 
 pub mod assembly;
 pub mod baseline;
+pub mod completion_cert;
 pub mod demo;
 pub mod evolve_cmd;
 pub mod giveup_cmd;
@@ -491,7 +492,20 @@ pub fn cli_main(args: Vec<String>) -> i32 {
                 found.unwrap_or(None)
             };
             let dir = std::env::temp_dir().join("truerise_cli_evolve");
-            evolve_cmd::evolve_demo(&dir, approve.as_deref(), inject, tape.as_deref())
+            let completion = match completion_cert::parse_completion_args(&args) {
+                Ok(c) => c,
+                Err(usage) => {
+                    eprintln!("usage error: {usage}");
+                    return 2;
+                }
+            };
+            evolve_cmd::evolve_demo(
+                &dir,
+                approve.as_deref(),
+                inject,
+                tape.as_deref(),
+                completion.as_ref().map(|b| b as &completion_cert::CompletionBinding),
+            )
         }
         "verify" => {
             // `verify --cert <path> [--issuer-key <hex>]` (W10): exit 0

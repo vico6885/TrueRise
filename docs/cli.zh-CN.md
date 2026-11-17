@@ -56,6 +56,7 @@ cargo run -p truerise-cli -- <命令>
 | `run --hat <toml>` | 以帽运行：内容哈希入链，`tool_subset` 成为外层策略门；子集里的未知工具在加载期即拒绝运行 |
 | `run --provider openai\|anthropic --model <id>` | 同一治理端口后接**真实模型**（预算/策略/判词不变）。`--provider-url <u>` 指向本地 vLLM/Ollama/代理。密钥只走环境变量（`TRUERISE_API_KEY` / `ANTHROPIC_API_KEY`）；缺钥即拒绝。运行钉定到模型 id，且 provider 自报的回显参与钉定校验 |
 | `evolve --demo --approve <hash>` | 一代 RSI（RFC 0003）：提案 -> 哈希绑定批准 -> 应用 -> 重评 -> 棘轮 -> 证书；`--inject-regression` 演示回滚；`--tape <path>` 录制每次模型调用 |
+| `evolve --demo --intent <toml> --completion <json>` | 把世代绑定到意图合同（G35/G36）：证书嵌入对封盘合同闭合的完成台账。合同没有台账即**拒绝发证**（退出 1）；replay 离线复算台账 |
 | `evolve --replay --cert <path>` | 离线复算世代证书（退出 0 = 逐字节一致；被篡改的证书会被拒绝） |
 | `verify --bundle <path> --intent <contract.toml>` | 自助验收包（G39）：每个机检验收项一条预期观测，覆盖面从合同封盘生成（漏一条即拒绝）。三桶报告——PASS / FAIL / NOT-VERIFIED（显式转送，绝不沉默）；全部 PASS 才退出 `0`。在你自己的机器上即可运行，无需本仓 |
 | `verify --cert <path> [--issuer-key <hex>]` | 校验证书签名（ed25519）；未签名的证书报告 `unverified issuer` 并以 `1` 退出——绝不静默当真 |

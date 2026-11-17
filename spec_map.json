@@ -275,6 +275,13 @@
       "infeasible_certificate_states_its_budget_bound",
       "three_valued_outcome_cannot_be_collapsed",
       "completed_claims_do_not_carry_infeasibility_ledgers"
+    ],
+    "证书完成闭合": [
+      "certificate_with_sealed_contract_requires_completion_ledger",
+      "certificate_completion_ledger_closes_against_contract",
+      "certificate_refuses_report_bound_to_another_contract",
+      "certificate_skips_completion_without_intent",
+      "replay_verifies_the_completion_ledger"
     ]
   }
 }
