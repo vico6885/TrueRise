@@ -8,6 +8,7 @@ pub mod ratchet;
 pub mod derivable;
 pub mod run_verdict;
 pub mod significance;
+pub mod stability;
 
 pub use fingerprint::{CompareForbidden, Fingerprint, FingerprintRegistry};
 pub use judge::{AgreementStats, Verdict, judge, judge_agreement, judge_and_record};

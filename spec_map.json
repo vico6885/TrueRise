@@ -311,6 +311,13 @@
       "override_is_recorded_as_violation",
       "interception_ledger_is_append_only",
       "intercepted_claims_are_counted_per_gate"
+    ],
+    "重采样一致性": [
+      "unstable_conclusion_cannot_be_promoted",
+      "instability_reported_in_certificate",
+      "stable_conclusion_is_steady_but_not_true",
+      "stability_requires_at_least_two_trials",
+      "instability_math_is_exact_integer"
     ]
   }
 }
