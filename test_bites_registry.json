@@ -1,0 +1,4 @@
+{
+  "_note": "Test-bites registry (G34 --floor mode): the ONLY way a deleted test file may pass the floor check. Every row must name the deleted test path AND the approved reason; a row without a reason is a violation (fail-closed). Rows whose file still exists are stale and must be cleaned.",
+  "removed_tests": []
+}

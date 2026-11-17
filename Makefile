@@ -26,6 +26,7 @@ gates-py:
 	python tools/check_leakguard_skeleton.py
 	python tools/check_claim_terms.py
 	python tools/check_stubs.py
+	python tools/check_test_bites.py
 	python tools/lint_dco.py
 	python tools/check_docs.py
 
