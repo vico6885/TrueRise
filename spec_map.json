@@ -239,6 +239,15 @@
       "not_done_reason_taxonomy_enforced",
       "completion_claim_requires_per_item_evidence",
       "not_verified_carries_the_cost_of_checking"
+    ],
+    "桩检测": [
+      "unannounced_stub_blocks_completion",
+      "stub_scan_covers_rust_and_python",
+      "empty_source_file_is_a_stub",
+      "stub_allowlist_entry_must_carry_reason",
+      "stale_stub_allowlist_row_is_refused",
+      "python_pass_only_body_is_flagged",
+      "stub_ratio_is_reported"
     ]
   }
 }
