@@ -5,6 +5,8 @@
 //! Relaxed for the unknown-command case only: `cli_main` prints help there,
 //! no unwraps are involved.
 
+#![allow(clippy::expect_used, clippy::unwrap_used)]
+
 use truerise_cli::cli_main;
 
 #[test]

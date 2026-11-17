@@ -96,8 +96,8 @@ fn chain_rows() -> String {
 fn seal_row(hash: &str) -> String {
     chain_rows()
         .lines()
-        .filter(|l| l.contains("\"intent.seal\"") && l.contains(hash))
-        .last()
+        .rev()
+        .find(|l| l.contains("\"intent.seal\"") && l.contains(hash))
         .unwrap_or_else(|| panic!("seal row for {hash} must land on the run chain"))
         .to_string()
 }

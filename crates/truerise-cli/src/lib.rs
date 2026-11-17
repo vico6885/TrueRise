@@ -419,13 +419,13 @@ pub fn cli_main(args: Vec<String>) -> i32 {
                     provider.as_ref(),
                 )
             };
-            return match intent_cmd::intent_guarded_run(&args, &run_with) {
+            match intent_cmd::intent_guarded_run(&args, &run_with) {
                 Ok(code) => code,
                 Err(usage) => {
                     eprintln!("usage error: {usage}");
                     2
                 }
-            };
+            }
         }
         "giveup" => giveup_cmd::handle_command(&args),
         "repl" => {

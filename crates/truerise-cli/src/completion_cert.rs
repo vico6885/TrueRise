@@ -172,7 +172,7 @@ pub fn replay_completion(completion: &serde_json::Value) -> Result<(), String> {
         closed.push(&entry.item_id);
     }
     for id in seen {
-        if !closed.iter().any(|done| *done == id) {
+        if !closed.contains(&id) {
             return Err(format!("report is silent about item {id}"));
         }
     }
