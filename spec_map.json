@@ -291,6 +291,12 @@
       "run_with_memory_recall_is_ratchet_ineligible",
       "eval_run_performs_no_memory_writes",
       "eval_and_memory_share_no_writable_surface"
+    ],
+    "三值判词": [
+      "unfinished_run_is_inconclusive_and_records_it",
+      "inconclusive_cannot_be_promoted_to_pass",
+      "grade_exit_maps_three_verdicts_to_three_codes",
+      "inconclusive_exit_code_distinct"
     ]
   }
 }

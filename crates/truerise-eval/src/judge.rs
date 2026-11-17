@@ -19,6 +19,10 @@ pub enum Verdict {
     Pass,
     /// At least one must-fail region failed.
     Fail,
+    /// G7: the evidence does not decide anything (the run did not
+    /// complete). NON-PROMOTABLE by construction - never reads as PASS,
+    /// never reads as "no difference", exit code distinct (3).
+    Inconclusive,
 }
 
 impl Verdict {
@@ -27,6 +31,7 @@ impl Verdict {
         match self {
             Verdict::Pass => "PASS",
             Verdict::Fail => "FAIL",
+            Verdict::Inconclusive => "INCONCLUSIVE",
         }
     }
 }

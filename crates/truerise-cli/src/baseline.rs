@@ -42,9 +42,17 @@ pub fn load_baseline(path: Option<&Path>) -> truerise_eval::ratchet::Baseline {
         .unwrap_or_else(truerise_eval::ratchet::Baseline::new)
 }
 
-/// Map a judged verdict onto the exit code (PASS=0 / FAIL=1 - the same
-/// contract as the demo; no third meaning is ever introduced).
+/// Map a judged verdict onto the exit code (G7 contract: PASS=0 / FAIL=1 /
+/// INCONCLUSIVE=3 - a run that proves nothing gets its OWN code, never 0,
+/// never 1; CI lanes still go red on it, and it can never read as either
+/// verdict).
 #[must_use]
 pub fn grade_exit(verdict: &truerise_eval::RunVerdict) -> i32 {
-    i32::from(!verdict.is_pass())
+    if verdict.is_pass() {
+        0
+    } else if verdict.verdict_str() == "INCONCLUSIVE" {
+        3
+    } else {
+        1
+    }
 }

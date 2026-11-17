@@ -150,6 +150,7 @@ pub fn run_commandline(
                 // verdict row therefore carries memory_recall: true, which
                 // excludes it from sequential correction and baselining.
                 memory_recall: true,
+                inconclusive: false,
             };
             match truerise_eval::judge_run(&facts, &baseline::load_baseline(baseline_path), &chain)
             {

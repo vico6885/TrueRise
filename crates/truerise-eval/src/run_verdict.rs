@@ -27,6 +27,11 @@ pub struct RunFacts {
     /// the plan), so it is excluded from the sequential-correction
     /// denominator and from ratchet baselining by construction.
     pub memory_recall: bool,
+    /// G7: the boundary's CAUSE declaration for an unfinished run - a
+    /// governance stop (budget halt) proves nothing (INCONCLUSIVE); a
+    /// takeover (the agent failed to perform) is a counted FAIL. The judge
+    /// never guesses causes: this flag IS the boundary's testimony.
+    pub inconclusive: bool,
 }
 
 /// A judged run verdict. Construction is crate-private: `judge_run` is the
@@ -162,14 +167,24 @@ pub fn judge_run(
     baseline: &Baseline,
     chain: &HashChain,
 ) -> Result<RunVerdict, EvalError> {
-    let failures = u32::from(!facts.finished);
-    let mut scores = Baseline::new();
-    scores.insert("run_failures".to_string(), f64::from(failures));
-    let regressed = verify_scores(baseline, &scores).is_err();
-    let verdict = if failures == 0 && !regressed {
-        Verdict::Pass
+    // G7: the verdict DISTINGUISHES the causes of an unfinished run. A
+    // governance stop (inconclusive=true) proves NOTHING - INCONCLUSIVE,
+    // exit 3, non-promotable. A takeover (inconclusive=false, finished
+    // false) is a counted FAIL - the agent failed to perform. The judge
+    // never guesses: the boundary testifies through RunFacts.
+    let (failures, verdict) = if facts.finished {
+        let mut scores = Baseline::new();
+        scores.insert("run_failures".to_string(), 0.0);
+        let regressed = verify_scores(baseline, &scores).is_err();
+        if regressed {
+            (1u32, Verdict::Fail)
+        } else {
+            (0u32, Verdict::Pass)
+        }
+    } else if facts.inconclusive {
+        (0u32, Verdict::Inconclusive)
     } else {
-        Verdict::Fail
+        (1u32, Verdict::Fail)
     };
     let out = RunVerdict {
         verdict: verdict.clone(),
@@ -232,6 +247,7 @@ mod tests {
                 finished: true,
                 rounds_total: 3,
                 memory_recall: false,
+                inconclusive: false,
             },
             &baseline_zero(),
             &chain,
@@ -243,7 +259,7 @@ mod tests {
     }
 
     #[test]
-    fn unfinished_run_fails_and_records_the_fail() {
+    fn unfinished_run_is_inconclusive_and_records_it() {
         let dir = temp_dir("fail");
         let chain = HashChain::open(&dir.join("c.jsonl")).unwrap();
         let v = judge_run(
@@ -251,13 +267,15 @@ mod tests {
                 finished: false,
                 rounds_total: 3,
                 memory_recall: false,
+                inconclusive: true,
             },
             &baseline_zero(),
             &chain,
         )
         .unwrap();
         assert!(!v.is_pass());
-        assert_eq!(v.failures(), 1);
+        assert_eq!(v.verdict_str(), "INCONCLUSIVE", "an unfinished run proves nothing");
+        assert_eq!(v.failures(), 0, "no failures were OBSERVED - the run did not complete");
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -270,6 +288,7 @@ mod tests {
                 finished: true,
                 rounds_total: 1,
                 memory_recall: false,
+                inconclusive: false,
             },
             &baseline_zero(),
             &chain,
@@ -303,6 +322,7 @@ mod tests {
                 finished: true,
                 rounds_total: 1,
                 memory_recall: true,
+                inconclusive: false,
             },
             &baseline_zero(),
             &chain,
@@ -327,6 +347,7 @@ mod tests {
                 finished: true,
                 rounds_total: 1,
                 memory_recall: false,
+                inconclusive: false,
             },
             &baseline_zero(),
             &chain,
@@ -344,6 +365,7 @@ mod tests {
                 finished: true,
                 rounds_total: 1,
                 memory_recall: true,
+                inconclusive: false,
             },
             &baseline_zero(),
             &chain,
