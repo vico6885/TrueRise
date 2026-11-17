@@ -76,5 +76,27 @@
       "observations"
     ],
     "additionalProperties": false
+  },
+  "giveup_claim.v1.schema": {
+    "fields": [
+      "contract_sealed_hash",
+      "verdict",
+      "ledger",
+      "verdict_space"
+    ],
+    "required": [
+      "verdict"
+    ],
+    "enums": {
+      "verdict": [
+        "infeasible_within_budget"
+      ],
+      "verdict_space": [
+        "completed",
+        "not_completed",
+        "infeasible_within_budget"
+      ]
+    },
+    "additionalProperties": false
   }
 }

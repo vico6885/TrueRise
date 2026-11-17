@@ -135,3 +135,10 @@ fn extract_flag(args: &[String], flag: &str) -> Result<Option<String>, String> {
     }
     Ok(found)
 }
+
+/// The shared run-chain dir (overridable for tests via TRUERISE_RUN_DIR).
+pub fn run_chain_dir() -> std::path::PathBuf {
+    std::env::var("TRUERISE_RUN_DIR")
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|_| std::env::temp_dir().join("truerise_cli_run"))
+}

@@ -267,6 +267,14 @@
       "test_file_removal_requires_approval",
       "selftest_proves_bite_and_flags_theatre",
       "stale_test_bites_allowlist_row_is_refused"
+    ],
+    "放弃复核": [
+      "abandonment_without_search_ledger_is_rejected",
+      "bounded_retry_is_disjoint_from_tried_set",
+      "retry_budget_covers_cheapest_untried_probe",
+      "infeasible_certificate_states_its_budget_bound",
+      "three_valued_outcome_cannot_be_collapsed",
+      "completed_claims_do_not_carry_infeasibility_ledgers"
     ]
   }
 }

@@ -60,6 +60,7 @@ cargo run -p truerise-cli -- <命令>
 | `verify --bundle <path> --intent <contract.toml>` | 自助验收包（G39）：每个机检验收项一条预期观测，覆盖面从合同封盘生成（漏一条即拒绝）。三桶报告——PASS / FAIL / NOT-VERIFIED（显式转送，绝不沉默）；全部 PASS 才退出 `0`。在你自己的机器上即可运行，无需本仓 |
 | `verify --cert <path> [--issuer-key <hex>]` | 校验证书签名（ed25519）；未签名的证书报告 `unverified issuer` 并以 `1` 退出——绝不静默当真 |
 | `mcp --serve [--chain <dir>]` | 经 stdio 起默认零暴露的 MCP server；每次调用都落链 |
+| `giveup --ledger <claim.json> [--intent <toml>]` | 记录一个**有界**放弃声明（G44）：搜索面账单、封盘成本上界、与已试集**不相交**的复核计划。无界或偷懒式放弃以 `2` 退出拒绝；判词空间严格三值（completed / not_completed / infeasible_within_budget），不可压缩。有界复核本体待预算联动（G2/G21）后落地 |
 | `repl` | 交互壳；斜杠命令 `/demo`、`/audit`、`/quit`、`/exit` |
 | `onboarding` | 首次运行向导；写 `config.toml`，**永不落任何密钥**（只走环境变量或系统钥匙串） |
 | `help`、`--help`、`-h` | 子命令清单 |

@@ -8,34 +8,10 @@
 //! test keeps the chain-row lookups unambiguous).
 #![allow(clippy::expect_used, clippy::unwrap_used)]
 
-use std::path::PathBuf;
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Mutex, MutexGuard};
+mod common;
 
+use common::{chain_guard, temp_dir};
 use truerise_cli::{cli_main, intent_cmd};
-
-static CHAIN_LOCK: Mutex<()> = Mutex::new(());
-
-fn chain_guard(tag: &str) -> MutexGuard<'static, ()> {
-    match CHAIN_LOCK.lock() {
-        Ok(g) => g,
-        Err(poisoned) => {
-            eprintln!("chain lock poisoned by a failed test ({tag}); recovering");
-            poisoned.into_inner()
-        }
-    }
-}
-
-fn temp_dir(tag: &str) -> PathBuf {
-    static N: AtomicU64 = AtomicU64::new(0);
-    let dir = std::env::temp_dir().join(format!(
-        "truerise_intent_{tag}_{}_{}",
-        std::process::id(),
-        N.fetch_add(1, Ordering::Relaxed)
-    ));
-    std::fs::create_dir_all(&dir).expect("temp dir");
-    dir
-}
 
 fn contract_toml(goal: &str, human_kind: &str) -> String {
     format!(
@@ -106,7 +82,15 @@ fn token_json(sealed_hash: &str, decisions: &[(&str, &str)]) -> String {
 
 fn chain_rows() -> String {
     let dir = std::env::temp_dir().join("truerise_cli_run");
-    std::fs::read_to_string(dir.join("run.jsonl")).unwrap_or_default()
+    // A concurrent writer holds the OS byte-range lock - a plain read can
+    // transiently fail; retry instead of swallowing it into an empty string.
+    for _ in 0..40 {
+        match std::fs::read_to_string(dir.join("run.jsonl")) {
+            Ok(text) => return text,
+            Err(_) => std::thread::sleep(std::time::Duration::from_millis(25)),
+        }
+    }
+    String::new()
 }
 
 fn seal_row(hash: &str) -> String {

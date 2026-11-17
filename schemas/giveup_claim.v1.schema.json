@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "giveup_claim.v1",
+  "title": "TrueRise bounded give-up claim (G44, contracted first version)",
+  "type": "object",
+  "description": "A give-up claim is bounded or it is nothing: InfeasibleWithinBudget requires a search-surface ledger (tried probes with outcomes, untried ones with their cheapest concrete form and cost), a sealed budget bound, and a retry plan DISJOINT from the tried set. The verdict space is exactly three-valued (completed / not_completed / infeasible_within_budget) and cannot be collapsed. Auto-executed bounded recheck is deferred until G2/G21 budget linkage (consensus v3.3).",
+  "properties": {
+    "contract_sealed_hash": {
+      "type": "string",
+      "description": "the sealed intent contract this claim dispositions (optional outside a contract run)"
+    },
+    "verdict": {
+      "enum": [
+        "infeasible_within_budget"
+      ],
+      "description": "the give-up verdict; completed/not_completed claims exist in the completion_report surface, not here"
+    },
+    "ledger": {
+      "type": "object",
+      "description": "the search-surface ledger (required for infeasible_within_budget)"
+    },
+    "verdict_space": {
+      "enum": [
+        "completed",
+        "not_completed",
+        "infeasible_within_budget"
+      ],
+      "description": "the complete three-valued space, machine-checked as non-collapsible"
+    }
+  },
+  "required": [
+    "verdict"
+  ],
+  "additionalProperties": false
+}

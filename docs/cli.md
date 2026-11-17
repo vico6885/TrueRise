@@ -63,6 +63,7 @@ cargo run -p truerise-cli -- <command>
 | `verify --bundle <path> --intent <contract.toml>` | the self-service acceptance package (G39): one expected observation per machine-checkable contract item, coverage SEALED from the contract (skipping one is a refusal). Three buckets - PASS / FAIL / NOT-VERIFIED (explicit routing, never silence); exit `0` only when everything passed. Runs on YOUR machine without this repo |
 | `verify --cert <path> [--issuer-key <hex>]` | verify a certificate signature (ed25519); an unsigned cert reports `unverified issuer` and exits `1` — never silent trust |
 | `mcp --serve [--chain <dir>]` | the zero-exposure MCP server over stdio; every call lands on the chain |
+| `giveup --ledger <claim.json> [--intent <toml>]` | record a BOUNDED give-up claim (G44): the search-surface ledger, the sealed budget bound and a retry plan DISJOINT from the tried set. Unbounded or lazy abandonment is refused with exit `2`; the verdict space is exactly three-valued (completed / not_completed / infeasible_within_budget) and cannot be collapsed. The bounded recheck itself lands once budget linkage (G2/G21) exists |
 | `repl` | interactive shell; slash commands `/demo`, `/audit`, `/quit`, `/exit` |
 | `onboarding` | first-run wizard; writes `config.toml` and **never stores a key** (env or OS keyring only) |
 | `help`, `--help`, `-h` | subcommand list |

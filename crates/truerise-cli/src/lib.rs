@@ -18,6 +18,7 @@ pub mod assembly;
 pub mod baseline;
 pub mod demo;
 pub mod evolve_cmd;
+pub mod giveup_cmd;
 pub mod identity;
 pub mod intent_cmd;
 pub mod interactive;
@@ -333,7 +334,7 @@ pub fn cli_main(args: Vec<String>) -> i32 {
             if let Some(seal) = &intent_seal {
                 goal = seal.goal.clone();
                 intent_cmd::print_intent_banner(seal);
-                let dir = std::env::temp_dir().join("truerise_cli_run");
+                let dir = intent_cmd::run_chain_dir();
                 if let Err(e) = intent_cmd::record_intent_on_chain(&dir, seal) {
                     eprintln!("run: {e}");
                     return 1;
@@ -434,6 +435,7 @@ pub fn cli_main(args: Vec<String>) -> i32 {
                 provider.as_ref(),
             )
         }
+        "giveup" => giveup_cmd::handle_command(&args),
         "repl" => {
             interactive::repl();
             0
