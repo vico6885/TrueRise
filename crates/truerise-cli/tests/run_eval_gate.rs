@@ -66,6 +66,7 @@ fn run_and_judge(
     .expect("run completes");
     let chain = HashChain::open(&dir.join("run.jsonl")).expect("chain");
     let facts = RunFacts {
+        memory_recall: false,
         finished: truerise_core::Loop::final_state(&books.transitions)
             == truerise_core::State::Finished,
         rounds_total: 1,

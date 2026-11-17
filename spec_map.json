@@ -285,6 +285,12 @@
       "certificate_refuses_report_bound_to_another_contract",
       "certificate_skips_completion_without_intent",
       "replay_verifies_the_completion_ledger"
+    ],
+    "记忆污染闸": [
+      "eval_run_records_memory_isolation_flag_in_certificate",
+      "run_with_memory_recall_is_ratchet_ineligible",
+      "eval_run_performs_no_memory_writes",
+      "eval_and_memory_share_no_writable_surface"
     ]
   }
 }

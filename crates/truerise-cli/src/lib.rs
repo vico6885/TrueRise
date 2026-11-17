@@ -146,6 +146,10 @@ pub fn run_commandline(
                 finished: truerise_core::Loop::final_state(&books.transitions)
                     == truerise_core::State::Finished,
                 rounds_total: 1,
+                // The CLI run always wires the recall bridge (W6) - the
+                // verdict row therefore carries memory_recall: true, which
+                // excludes it from sequential correction and baselining.
+                memory_recall: true,
             };
             match truerise_eval::judge_run(&facts, &baseline::load_baseline(baseline_path), &chain)
             {

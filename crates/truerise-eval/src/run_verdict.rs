@@ -22,6 +22,11 @@ pub struct RunFacts {
     pub finished: bool,
     /// How many rounds the run declared.
     pub rounds_total: u32,
+    /// G50: did the run's plan phase consult memory recall? A recall-enabled
+    /// run is NOT trial-independent (evidence from earlier runs leaks into
+    /// the plan), so it is excluded from the sequential-correction
+    /// denominator and from ratchet baselining by construction.
+    pub memory_recall: bool,
 }
 
 /// A judged run verdict. Construction is crate-private: `judge_run` is the
@@ -32,6 +37,7 @@ pub struct RunVerdict {
     failures: u32,
     finished: bool,
     rounds_total: u32,
+    memory_recall: bool,
 }
 
 impl RunVerdict {
@@ -63,6 +69,20 @@ impl RunVerdict {
     #[must_use]
     pub fn rounds_total(&self) -> u32 {
         self.rounds_total
+    }
+
+    /// G50: did the judged run consult memory recall?
+    #[must_use]
+    pub fn memory_recall(&self) -> bool {
+        self.memory_recall
+    }
+
+    /// G50: a recall-enabled run is excluded from the sequential-correction
+    /// denominator and from ratchet baselining (its scores are NOT
+    /// trial-independent).
+    #[must_use]
+    pub fn ratchet_eligible(&self) -> bool {
+        !self.memory_recall
     }
 }
 
@@ -103,6 +123,9 @@ pub fn judge_tasks(
         failures,
         finished: true,
         rounds_total: total,
+        // Task-pack judging never consults memory recall (the evolve loop
+        // reads the task pack directly) - isolation is inherent here.
+        memory_recall: false,
     };
     chain
         .append(
@@ -153,6 +176,7 @@ pub fn judge_run(
         failures,
         finished: facts.finished,
         rounds_total: facts.rounds_total,
+        memory_recall: facts.memory_recall,
     };
     chain
         .append(
@@ -167,7 +191,9 @@ pub fn judge_run(
                 "failures": out.failures,
                 "finished": out.finished,
                 "rounds_total": out.rounds_total,
-                "baseline_present": !baseline.is_empty()
+                "baseline_present": !baseline.is_empty(),
+                "memory_recall": out.memory_recall,
+                "excluded_from_sequential_denominator": out.memory_recall
             }),
             None,
         )
@@ -205,6 +231,7 @@ mod tests {
             &RunFacts {
                 finished: true,
                 rounds_total: 3,
+                memory_recall: false,
             },
             &baseline_zero(),
             &chain,
@@ -223,6 +250,7 @@ mod tests {
             &RunFacts {
                 finished: false,
                 rounds_total: 3,
+                memory_recall: false,
             },
             &baseline_zero(),
             &chain,
@@ -241,6 +269,7 @@ mod tests {
             &RunFacts {
                 finished: true,
                 rounds_total: 1,
+                memory_recall: false,
             },
             &baseline_zero(),
             &chain,
@@ -260,5 +289,69 @@ mod tests {
             truerise_governance::ChainError::Tampered { .. }
         ));
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn eval_run_records_memory_isolation_flag_in_certificate() {
+        // G50: the verdict row carries the recall flag AND the exclusion
+        // marker, so every consumer (certificate, denominator, baseline
+        // tooling) reads the isolation state from the chain, not from hope.
+        let dir = temp_dir("iso_flag");
+        let chain = HashChain::open(&dir.join("c.jsonl")).unwrap();
+        let v = judge_run(
+            &RunFacts {
+                finished: true,
+                rounds_total: 1,
+                memory_recall: true,
+            },
+            &baseline_zero(),
+            &chain,
+        )
+        .unwrap();
+        assert!(v.memory_recall());
+        assert!(!v.ratchet_eligible(), "a recall-enabled run is not ratchet eligible");
+        let rows = chain.governing_rows();
+        let verdict_row = rows
+            .iter()
+            .find(|r| r.event.kind == "eval.verdict")
+            .map(|r| r.event.detail.clone())
+            .unwrap();
+        assert_eq!(verdict_row["memory_recall"], serde_json::json!(true));
+        assert_eq!(
+            verdict_row["excluded_from_sequential_denominator"],
+            serde_json::json!(true)
+        );
+        // The isolated run records the opposite.
+        let v2 = judge_run(
+            &RunFacts {
+                finished: true,
+                rounds_total: 1,
+                memory_recall: false,
+            },
+            &baseline_zero(),
+            &chain,
+        )
+        .unwrap();
+        assert!(v2.ratchet_eligible());
+    }
+
+    #[test]
+    fn run_with_memory_recall_is_ratchet_ineligible() {
+        let dir = temp_dir("iso_ratchet");
+        let chain = HashChain::open(&dir.join("c.jsonl")).unwrap();
+        let recall_enabled = judge_run(
+            &RunFacts {
+                finished: true,
+                rounds_total: 1,
+                memory_recall: true,
+            },
+            &baseline_zero(),
+            &chain,
+        )
+        .unwrap();
+        assert!(
+            !recall_enabled.ratchet_eligible(),
+            "recall leaks evidence across trials - the score must never enter a baseline"
+        );
     }
 }
