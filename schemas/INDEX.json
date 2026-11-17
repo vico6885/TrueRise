@@ -54,5 +54,16 @@
       ]
     },
     "additionalProperties": false
+  },
+  "completion_report.v1.schema": {
+    "fields": [
+      "contract_sealed_hash",
+      "entries"
+    ],
+    "required": [
+      "contract_sealed_hash",
+      "entries"
+    ],
+    "additionalProperties": false
   }
 }

@@ -230,8 +230,15 @@
       "run_rejects_intent_token_that_skips_an_item",
       "run_rejects_intent_contract_with_unknown_kind",
       "run_records_machine_floor_note_for_underfloor_contract",
-      "duplicate_item_ids_are_refused",
-      "G32 意图合同最小版：wire schema intent_contract.v1 + 封盘哈希 + 逐项裁定令牌 + run --intent/--intent-token（复核自动执行按共识暂缓）"
+      "duplicate_item_ids_are_refused"
+    ],
+    "缺口台账": [
+      "every_acceptance_item_is_done_or_not_done_or_not_verified",
+      "silence_is_not_coverage",
+      "certificate_without_gap_section_is_refused",
+      "not_done_reason_taxonomy_enforced",
+      "completion_claim_requires_per_item_evidence",
+      "not_verified_carries_the_cost_of_checking"
     ]
   }
 }

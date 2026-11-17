@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "completion_report.v1",
+  "title": "TrueRise completion report (G35/G36): three-way per-item ledger",
+  "type": "object",
+  "description": "For EVERY acceptance item of the sealed contract exactly one entry: done (with an evidence reference), not_done (with a reason from the closed taxonomy), or not_verified (with the why and the cost of checking). A report that skips an item is refused - silence is not coverage; a contract under the machine-check floor cannot certify completion at all.",
+  "properties": {
+    "contract_sealed_hash": {
+      "type": "string",
+      "description": "the sealed intent contract hash this report dispositions"
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "exactly one done/not_done/not_verified entry per acceptance item (no skips, no duplicates)"
+    }
+  },
+  "required": [
+    "contract_sealed_hash",
+    "entries"
+  ],
+  "additionalProperties": false
+}
