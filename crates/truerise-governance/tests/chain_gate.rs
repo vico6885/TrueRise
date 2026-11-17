@@ -256,3 +256,39 @@ fn canonical_json_float_rule_test() {
         .append("zero.row", Severity::Info, &json!({"count": 0}), None)
         .expect("zero is an integer");
 }
+
+#[test]
+fn same_row_count_replacement_tamper_is_caught_on_next_append() {
+    // Review fix (P1): the old append only re-verified when the ROW COUNT
+    // changed - a same-count replacement tamper sailed through to a
+    // successful append. Now every append re-derives the chain from disk
+    // inside the lock, and verify() re-reads FROM DISK (the in-memory
+    // cache is never the judge).
+    let dir = tempdir::TempDir::default();
+    let path = dir.path().join("replace.jsonl");
+    let chain = HashChain::open(&path).expect("open");
+    chain
+        .append("k1", Severity::Info, &serde_json::json!({"n": 1}), None)
+        .expect("append 1");
+    chain
+        .append("k2", Severity::Info, &serde_json::json!({"n": 2}), None)
+        .expect("append 2");
+    // Review scenario: the chain handle was opened BEFORE the tamper - its
+    // in-memory state predates the edit, and only the unconditional
+    // in-lock reload catches the replacement. (A fresh open would catch it
+    // too, but that path was already covered; this is the hole.)
+    let text = std::fs::read_to_string(&path).expect("read");
+    let tampered = text.replacen("\"n\":1", "\"n\":999", 1);
+    assert_ne!(tampered, text, "the drill must actually change a byte");
+    std::fs::write(&path, tampered).expect("write tampered");
+    let err = chain.append("k3", Severity::Info, &serde_json::json!({"n": 3}), None);
+    assert!(
+        matches!(err, Err(ChainError::Tampered { .. })),
+        "append onto tampered bytes must refuse: {err:?}"
+    );
+    assert!(
+        matches!(chain.verify(), Err(ChainError::Tampered { .. })),
+        "verify() re-reads from disk and catches the replacement"
+    );
+    drop(dir); // TempDir cleans up on drop
+}

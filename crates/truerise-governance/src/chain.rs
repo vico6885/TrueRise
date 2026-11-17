@@ -209,9 +209,12 @@ impl HashChain {
         // (e.g. fs::read_to_string) would collide with our own lock.
         let mut guard = lock_exclusive(&self.path)?;
         let text = String::from_utf8_lossy(&guard.read_all()?).to_string();
-        let count = text.lines().filter(|l| !l.trim().is_empty()).count();
-        if count != state.rows.len() {
-            // Another writer appended; reload and verify before continuing.
+        // Review fix (P1): reload + verify UNCONDITIONALLY. The old
+        // row-count check only caught ADDED/REMOVED lines - a same-row-
+        // count REPLACEMENT tamper sailed through to a successful append.
+        // Every append now re-derives the whole chain from disk inside the
+        // lock, so what we append onto is always the verified bytes.
+        {
             let mut rows = Vec::new();
             for (i, line) in text.lines().filter(|l| !l.trim().is_empty()).enumerate() {
                 let ev: AuditEventV2 =
@@ -283,9 +286,24 @@ impl HashChain {
     }
 
     /// Full verification (all three checks), locating offending rows.
+    /// Review fix (P1): re-reads FROM DISK - the in-memory cache can go
+    /// stale the moment another process (or an editor) touches the file,
+    /// and a verify that trusts the cache is not verification.
     pub fn verify(&self) -> Result<(), ChainError> {
-        let state = self.inner.lock().unwrap_or_else(|p| p.into_inner());
-        let problems = verify_rows(&state.rows);
+        // The in-memory cache is NOT trusted (review P1): read the file.
+        let mut guard = lock_exclusive(&self.path)?;
+        let text = String::from_utf8_lossy(&guard.read_all()?).to_string();
+        drop(guard);
+        let mut rows = Vec::new();
+        for (i, line) in text.lines().filter(|l| !l.trim().is_empty()).enumerate() {
+            let ev: AuditEventV2 = serde_json::from_str(line).map_err(|e| ChainError::Tampered {
+                rows: vec![i],
+                reason: format!("unparsable row {i}: {e}"),
+            })?;
+            let legacy = ev.kind.starts_with("legacy:");
+            rows.push(Row { event: ev, legacy });
+        }
+        let problems = verify_rows(&rows);
         if problems.is_empty() {
             Ok(())
         } else {

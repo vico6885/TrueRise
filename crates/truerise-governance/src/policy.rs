@@ -75,15 +75,16 @@ impl PolicyTable {
                 Decision::Allow
             }
             Some(PolicyState::Ask) => {
-                let d = if approval_on_file {
+                // Review fix (P1): an Ask ALLOW is for THIS evaluation only
+                // and is NEVER cached - caching it turned a revocable
+                // approval into permanent consent (the tool-port contract
+                // says approvals never expire into consent; the old cache
+                // violated that on the next approval_on_file=false call).
+                if approval_on_file {
                     Decision::Allow
                 } else {
                     Decision::NeedsApproval
-                };
-                if d == Decision::Allow {
-                    self.cache.insert(scope.to_string(), d.clone());
                 }
-                d
             }
             Some(PolicyState::Deny) => Decision::Deny, // unreachable (short-circuit above), exhaustive for the compiler
             None => Decision::Deny,                    // default-deny
@@ -119,16 +120,21 @@ mod tests {
     }
 
     #[test]
-    fn ask_requires_approval_on_file_and_then_caches() {
+    fn ask_allow_is_per_evaluation_never_cached() {
+        // Review fix (P1): the old test PINNED the bug - an Ask allow was
+        // cached, turning a revocable approval into permanent consent. The
+        // contract is "approvals never expire into consent": each
+        // evaluation re-checks approval_on_file.
         let mut t = PolicyTable::new();
         t.set("write", PolicyState::Ask);
         assert_eq!(t.evaluate("write", false), Decision::NeedsApproval);
         assert_eq!(t.evaluate("write", true), Decision::Allow);
         assert_eq!(
             t.evaluate("write", false),
-            Decision::Allow,
-            "approval cached"
+            Decision::NeedsApproval,
+            "the allow was for THAT evaluation - no consent leakage"
         );
+        assert_eq!(t.evaluate("write", true), Decision::Allow);
     }
 
     #[test]

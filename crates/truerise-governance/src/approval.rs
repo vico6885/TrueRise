@@ -61,9 +61,20 @@ impl ApprovalQueue {
     }
 
     /// Queue an approval request (stamped with the current epoch).
-    pub fn request(&mut self, id: &str) {
+    /// Review fix (P1): an EXISTING id is refused - the old unconditional
+    /// insert RESET Revoked back to Pending, making the "terminal" revoke
+    /// reopenable (and the apply gate behind it bypassable).
+    pub fn request(&mut self, id: &str) -> Result<(), CoreError> {
+        if self.requests.contains_key(id) {
+            return Err(CoreError::RiskGate(
+                truerise_core::RiskGate::ApprovalRequired {
+                    action: format!("request {id} already exists (revoke is terminal - a new proposal needs a new id)"),
+                },
+            ));
+        }
         self.requests
             .insert(id.to_string(), (RequestState::Pending, self.current_epoch));
+        Ok(())
     }
 
     /// Explicitly approve a PENDING request; anything else stays as-is.
@@ -140,6 +151,26 @@ mod tests {
         q.revoke("r1");
         assert!(q.approve("r1").is_err());
         assert_eq!(q.state("r1"), Some(RequestState::Revoked));
+    }
+
+    #[test]
+    fn revoked_request_cannot_be_reopened() {
+        // Review fix (P1): the old request() unconditionally reset Revoked
+        // to Pending - the "terminal" revoke was reopenable and the apply
+        // gate behind it bypassable.
+        let mut q = ApprovalQueue::new();
+        q.request("h1").expect("fresh request");
+        q.approve("h1").expect("approved");
+        q.revoke("h1");
+        assert!(q.request("h1").is_err(), "a revoked id is spent forever");
+        assert!(q.approve("h1").is_err());
+    }
+
+    #[test]
+    fn duplicate_request_id_is_refused() {
+        let mut q = ApprovalQueue::new();
+        q.request("h1").expect("fresh request");
+        assert!(q.request("h1").is_err(), "one id, one request");
     }
 
     #[test]
