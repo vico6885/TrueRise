@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Timesafety job existence assertion (PLACEHOLDER until M1).
+"""Timesafety job existence assertion (enforced since M1 (four vectors live in tests/timesafety/four_vectors.toml)).
 
 The CI job named ``timesafety-placeholder`` must never be skipped; until the
 real LeakGuard suite lands in M1 this assertion keeps the job fail-closed:

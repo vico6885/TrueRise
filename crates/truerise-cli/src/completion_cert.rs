@@ -12,8 +12,8 @@
 use std::path::PathBuf;
 
 use serde_json::json;
-use truerise_wire::IntentContractV1;
 use truerise_wire::CompletionReportV1;
+use truerise_wire::IntentContractV1;
 
 /// The binding between a generation run and its intent contract:
 /// `--intent <contract.toml>` plus the (required) `--completion <report.json>`.
@@ -102,8 +102,12 @@ pub fn parse_completion_args(args: &[String]) -> Result<Option<CompletionBinding
 /// load the contract, validate, SEAL it, parse the report, and close the
 /// report against the contract. `Err` = the certificate must NOT be issued.
 pub fn validate_binding(binding: &CompletionBinding) -> Result<serde_json::Value, String> {
-    let contract_text = std::fs::read_to_string(&binding.intent_path)
-        .map_err(|e| format!("cannot read intent contract {}: {e}", binding.intent_path.display()))?;
+    let contract_text = std::fs::read_to_string(&binding.intent_path).map_err(|e| {
+        format!(
+            "cannot read intent contract {}: {e}",
+            binding.intent_path.display()
+        )
+    })?;
     let mut contract: IntentContractV1 = toml::from_str(&contract_text)
         .map_err(|e| format!("intent contract is not valid v1 TOML: {e}"))?;
     contract
@@ -121,8 +125,12 @@ pub fn validate_binding(binding: &CompletionBinding) -> Result<serde_json::Value
                 .to_string(),
         );
     };
-    let report_text = std::fs::read_to_string(report_path)
-        .map_err(|e| format!("cannot read completion report {}: {e}", report_path.display()))?;
+    let report_text = std::fs::read_to_string(report_path).map_err(|e| {
+        format!(
+            "cannot read completion report {}: {e}",
+            report_path.display()
+        )
+    })?;
     let report: CompletionReportV1 = serde_json::from_str(&report_text)
         .map_err(|e| format!("completion report is not valid v1 JSON: {e}"))?;
     report
@@ -148,11 +156,7 @@ pub fn validate_binding(binding: &CompletionBinding) -> Result<serde_json::Value
                         .to_string(),
                 );
             }
-            token
-                .decisions
-                .iter()
-                .map(|d| d.item_id.clone())
-                .collect()
+            token.decisions.iter().map(|d| d.item_id.clone()).collect()
         }
         None => Vec::new(),
     };
@@ -247,4 +251,3 @@ pub fn replay_completion(completion: &serde_json::Value) -> Result<(), String> {
     }
     Ok(())
 }
-

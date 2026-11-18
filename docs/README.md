@@ -48,6 +48,10 @@ User-facing documents ship as a pair: `name.md` (English, authoritative) and
 in its header. Design notes (`arch`, `governance`, `timesafety`, `topology`,
 `determinism`, `integrations`) carry both languages inline in one file.
 
+Exception: the helper READMEs under `benches/`, `hats/`, `schemas/`,
+`tests/timesafety/`, `examples/` and `providers/` are English-only by
+convention (contributor-facing engineering pages, not user-facing surfaces).
+
 The pairing is machine-checked: `python tools/check_docs.py` fails CI when a
 registered document loses its counterpart, when a header link is missing, or
 when a document references a path that does not exist.

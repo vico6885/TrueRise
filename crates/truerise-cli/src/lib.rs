@@ -160,8 +160,7 @@ pub fn run_commandline(
                     return 1;
                 }
             };
-            match truerise_eval::judge_run(&facts, &baseline_loaded, &chain)
-            {
+            match truerise_eval::judge_run(&facts, &baseline_loaded, &chain) {
                 Ok(verdict) => {
                     println!(
                         "  verdict:            {} (failures {}, baseline {})",
@@ -501,7 +500,9 @@ pub fn cli_main(args: Vec<String>) -> i32 {
                 approve.as_deref(),
                 inject,
                 tape.as_deref(),
-                completion.as_ref().map(|b| b as &completion_cert::CompletionBinding),
+                completion
+                    .as_ref()
+                    .map(|b| b as &completion_cert::CompletionBinding),
             )
         }
         "verify" => {

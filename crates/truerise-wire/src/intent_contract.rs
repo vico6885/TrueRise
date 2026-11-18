@@ -134,10 +134,16 @@ impl std::fmt::Display for ContractError {
         match self {
             Self::EmptyGoal => write!(f, "goal is empty - state what the user wants"),
             Self::UnsupportedVersion(v) => {
-                write!(f, "contract_version {v} is not v1 - only the v1 wire exists")
+                write!(
+                    f,
+                    "contract_version {v} is not v1 - only the v1 wire exists"
+                )
             }
             Self::NoAcceptanceItems => {
-                write!(f, "contract has no acceptance items - ask the user, do not assume")
+                write!(
+                    f,
+                    "contract has no acceptance items - ask the user, do not assume"
+                )
             }
             Self::EmptyItemId => write!(f, "acceptance item id is empty"),
             Self::EmptyItemText => write!(f, "acceptance item text is empty"),
@@ -150,19 +156,28 @@ impl std::fmt::Display for ContractError {
                 write!(f, "confirmation token is empty - adjudicate every item")
             }
             Self::TokenMissingDecision(id) => {
-                write!(f, "confirmation token skips item {id} - per-item adjudication required")
+                write!(
+                    f,
+                    "confirmation token skips item {id} - per-item adjudication required"
+                )
             }
             Self::TokenDuplicateDecision(id) => write!(f, "token adjudicates {id} twice"),
             Self::TokenUnknownDecision(id) => write!(f, "token adjudicates unknown item {id}"),
             Self::TokenHashMismatch { expected, found } => {
-                write!(f, "token was sealed against contract {found}, this contract is {expected}")
+                write!(
+                    f,
+                    "token was sealed against contract {found}, this contract is {expected}"
+                )
             }
             Self::MachineFloor { found, minimum } => write!(
                 f,
                 "only {found} machine-checkable items (floor {minimum}) - this contract cannot certify completion"
             ),
             Self::CompletionMissingItem(id) => {
-                write!(f, "completion report is silent about item {id} - silence is not coverage")
+                write!(
+                    f,
+                    "completion report is silent about item {id} - silence is not coverage"
+                )
             }
             Self::CompletionDuplicateItem(id) => write!(f, "completion report names {id} twice"),
             Self::CompletionUnknownItem(id) => {
@@ -181,7 +196,9 @@ impl IntentContractV1 {
         // Rust side used to accept "v99" silently (a cross-implementation
         // inconsistency in a dual-impl project).
         if self.contract_version != "v1" {
-            return Err(ContractError::UnsupportedVersion(self.contract_version.clone()));
+            return Err(ContractError::UnsupportedVersion(
+                self.contract_version.clone(),
+            ));
         }
         if self.goal.trim().is_empty() {
             return Err(ContractError::EmptyGoal);
@@ -298,10 +315,14 @@ impl IntentToken {
                 .iter()
                 .any(|item| item.id == decision.item_id)
             {
-                return Err(ContractError::TokenUnknownDecision(decision.item_id.clone()));
+                return Err(ContractError::TokenUnknownDecision(
+                    decision.item_id.clone(),
+                ));
             }
             if seen.contains(&decision.item_id.as_str()) {
-                return Err(ContractError::TokenDuplicateDecision(decision.item_id.clone()));
+                return Err(ContractError::TokenDuplicateDecision(
+                    decision.item_id.clone(),
+                ));
             }
             seen.push(&decision.item_id);
         }
@@ -441,7 +462,10 @@ mod tests {
         let mut contract = IntentContractV1 {
             contract_version: "v1".into(),
             goal: "g".into(),
-            acceptance_items: vec![item("m0", AcceptanceKind::Machine), item("m0", AcceptanceKind::Human)],
+            acceptance_items: vec![
+                item("m0", AcceptanceKind::Machine),
+                item("m0", AcceptanceKind::Human),
+            ],
             non_goals: vec![],
             exclusions: vec![],
             sealed_hash: None,

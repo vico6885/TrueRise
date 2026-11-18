@@ -9,7 +9,7 @@ CJK tokens match as substrings; matching is case-insensitive.
 Exit codes: 0 = zero hits (gate green), 1 = leak detected (hits listed),
 2 = configuration error (empty/corrupt token list is fail-closed red).
 
-Excluded surfaces (rationale recorded in docs/PROGRESS.md):
+Excluded surfaces (rationale recorded in CHANGELOG.md):
 - ``.git/``: VCS internals - the history door (lint_git_history.py) owns
   this surface exclusively.
 - ``target/``: build artifacts.

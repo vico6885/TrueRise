@@ -4,7 +4,7 @@
 
 ## Which spec row does this serve?
 
-- [ ] This change maps to a row in `spec_map.json` (23 rows / 67 identifiers).
+- [ ] This change maps to a row in `spec_map.json` (54 rows / 210 identifiers).
       If it adds behaviour, the row **and** a named test are in this PR.
 - [ ] Pure refactor / docs — no behaviour row affected.
 

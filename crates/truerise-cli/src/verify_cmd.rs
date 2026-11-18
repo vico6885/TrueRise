@@ -30,10 +30,10 @@ pub enum ObservationOutcome {
 fn observation_file(observation: &BundleObservation) -> &str {
     match observation.kind {
         ObservationKind::FileExists => &observation.target,
-        ObservationKind::ArtifactField => observation.target.split_once('#').map_or(
-            &observation.target,
-            |(file, _)| file,
-        ),
+        ObservationKind::ArtifactField => observation
+            .target
+            .split_once('#')
+            .map_or(&observation.target, |(file, _)| file),
     }
 }
 
@@ -74,9 +74,9 @@ pub fn run_observation(observation: &BundleObservation) -> ObservationOutcome {
                     "field {file}#{dotted} = {actual}, expected {}",
                     observation.expected
                 )),
-                None => ObservationOutcome::NotVerified(format!(
-                    "field not found in {file}: {dotted}"
-                )),
+                None => {
+                    ObservationOutcome::NotVerified(format!("field not found in {file}: {dotted}"))
+                }
             }
         }
     }

@@ -6,7 +6,7 @@
       "runtime_table_terminal_absorbs_every_event",
       "declared_log_agrees_with_final_state",
       "terminal_states_absorb_at_compile_time",
-      "state_machine"
+      "full_table_coverage_defined_and_undefined"
     ],
     "审计链": [
       "append_verify_and_persistence_reload",
@@ -72,7 +72,7 @@
       "unknown_policy_refused"
     ],
     "T×W 谓词": [
-      "policy 三态 tests implement the conjunction semantics (allow = verdict in auto AND face allowed AND approval on file); the typed-capability half lives in the mode row"
+      "research_never_grants_execution"
     ],
     "审批队列": [
       "stale_epoch_writes_rejected",
@@ -215,7 +215,7 @@
       "promise_package_ids_form_a_complete_sequence",
       "claim_gate_red_means_the_word_leaves_the_title",
       "claim_terms_map_term_to_command_test_artifact",
-      "docs/limits.md 双语对：自指边界 + 承诺分级 + 永不承诺事项（宣称门执法措辞，闭合检查分级表）"
+      "check_promise_grades"
     ],
     "意图合同": [
       "contract_with_fewer_than_three_machine_checks_cannot_certify_completion",
@@ -295,8 +295,7 @@
     "三值判词": [
       "unfinished_run_is_inconclusive_and_records_it",
       "inconclusive_cannot_be_promoted_to_pass",
-      "grade_exit_maps_three_verdicts_to_three_codes",
-      "inconclusive_exit_code_distinct"
+      "grade_exit_maps_three_verdicts_to_three_codes"
     ],
     "重算闸": [
       "derivable_claim_is_recomputed_not_judged",

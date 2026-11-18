@@ -76,7 +76,10 @@ impl std::fmt::Display for BundleError {
             Self::DuplicateObservation(id) => write!(f, "bundle names item {id} twice"),
             Self::UnknownItem(id) => write!(f, "bundle names unknown item {id}"),
             Self::HashMismatch { expected, found } => {
-                write!(f, "bundle was built against contract {found}, this contract is {expected}")
+                write!(
+                    f,
+                    "bundle was built against contract {found}, this contract is {expected}"
+                )
             }
         }
     }
@@ -114,7 +117,9 @@ impl VerifyBundleV1 {
                 return Err(BundleError::UnknownItem(observation.item_id.clone()));
             }
             if seen.contains(&observation.item_id.as_str()) {
-                return Err(BundleError::DuplicateObservation(observation.item_id.clone()));
+                return Err(BundleError::DuplicateObservation(
+                    observation.item_id.clone(),
+                ));
             }
             seen.push(&observation.item_id);
         }

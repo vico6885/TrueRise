@@ -134,7 +134,6 @@ jobs:
           fetch-depth: 0
       - run: python3 tools/lint_schemas.py
       - run: python3 tools/lint_spec_map.py
-      - run: python3 tools/check_leakguard_skeleton.py
       - run: python3 tools/lint_dco.py
       - run: python3 tools/check_stubs.py
       # --floor against the merge base: assertion/test counts must not DROP
@@ -184,7 +183,8 @@ jobs:
       # ITSELF (critcmp main main) - it could never fail. The baseline is
       # now persisted via actions/cache: a run SAVES its own `pr` baseline
       # and compares against the cached `main` baseline from previous runs.
-      - uses: actions/cache@v4
+      # actions/cache v4.2.0 (SHA-pinned per W18 policy)
+      - uses: actions/cache@0c9075692d92f72b52d1d86a89f9f4cc0ebc4ed4 # v4.2.0
         with:
           path: target/criterion
           key: criterion-${{ github.ref_name }}

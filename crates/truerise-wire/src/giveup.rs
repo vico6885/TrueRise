@@ -143,7 +143,10 @@ impl std::fmt::Display for GiveUpError {
                 "give-up without a search-surface ledger is unattributed abandonment - refused"
             ),
             Self::UnboundedClaim => {
-                write!(f, "no sealed budget bound - 'infeasible' without a bound is not a claim")
+                write!(
+                    f,
+                    "no sealed budget bound - 'infeasible' without a bound is not a claim"
+                )
             }
             Self::RetryNotDisjoint(probe) => {
                 write!(f, "retry plan re-runs a tried probe: {probe}")
@@ -153,12 +156,23 @@ impl std::fmt::Display for GiveUpError {
                 "untried hypothesis has no cheapest concrete form: {h} (listing only doomed directions is not a search surface)"
             ),
             Self::TriedWithoutResult(h) => {
-                write!(f, "tried hypothesis {h} carries no result note - an outcome fact is required")
+                write!(
+                    f,
+                    "tried hypothesis {h} carries no result note - an outcome fact is required"
+                )
             }
-            Self::UntriedWithoutCost(h) => write!(f, "untried hypothesis has no cost estimate: {h}"),
-            Self::EmptyLedger => write!(f, "empty search ledger - tried nothing is not a bounded claim"),
+            Self::UntriedWithoutCost(h) => {
+                write!(f, "untried hypothesis has no cost estimate: {h}")
+            }
+            Self::EmptyLedger => write!(
+                f,
+                "empty search ledger - tried nothing is not a bounded claim"
+            ),
             Self::HashMismatch { expected, found } => {
-                write!(f, "claim cites contract {found}, this contract is {expected}")
+                write!(
+                    f,
+                    "claim cites contract {found}, this contract is {expected}"
+                )
             }
             Self::VerdictLedgerMismatch => {
                 write!(f, "only InfeasibleWithinBudget carries a search ledger")
@@ -171,10 +185,7 @@ impl std::error::Error for GiveUpError {}
 
 impl GiveUpClaimV1 {
     /// Validate against a sealed contract (when contract-bound).
-    pub fn validate_against(
-        &self,
-        contract: Option<&IntentContractV1>,
-    ) -> Result<(), GiveUpError> {
+    pub fn validate_against(&self, contract: Option<&IntentContractV1>) -> Result<(), GiveUpError> {
         if let Some(contract) = contract {
             let sealed = contract
                 .sealed_hash()
@@ -201,7 +212,10 @@ impl GiveUpClaimV1 {
         }
         match self.verdict {
             GiveUpVerdict::InfeasibleWithinBudget => {
-                let ledger = self.ledger.as_ref().ok_or(GiveUpError::AbandonmentWithoutLedger)?;
+                let ledger = self
+                    .ledger
+                    .as_ref()
+                    .ok_or(GiveUpError::AbandonmentWithoutLedger)?;
                 self.validate_ledger(ledger)
             }
             GiveUpVerdict::Completed | GiveUpVerdict::NotCompleted => {
@@ -349,9 +363,11 @@ mod tests {
             Err(GiveUpError::UnboundedClaim)
         );
         // A bounded ledger with a full retry plan validates.
-        assert!(claim(Some(ledger(2, 1, &["smallest experiment for untried-0"])))
-            .validate_against(None)
-            .is_ok());
+        assert!(
+            claim(Some(ledger(2, 1, &["smallest experiment for untried-0"])))
+                .validate_against(None)
+                .is_ok()
+        );
     }
 
     #[test]
@@ -368,7 +384,10 @@ mod tests {
         // Untried hypotheses remain but the retry plan is EMPTY: the bound
         // covers nothing - refused (the lazy-ledger tripwire).
         let lazy = claim(Some(ledger(1, 2, &[])));
-        assert_eq!(lazy.validate_against(None), Err(GiveUpError::UnboundedClaim));
+        assert_eq!(
+            lazy.validate_against(None),
+            Err(GiveUpError::UnboundedClaim)
+        );
         // An untried probe without a cheapest concrete form: refused.
         let mut no_form = ledger(1, 1, &["plan-0"]);
         no_form.probes[1].outcome = ProbeOutcome::Untried {
@@ -385,7 +404,13 @@ mod tests {
     fn three_valued_outcome_cannot_be_collapsed() {
         // Only the three named verdicts parse - there is no "partial",
         // "mostly done" or "passed with caveats".
-        for bogus in ["pass", "partial", "mostly_done", "success_with_caveats", "done"] {
+        for bogus in [
+            "pass",
+            "partial",
+            "mostly_done",
+            "success_with_caveats",
+            "done",
+        ] {
             assert!(
                 serde_json::from_str::<GiveUpVerdict>(format!("\"{bogus}\"").as_str()).is_err(),
                 "{bogus} must not parse as a verdict"

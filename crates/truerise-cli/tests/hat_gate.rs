@@ -13,6 +13,10 @@ use truerise_governance::HashChain;
 /// The REAL preset hats (compile-embedded: no drift from hats/*.toml).
 const CRITIC: &str = include_str!("../../../hats/critic.toml");
 const ENGINEER: &str = include_str!("../../../hats/engineer.toml");
+// Audit fix (E-line): evaluator/researcher were zero-referenced orphans -
+// every preset hat is now compile-embedded and parse-gated below.
+const EVALUATOR: &str = include_str!("../../../hats/evaluator.toml");
+const RESEARCHER: &str = include_str!("../../../hats/researcher.toml");
 
 fn temp_dir(tag: &str) -> PathBuf {
     static N: AtomicU64 = AtomicU64::new(0);
@@ -138,4 +142,20 @@ fn unknown_tool_in_hat_refused_at_load() {
             .any(|r| r.event.kind.starts_with("tool.")),
         "a refused run never reaches a tool"
     );
+}
+
+#[test]
+fn all_preset_hats_parse_and_gate() {
+    // Audit fix (E-line): evaluator/researcher were zero-referenced orphans.
+    // Every preset hat must parse (load-gated) - no dead data files.
+    for (name, toml) in [
+        ("critic", CRITIC),
+        ("engineer", ENGINEER),
+        ("evaluator", EVALUATOR),
+        ("researcher", RESEARCHER),
+    ] {
+        let hat = truerise_hats::parse_hat(toml)
+            .unwrap_or_else(|e| panic!("preset hat {name} must parse: {e}"));
+        assert_eq!(hat.name, name, "the preset id matches its file");
+    }
 }

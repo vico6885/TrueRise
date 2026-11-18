@@ -8,6 +8,6 @@ Current content: `audit_event.v2.schema.json` — the tightened audit-chain
 record contract (7 fields, 3 chain-critical required keys, no extra
 fields), asserted by `tools/lint_schemas.py` against `INDEX.json` at spec
 level (fields / required / enums / additionalProperties — never mere file
-references). The legacy v1 edition lands alongside in M1 (double-version
+references). The the legacy v1 edition shipped alongside in M1 (double-version
 rule, explicit at the type level; legacy reads stay valid but are excluded
 from governance).

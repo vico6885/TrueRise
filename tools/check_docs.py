@@ -48,6 +48,7 @@ INLINE_BILINGUAL = [
     "docs/governance.md",
     "docs/timesafety.md",
     "docs/topology.md",
+    "docs/integrations.md",
     "docs/rfc/README.md",
 ]
 

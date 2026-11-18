@@ -44,7 +44,7 @@ python tools/check_dual_impl.py         # 双实现互证：Rust 与 Python 判�
 | 部件 | 范围 | 许可 |
 |---|---|---|
 | `truerise`（Python） | 60 秒走查 + `truerise.evals` Anti-Cheat Bench（题包、封盘答案、声明证书） | Apache-2.0 / MIT |
-| `truerise`（Rust，12 个 crate） | 契约与判定权威：哈希链审计、三态策略、沙箱端口、一致性判定、棘轮、指纹、MCP（默认零暴露）、可观测导出 | Apache-2.0 / MIT |
+| `truerise`（Rust，13 个 crate） | 契约与判定权威：哈希链审计、三态策略、沙箱端口、一致性判定、棘轮、指纹、MCP（默认零暴露）、可观测导出 | Apache-2.0 / MIT |
 | 题包（数据） | 生成的夹具 + 封盘答案 | CC-BY-4.0（`LICENSE-DATA.md`） |
 
 ## 参考读数（已入库，可复算）

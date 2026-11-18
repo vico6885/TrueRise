@@ -93,16 +93,18 @@ fn bundle_passes_when_all_observations_match() {
     std::fs::write(dir.join("artifacts/verdict.json"), r#"{"verdict":"PASS"}"#)
         .expect("write artifact");
     std::fs::write(dir.join("artifacts/seal.txt"), "sha256:deadbeef").expect("write seal");
-    std::fs::write(
-        dir.join("artifacts/count.json"),
-        r#"{"items":{"m2":"42"}}"#,
-    )
-    .expect("write count");
+    std::fs::write(dir.join("artifacts/count.json"), r#"{"items":{"m2":"42"}}"#)
+        .expect("write count");
     let bundle_path = dir.join("bundle.json");
     let m2 = format!("{}/artifacts/count.json#items.m2", dir.display());
     std::fs::write(&bundle_path, bundle_json(&seal, &dir, &m2)).expect("write bundle");
     let report = verify_cmd::run_bundle(&bundle_path, &contract_path).expect("bundle runs");
-    assert_eq!(report.exit_code(), 0, "all observations pass: {}", report.render());
+    assert_eq!(
+        report.exit_code(),
+        0,
+        "all observations pass: {}",
+        report.render()
+    );
     assert!(report.render().contains("3 pass / 0 fail / 0 not-verified"));
 }
 
@@ -126,7 +128,10 @@ fn bundle_expected_observations_sealed_from_contract_items() {
     )
     .expect("write bundle");
     let err = verify_cmd::run_bundle(&bundle_path, &contract_path).expect_err("refused");
-    assert!(err.contains("no observation for machine item m1"), "names the gap: {err}");
+    assert!(
+        err.contains("no observation for machine item m1"),
+        "names the gap: {err}"
+    );
     // CLI level: exit 2.
     let code = cli_main(vec![
         "truerise".into(),
@@ -158,7 +163,10 @@ fn unverifiable_item_routes_to_not_verified() {
     let report = verify_cmd::run_bundle(&bundle_path, &contract_path).expect("bundle runs");
     assert_eq!(report.exit_code(), 1, "not-verified is not a pass");
     let rendered = report.render();
-    assert!(rendered.contains("NOT-VERIFIED  m2"), "item routed explicitly: {rendered}");
+    assert!(
+        rendered.contains("NOT-VERIFIED  m2"),
+        "item routed explicitly: {rendered}"
+    );
     assert!(rendered.contains("silence is not coverage"));
 }
 
@@ -168,13 +176,13 @@ fn bundle_rejects_wrong_contract_hash() {
     let contract_path = dir.join("intent.toml");
     std::fs::write(&contract_path, CONTRACT).expect("write contract");
     let bundle_path = dir.join("bundle.json");
-    std::fs::write(
-        &bundle_path,
-        bundle_json("deadbeef", &dir, "x#items.m2"),
-    )
-    .expect("write bundle");
+    std::fs::write(&bundle_path, bundle_json("deadbeef", &dir, "x#items.m2"))
+        .expect("write bundle");
     let err = verify_cmd::run_bundle(&bundle_path, &contract_path).expect_err("refused");
-    assert!(err.contains("bundle refused"), "refusal names the cause: {err}");
+    assert!(
+        err.contains("bundle refused"),
+        "refusal names the cause: {err}"
+    );
 }
 
 #[test]
@@ -196,7 +204,11 @@ fn bundle_fail_is_a_fail_not_a_skip() {
     std::fs::write(&bundle_path, bundle_json(&seal, &dir, &m2)).expect("write bundle");
     let report = verify_cmd::run_bundle(&bundle_path, &contract_path).expect("bundle runs");
     assert_eq!(report.exit_code(), 1);
-    assert!(report.render().contains("FAIL  m0"), "mismatch is FAIL: {}", report.render());
+    assert!(
+        report.render().contains("FAIL  m0"),
+        "mismatch is FAIL: {}",
+        report.render()
+    );
 }
 
 #[test]
@@ -227,7 +239,8 @@ fn bundle_runs_without_repo_checkout() {
         previous: std::env::current_dir().expect("cwd"),
     };
     std::env::set_current_dir(&workdir).expect("chdir");
-    let report = verify_cmd::run_bundle(&bundle_path, &contract_path).expect("bundle runs from a foreign cwd");
+    let report = verify_cmd::run_bundle(&bundle_path, &contract_path)
+        .expect("bundle runs from a foreign cwd");
     // m0 fails (no verdict field in local.json) but the RUN itself is cwd-
     // independent - the point of this test is execution, not the verdict.
     assert!(

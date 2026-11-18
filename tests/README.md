@@ -26,8 +26,6 @@ when a row loses its mapping or an identifier stops existing.
 | `python/tests/test_demo_perturbation.py` | verdict flips with inputs; nothing hardcoded; offline replay equals the stored certificate |
 | `python/tests/test_evals_bench.py` | pack scale and taxonomy, generator determinism, public surface carries no sealed hint, canary leak fails closed, judge exact on both axes, honest PASS / cheater FAIL / mutator FAIL, tamper fails closed on replay, zero trials refused, majority cannot un-count losing trials, classification covers every family |
 | `python/tests/test_sdk.py` | the SDK surface: ledger tamper detection, policy three-state parity with Rust, budget semantics, external-solver isolation |
-| `python/tests/test_long_horizon.py` | the long-horizon closed-loop family (byte-reproducible, skip = failure) |
-| `python/tests/test_external_solver.py` | the external-solver protocol (process boundary, output parsing) |
 
 Markers: none registered in `pyproject.toml` (the marker list that used to
 live here described an aspiration, not the code - removed).

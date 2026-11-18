@@ -50,8 +50,8 @@ pub fn load_intent(args: &[String]) -> Result<Option<IntentSeal>, String> {
     };
     let text = std::fs::read_to_string(&path)
         .map_err(|e| format!("cannot read intent contract {path}: {e}"))?;
-    let mut contract: IntentContractV1 = toml::from_str(&text)
-        .map_err(|e| format!("intent contract is not valid v1 TOML: {e}"))?;
+    let mut contract: IntentContractV1 =
+        toml::from_str(&text).map_err(|e| format!("intent contract is not valid v1 TOML: {e}"))?;
     contract
         .validate()
         .map_err(|e| format!("intent contract refused: {e}"))?;
@@ -130,7 +130,11 @@ pub fn print_intent_banner(seal: &IntentSeal) {
         seal.sealed_hash,
         seal.machine_items,
         seal.items_total,
-        if seal.adjudicated { "yes" } else { "no - the contract cannot certify completion until a per-item token is presented" }
+        if seal.adjudicated {
+            "yes"
+        } else {
+            "no - the contract cannot certify completion until a per-item token is presented"
+        }
     );
     if seal.rejected {
         println!(
@@ -182,8 +186,8 @@ pub fn run_chain_dir() -> std::path::PathBuf {
 pub fn verify_intent_unchanged(intent_path: &Path, sealed_hash: &str) -> Result<(), String> {
     let text = std::fs::read_to_string(intent_path)
         .map_err(|e| format!("intent contract unreadable after the run ({e}) - the completion basis cannot be re-derived"))?;
-    let mut contract: IntentContractV1 = toml::from_str(&text)
-        .map_err(|e| format!("intent contract no longer parses ({e})"))?;
+    let mut contract: IntentContractV1 =
+        toml::from_str(&text).map_err(|e| format!("intent contract no longer parses ({e})"))?;
     contract
         .validate()
         .map_err(|e| format!("intent contract no longer validates ({e})"))?;
@@ -223,10 +227,7 @@ fn record_intent_changed(dir: &Path, seal: &IntentSeal, reason: &str) -> Result<
 /// (single-track: everything else in the run branch is untouched).
 /// `Err(usage)` = exit 2; `Ok(code)` = the run's exit code (a voided run
 /// exits 1 with the intent.changed row on the chain).
-pub fn intent_guarded_run(
-    args: &[String],
-    run: &dyn Fn(&str) -> i32,
-) -> Result<i32, String> {
+pub fn intent_guarded_run(args: &[String], run: &dyn Fn(&str) -> i32) -> Result<i32, String> {
     let seal = load_intent(args)?;
     let fallback_goal = args
         .iter()

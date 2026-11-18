@@ -47,7 +47,10 @@ fn abandonment_without_search_ledger_is_rejected() {
         "--ledger".into(),
         path.to_string_lossy().into(),
     ]);
-    assert_eq!(code, 2, "give-up without a ledger is unattributed abandonment");
+    assert_eq!(
+        code, 2,
+        "give-up without a ledger is unattributed abandonment"
+    );
 }
 
 #[test]
@@ -55,8 +58,11 @@ fn bounded_giveup_lands_on_chain() {
     let _guard = chain_guard("bounded");
     let dir = temp_dir("bounded");
     let path = dir.join("claim.json");
-    std::fs::write(&path, claim_json("infeasible_within_budget", Some(GOOD_LEDGER)))
-        .expect("write claim");
+    std::fs::write(
+        &path,
+        claim_json("infeasible_within_budget", Some(GOOD_LEDGER)),
+    )
+    .expect("write claim");
     let code = cli_main(vec![
         "truerise".into(),
         "giveup".into(),
@@ -96,10 +102,7 @@ fn bounded_retry_is_disjoint_from_tried_set() {
 fn infeasible_certificate_states_its_budget_bound() {
     let dir = temp_dir("unbounded");
     let path = dir.join("claim.json");
-    let ledger = GOOD_LEDGER.replace(
-        "two bounded runs or 100k tokens, whichever first",
-        "   ",
-    );
+    let ledger = GOOD_LEDGER.replace("two bounded runs or 100k tokens, whichever first", "   ");
     std::fs::write(&path, claim_json("infeasible_within_budget", Some(&ledger)))
         .expect("write claim");
     let code = cli_main(vec![
@@ -108,7 +111,10 @@ fn infeasible_certificate_states_its_budget_bound() {
         "--ledger".into(),
         path.to_string_lossy().into(),
     ]);
-    assert_eq!(code, 2, "'infeasible' without a sealed bound is not a claim");
+    assert_eq!(
+        code, 2,
+        "'infeasible' without a sealed bound is not a claim"
+    );
 }
 
 #[test]
@@ -125,7 +131,10 @@ fn three_valued_outcome_cannot_be_collapsed() {
         "--ledger".into(),
         path.to_string_lossy().into(),
     ]);
-    assert_eq!(code, 2, "a collapsed verdict does not parse, so it cannot record");
+    assert_eq!(
+        code, 2,
+        "a collapsed verdict does not parse, so it cannot record"
+    );
 }
 
 #[test]
@@ -206,8 +215,11 @@ fn giveup_flag_without_value_is_a_usage_error() {
     // whole contract binding and record an UNANCHORED claim. Refusal now.
     let dir = temp_dir("no_value");
     let claim_path = dir.join("claim.json");
-    std::fs::write(&claim_path, claim_json("infeasible_within_budget", Some(GOOD_LEDGER)))
-        .expect("write claim");
+    std::fs::write(
+        &claim_path,
+        claim_json("infeasible_within_budget", Some(GOOD_LEDGER)),
+    )
+    .expect("write claim");
     let code = cli_main(vec![
         "truerise".into(),
         "giveup".into(),
@@ -215,15 +227,21 @@ fn giveup_flag_without_value_is_a_usage_error() {
         claim_path.to_string_lossy().into(),
         "--intent".into(), // value deliberately missing
     ]);
-    assert_eq!(code, 2, "a dangling --intent is a usage error, not a fallback");
+    assert_eq!(
+        code, 2,
+        "a dangling --intent is a usage error, not a fallback"
+    );
 }
 
 #[test]
 fn giveup_duplicated_flag_is_a_usage_error() {
     let dir = temp_dir("dup");
     let claim_path = dir.join("claim.json");
-    std::fs::write(&claim_path, claim_json("infeasible_within_budget", Some(GOOD_LEDGER)))
-        .expect("write claim");
+    std::fs::write(
+        &claim_path,
+        claim_json("infeasible_within_budget", Some(GOOD_LEDGER)),
+    )
+    .expect("write claim");
     let code = cli_main(vec![
         "truerise".into(),
         "giveup".into(),
@@ -234,5 +252,8 @@ fn giveup_duplicated_flag_is_a_usage_error() {
         "--intent".into(),
         dir.join("b.toml").to_string_lossy().into(),
     ]);
-    assert_eq!(code, 2, "duplicate flags are refused, never silently overridden");
+    assert_eq!(
+        code, 2,
+        "duplicate flags are refused, never silently overridden"
+    );
 }

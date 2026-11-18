@@ -114,7 +114,7 @@ pub fn check(claim: &DerivableClaim, artifact: &Value) -> DerivableVerdict {
                     None => {
                         return DerivableVerdict::Unsupported {
                             field: field.clone(),
-                        }
+                        };
                     }
                 }
             }
@@ -128,11 +128,12 @@ pub fn check(claim: &DerivableClaim, artifact: &Value) -> DerivableVerdict {
                 .map(|asserted| total.fract() == 0.0 && total == asserted as f64)
                 .unwrap_or(false);
             match claim.asserted.as_f64() {
-                Some(asserted) if integer_match || total == asserted => {
-                    DerivableVerdict::Supported
-                }
+                Some(asserted) if integer_match || total == asserted => DerivableVerdict::Supported,
                 Some(asserted) => DerivableVerdict::Contradicted {
-                    reason: format!("sum of {:?} = {total}, the claim asserts {asserted}", claim.fields),
+                    reason: format!(
+                        "sum of {:?} = {total}, the claim asserts {asserted}",
+                        claim.fields
+                    ),
                 },
                 None => DerivableVerdict::Unsupported {
                     field: "(asserted value is not a number)".to_string(),
@@ -151,9 +152,7 @@ pub fn check(claim: &DerivableClaim, artifact: &Value) -> DerivableVerdict {
                 (Some(a), Some(b)) => {
                     let diff = b - a;
                     match claim.asserted.as_f64() {
-                        Some(asserted) if diff == asserted => {
-                            DerivableVerdict::Supported
-                        }
+                        Some(asserted) if diff == asserted => DerivableVerdict::Supported,
                         Some(asserted) => DerivableVerdict::Contradicted {
                             reason: format!(
                                 "{} - {} = {diff}, the claim asserts {asserted}",

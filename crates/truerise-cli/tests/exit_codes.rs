@@ -66,10 +66,9 @@ fn grade_exit_maps_three_verdicts_to_three_codes() {
         inconclusive: !finished, // the test simulates a governance stop
     };
     let zero_baseline = truerise_eval::ratchet::Baseline::new();
-    let pass = truerise_eval::judge_run(&facts(true), &zero_baseline, &chain)
-        .expect("recorded");
-    let inconclusive = truerise_eval::judge_run(&facts(false), &zero_baseline, &chain)
-        .expect("recorded");
+    let pass = truerise_eval::judge_run(&facts(true), &zero_baseline, &chain).expect("recorded");
+    let inconclusive =
+        truerise_eval::judge_run(&facts(false), &zero_baseline, &chain).expect("recorded");
     // inconclusive_exit_code_distinct: the third verdict gets the third
     // code - distinct from PASS (0) and FAIL (1), red in CI all the same.
     assert_eq!(truerise_cli::grade_exit(&pass), 0);

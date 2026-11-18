@@ -296,10 +296,11 @@ impl HashChain {
         drop(guard);
         let mut rows = Vec::new();
         for (i, line) in text.lines().filter(|l| !l.trim().is_empty()).enumerate() {
-            let ev: AuditEventV2 = serde_json::from_str(line).map_err(|e| ChainError::Tampered {
-                rows: vec![i],
-                reason: format!("unparsable row {i}: {e}"),
-            })?;
+            let ev: AuditEventV2 =
+                serde_json::from_str(line).map_err(|e| ChainError::Tampered {
+                    rows: vec![i],
+                    reason: format!("unparsable row {i}: {e}"),
+                })?;
             let legacy = ev.kind.starts_with("legacy:");
             rows.push(Row { event: ev, legacy });
         }

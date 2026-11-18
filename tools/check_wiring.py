@@ -7,7 +7,7 @@ computes the real production transitive closure from ``cargo metadata`` and
 fails while any roster entry is an unreachable island.
 
 The gate proves reachability, never usefulness: a crate can only be wired by
-a work package whose enforcement tests exercise it (see docs/PROGRESS.md).
+a work package whose enforcement tests exercise it (see CHANGELOG.md).
 A wiring change without an enforcement test is a fake wire and fails review.
 
 ``--selftest`` runs the gate logic against two in-memory roster mutations and

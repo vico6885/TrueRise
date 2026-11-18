@@ -126,8 +126,6 @@ def scan() -> tuple[list[dict], int]:
                 for lineno, token in scan_rust(path):
                     hits.append({"path": rel(path), "line": lineno, "token": token})
             elif path.suffix == ".py":
-                if not path.name.endswith(".py") or path.name == "__init__.py":
-                    pass  # __init__.py may legitimately be empty
                 scanned += 1
                 if path.read_bytes().strip() == b"":
                     if path.name != "__init__.py":

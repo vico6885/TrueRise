@@ -110,7 +110,9 @@ impl CompletionReportV1 {
                 return Err(ContractError::CompletionUnknownItem(entry.item_id.clone()));
             }
             if seen.contains(&entry.item_id.as_str()) {
-                return Err(ContractError::CompletionDuplicateItem(entry.item_id.clone()));
+                return Err(ContractError::CompletionDuplicateItem(
+                    entry.item_id.clone(),
+                ));
             }
             seen.push(&entry.item_id);
         }

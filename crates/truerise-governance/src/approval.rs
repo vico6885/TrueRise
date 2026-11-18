@@ -68,7 +68,9 @@ impl ApprovalQueue {
         if self.requests.contains_key(id) {
             return Err(CoreError::RiskGate(
                 truerise_core::RiskGate::ApprovalRequired {
-                    action: format!("request {id} already exists (revoke is terminal - a new proposal needs a new id)"),
+                    action: format!(
+                        "request {id} already exists (revoke is terminal - a new proposal needs a new id)"
+                    ),
                 },
             ));
         }

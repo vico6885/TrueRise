@@ -10,8 +10,8 @@ use std::sync::atomic::{AtomicUsize, Ordering as AtomicOrdering};
 
 use truerise_cli::{RunParams, ScriptRouter, run_books_in};
 use truerise_core::RecallEvidence;
-use truerise_memory::{InMemoryBackend, MemoryBackend, Record, Weights};
 use truerise_memory::RecallBridge;
+use truerise_memory::{InMemoryBackend, MemoryBackend, Record, Weights};
 
 fn temp_dir(tag: &str) -> PathBuf {
     static N: AtomicU64 = AtomicU64::new(0);

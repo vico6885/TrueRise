@@ -96,7 +96,9 @@ impl InterceptionLedger {
     /// enforcement is EARNED by a precision account, not granted).
     #[must_use]
     pub fn new() -> Self {
-        Self { entries: Vec::new() }
+        Self {
+            entries: Vec::new(),
+        }
     }
 
     /// Record one interception (append-only; the entry is returned so the

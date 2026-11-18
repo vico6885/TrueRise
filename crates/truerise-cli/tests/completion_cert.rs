@@ -90,7 +90,13 @@ fn read_cert(dir: &std::path::Path) -> serde_json::Value {
 #[test]
 fn certificate_skips_completion_without_intent() {
     let dir = temp_dir("plain");
-    let code = evolve_cmd::evolve_demo(&dir, Some(&content_hash(evolve_cmd::GEN1_ANSWERS)), false, None, None);
+    let code = evolve_cmd::evolve_demo(
+        &dir,
+        Some(&content_hash(evolve_cmd::GEN1_ANSWERS)),
+        false,
+        None,
+        None,
+    );
     assert_eq!(code, 0);
     let cert = read_cert(&dir);
     assert!(
@@ -139,7 +145,10 @@ fn certificate_completion_ledger_closes_against_contract() {
         None,
         Some(&binding(&contract_path, Some(&report_path))),
     );
-    assert_eq!(code, 0, "a complete three-way ledger closes the certificate");
+    assert_eq!(
+        code, 0,
+        "a complete three-way ledger closes the certificate"
+    );
     let cert = read_cert(&dir);
     assert_eq!(
         cert["completion"]["contract_sealed_hash"],
@@ -211,12 +220,14 @@ fn replay_verifies_the_completion_ledger() {
     let mut cert = read_cert(&dir);
     cert["completion"]["report"]["contract_sealed_hash"] = serde_json::json!("deadbeef");
     let tampered = dir.join("tampered.json");
-    std::fs::write(&tampered, serde_json::to_string_pretty(&cert).expect("serialize"))
-        .expect("write tampered");
+    std::fs::write(
+        &tampered,
+        serde_json::to_string_pretty(&cert).expect("serialize"),
+    )
+    .expect("write tampered");
     assert_eq!(
         evolve_cmd::evolve_replay(&tampered),
         1,
         "a tampered ledger does not recompute"
     );
 }
-

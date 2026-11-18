@@ -13,7 +13,9 @@ pub mod intent_contract;
 pub use audit_event::{AuditEventV1, AuditEventV2, Severity};
 pub use bundle::{BundleError, BundleObservation, ObservationKind, VerifyBundleV1};
 pub use completion::{CompletionEntry, CompletionReportV1, CompletionStatus, NotDoneReason};
-pub use giveup::{GiveUpClaimV1, GiveUpError, GiveUpVerdict, ProbeOutcome, RetryPlan, SearchLedgerV1, SearchProbe};
+pub use giveup::{
+    GiveUpClaimV1, GiveUpError, GiveUpVerdict, ProbeOutcome, RetryPlan, SearchLedgerV1, SearchProbe,
+};
 pub use intent_contract::{
     AcceptanceItem, AcceptanceKind, Adjudication, AdjudicationDecision, ContractError,
     IntentContractV1, IntentToken, MACHINE_CHECK_FLOOR,

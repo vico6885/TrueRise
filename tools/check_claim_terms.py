@@ -12,7 +12,7 @@ to a command, a named test and a committed artifact. Three assertions:
    test identifier exists in the Rust tree, the artifact file exists, and
    the command names an existing integration-test target when it has the
    ``--test <name>`` shape. Broken evidence = red = the word leaves the
-   title (hard rule, docs/PROGRESS.md).
+   title (hard rule, CHANGELOG.md).
 3. PROMISE GRADES (docs/limits.md): ``promise_grades.packages`` must cover
    the whole backlog (every G-id from G1 up to the max appears at least
    once), rows are unique per (package, aspect), grades are only A/B/C, and

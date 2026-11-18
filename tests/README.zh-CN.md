@@ -15,7 +15,7 @@
 | `truerise-cli/tests/exit_codes.rs` | 退出码承载判词（FAIL → 1、诚实 → 0、未知命令 → 2）—— 变不了红的闸不叫闸 |
 | 各 crate 内的单元测试 | 策略三态、审批永不超时转同意、删除三关、棘轮只收紧、跨环境比较拒绝、预算单例对账、evolve 永不合并、帽内容哈希入链、MCP 零暴露与写类硬拒、观测导出脱敏、记忆融合确定性、压缩单调性、退避可重试类别 |
 
-逐行为映射由机器核对：`spec_map.json` 把 23 行行为规格绑到 67 个具名测试标识符，
+逐行为映射由机器核对：`spec_map.json` 把 23 行行为规格绑到 210 个具名测试标识符，
 某行失去映射或某标识符不再存在时 `python tools/lint_spec_map.py` 即失败。
 
 ## Python —— 25 个测试（`python -m pytest python/tests -q`）

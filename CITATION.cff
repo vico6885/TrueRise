@@ -9,8 +9,7 @@ type: software
 authors:
   - name: vico
     email: vico@users.noreply.github.com
-# TODO(first tag): the repository URL follows the GitHub org decision (RELEASING.md item A)
-repository-code: "https://github.com/truerise/TrueRise"
+# repository-code: pending the org decision (RELEASING item A) - not invented
 abstract: >-
   A task-pack bench where cheating is caught mechanically, a claim
   certificate a stranger can recompute offline, and a Rust runtime

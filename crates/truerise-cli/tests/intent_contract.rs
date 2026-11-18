@@ -210,21 +210,32 @@ fn missing_acceptance_item_forces_question_not_assumption() {
         contract_path.to_string_lossy().into(),
     ])
     .expect_err("refused");
-    assert!(err.contains("no acceptance items"), "refusal names the fix: {err}");
+    assert!(
+        err.contains("no acceptance items"),
+        "refusal names the fix: {err}"
+    );
 }
 
 #[test]
 fn run_rejects_intent_token_mismatch() {
     let dir = temp_dir("token_mismatch");
     let contract_path = dir.join("intent.toml");
-    std::fs::write(&contract_path, contract_toml("token hash mismatch case", "human"))
-        .expect("write contract");
+    std::fs::write(
+        &contract_path,
+        contract_toml("token hash mismatch case", "human"),
+    )
+    .expect("write contract");
     let token_path = dir.join("token.json");
     std::fs::write(
         &token_path,
         token_json(
             "deadbeef",
-            &[("m0", "accept"), ("m1", "accept"), ("m2", "accept"), ("h0", "accept")],
+            &[
+                ("m0", "accept"),
+                ("m1", "accept"),
+                ("m2", "accept"),
+                ("h0", "accept"),
+            ],
         ),
     )
     .expect("write token");
@@ -236,7 +247,10 @@ fn run_rejects_intent_token_mismatch() {
         "--intent-token".into(),
         token_path.to_string_lossy().into(),
     ]);
-    assert_eq!(code, 2, "a token bound to another contract hash is a refusal");
+    assert_eq!(
+        code, 2,
+        "a token bound to another contract hash is a refusal"
+    );
 }
 
 #[test]
@@ -257,7 +271,10 @@ fn run_rejects_intent_token_that_skips_an_item() {
     // item is skipped, which must refuse (per-item adjudication required).
     std::fs::write(
         &token_path,
-        token_json(&seal.sealed_hash, &[("m0", "accept"), ("m1", "accept"), ("m2", "accept")]),
+        token_json(
+            &seal.sealed_hash,
+            &[("m0", "accept"), ("m1", "accept"), ("m2", "accept")],
+        ),
     )
     .expect("write token");
     let code = cli_main(vec![
@@ -275,11 +292,8 @@ fn run_rejects_intent_token_that_skips_an_item() {
 fn run_rejects_intent_contract_with_unknown_kind() {
     let dir = temp_dir("unknown_kind");
     let contract_path = dir.join("intent.toml");
-    std::fs::write(
-        &contract_path,
-        contract_toml("unknown kind case", "vibes"),
-    )
-    .expect("write contract");
+    std::fs::write(&contract_path, contract_toml("unknown kind case", "vibes"))
+        .expect("write contract");
     let code = cli_main(vec![
         "truerise".into(),
         "run".into(),
@@ -294,7 +308,8 @@ fn run_records_machine_floor_note_for_underfloor_contract() {
     let _guard = chain_guard("underfloor");
     let dir = temp_dir("underfloor");
     let contract_path = dir.join("intent.toml");
-    std::fs::write(&contract_path, underfloor_contract_toml("under the floor")).expect("write contract");
+    std::fs::write(&contract_path, underfloor_contract_toml("under the floor"))
+        .expect("write contract");
     let seal = intent_cmd::load_intent(&[
         "run".into(),
         "--intent".into(),
@@ -309,7 +324,10 @@ fn run_records_machine_floor_note_for_underfloor_contract() {
         "--intent".into(),
         contract_path.to_string_lossy().into(),
     ]);
-    assert_eq!(code, 0, "the contract RUNS - it just cannot certify completion");
+    assert_eq!(
+        code, 0,
+        "the contract RUNS - it just cannot certify completion"
+    );
     let row = seal_row(&seal.sealed_hash);
     assert!(
         row.contains("\"machine_items\":2"),
@@ -350,8 +368,11 @@ fn intent_changed_midrun_voids_the_run() {
     let _guard = chain_guard("midrun");
     let dir = temp_dir("midrun");
     let contract_path = dir.join("intent.toml");
-    std::fs::write(&contract_path, contract_toml("the run starts honest", "human"))
-        .expect("write contract");
+    std::fs::write(
+        &contract_path,
+        contract_toml("the run starts honest", "human"),
+    )
+    .expect("write contract");
     let args = vec![
         "run".to_string(),
         "--intent".to_string(),
@@ -377,8 +398,11 @@ fn intent_unchanged_passes_the_post_run_check() {
     let _guard = chain_guard("unchanged");
     let dir = temp_dir("unchanged");
     let contract_path = dir.join("intent.toml");
-    std::fs::write(&contract_path, contract_toml("the run stays honest", "human"))
-        .expect("write contract");
+    std::fs::write(
+        &contract_path,
+        contract_toml("the run stays honest", "human"),
+    )
+    .expect("write contract");
     let args = vec![
         "run".to_string(),
         "--intent".into(),
@@ -393,8 +417,11 @@ fn deleted_contract_after_seal_voids_the_run() {
     let _guard = chain_guard("deleted");
     let dir = temp_dir("deleted");
     let contract_path = dir.join("intent.toml");
-    std::fs::write(&contract_path, contract_toml("the contract disappears", "human"))
-        .expect("write contract");
+    std::fs::write(
+        &contract_path,
+        contract_toml("the contract disappears", "human"),
+    )
+    .expect("write contract");
     let args = vec![
         "run".to_string(),
         "--intent".into(),
@@ -405,5 +432,8 @@ fn deleted_contract_after_seal_voids_the_run() {
         0
     })
     .expect("flow completes");
-    assert_eq!(code, 1, "a completion basis that cannot be re-derived is void");
+    assert_eq!(
+        code, 1,
+        "a completion basis that cannot be re-derived is void"
+    );
 }

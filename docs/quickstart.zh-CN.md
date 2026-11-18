@@ -18,9 +18,9 @@
 
 ```bash
 git clone <本仓库> && cd truerise
-cargo test --workspace           # 153 passed, 0 failed，零告警
+cargo test --workspace           # 240 passed, 0 failed，零告警
 python -m pip install -e python/
-python -m pytest python/tests -q # 25 passed
+python -m pytest python/tests -q # 40 passed
 ```
 
 ## 3. 第一份判词（60 秒走查）

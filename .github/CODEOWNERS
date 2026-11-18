@@ -1,7 +1,7 @@
 # CODEOWNERS - review routing.
 #
 # NOTE: the GitHub handle below is a placeholder until the remote and the
-# account decision land (tracked in docs/PROGRESS.md, "vico, no clock" item:
+# account decision land (tracked in CHANGELOG.md, "vico, no clock" item:
 # git identity email vico@users.noreply.github.com is likewise provisional).
 # Until then this file documents the routing INTENT; GitHub will not resolve
 # it, which is exactly the failure mode the release checklist catches

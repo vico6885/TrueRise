@@ -274,8 +274,16 @@ mod tests {
         )
         .unwrap();
         assert!(!v.is_pass());
-        assert_eq!(v.verdict_str(), "INCONCLUSIVE", "an unfinished run proves nothing");
-        assert_eq!(v.failures(), 0, "no failures were OBSERVED - the run did not complete");
+        assert_eq!(
+            v.verdict_str(),
+            "INCONCLUSIVE",
+            "an unfinished run proves nothing"
+        );
+        assert_eq!(
+            v.failures(),
+            0,
+            "no failures were OBSERVED - the run did not complete"
+        );
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -329,7 +337,10 @@ mod tests {
         )
         .unwrap();
         assert!(v.memory_recall());
-        assert!(!v.ratchet_eligible(), "a recall-enabled run is not ratchet eligible");
+        assert!(
+            !v.ratchet_eligible(),
+            "a recall-enabled run is not ratchet eligible"
+        );
         let rows = chain.governing_rows();
         let verdict_row = rows
             .iter()

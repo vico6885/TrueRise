@@ -14,8 +14,8 @@ use std::path::{Path, PathBuf};
 
 use serde_json::json;
 use truerise_governance::HashChain;
-use truerise_wire::Severity;
 use truerise_wire::GiveUpClaimV1;
+use truerise_wire::Severity;
 
 /// The snake_case name of a verdict (chain rows speak serde names, not
 /// Rust Debug names).
@@ -94,8 +94,10 @@ pub fn handle_command(args: &[String]) -> i32 {
     let ledger = match flag_value(args, "--ledger") {
         Ok(v) => v,
         Err(usage) => {
-            eprintln!("usage error: {usage}
-usage: truerise giveup --ledger <claim.json> [--intent <contract.toml>]");
+            eprintln!(
+                "usage error: {usage}
+usage: truerise giveup --ledger <claim.json> [--intent <contract.toml>]"
+            );
             return 2;
         }
     };
