@@ -65,7 +65,7 @@
     "policy 三态": [
       "default_deny",
       "deny_short_circuits_even_with_approval",
-      "ask_requires_approval_on_file_and_then_caches"
+      "ask_allow_is_per_evaluation_never_cached"
     ],
     "ResourcePolicy": [
       "three_gates_in_order",

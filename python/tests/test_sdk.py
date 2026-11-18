@@ -40,7 +40,7 @@ def test_sdk_budget_denominator_not_sharded():
 
 
 def test_sdk_policy_ask_requires_approval_on_file():
-    """Mirror of ask_requires_approval_on_file_and_then_caches."""
+    """Mirror of ask_allow_is_per_evaluation_never_cached."""
     policy = Policy()
     policy.set("write_file", "ask")
     assert policy.decide("write_file", False) == "needs_approval"
@@ -140,3 +140,61 @@ def test_native_backend_is_optional_and_pure_python_is_complete():
     sdk = Ratchet(baseline={"failures_pm": 20})
     with pytest.raises(ValueError, match="regressed"):
         sdk.verify({"failures_pm": 30})
+
+
+def test_python_row_hash_matches_the_rust_canonical_template():
+    """Review fix B-P1-10 closure: the python canonical must be byte-identical
+    to the Rust HashChain template for the same logical row - otherwise the
+    two implementations mint different hashes for the same fact (the exact
+    cross-implementation bug class docs/determinism.md forbids).
+
+    The Rust template (governance/chain.rs content_hash):
+      {"detail":<detail>,"hash":null,"kind":<kind>,"prev_hash":<prev>,
+       "seq":<seq>,"severity":<sev>,"ts":<ts>}
+    (sorted keys, compact separators, non-ASCII unescaped).
+    """
+    import hashlib
+    import json
+
+    from truerise.ledger import Ledger
+
+    ledger = Ledger()
+    row = ledger.append(
+        "parity.probe",
+        {"n": 1, "text": "非 ASCII 也必须一致"},
+        severity="info",
+        ts="seq@7",
+    )
+    row.hash = ""
+    rust_template = (
+        '{"detail":'
+        + json.dumps(row.detail, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        + ',"hash":null,"kind":"parity.probe","prev_hash":"'
+        + row.prev_hash
+        + '","seq":'
+        + str(row.seq)
+        + ',"severity":"info","ts":"seq@7"}'
+    )
+    expected = hashlib.sha256(rust_template.encode("utf-8")).hexdigest()
+    assert row.content_hash() == expected, (
+        "python canonical diverged from the Rust template - "
+        "chains written by one implementation would be rejected by the other"
+    )
+
+
+def test_persisted_row_shape_is_rust_parseable():
+    """The persisted line carries exactly the Rust AuditEventV2 fields (the
+    Rust wire type denies unknown fields - a python-only key would make
+    every python-written chain unparseable in Rust)."""
+    import json as _json
+    import tempfile
+    from pathlib import Path
+
+    from truerise.ledger import Ledger
+
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / "chain.jsonl"
+        ledger = Ledger(path=path)
+        ledger.append("probe.kind", {"x": 1}, ts="seq@1")
+        row_keys = sorted(_json.loads(path.read_text(encoding="utf-8").splitlines()[0]).keys())
+        assert row_keys == ["detail", "hash", "kind", "prev_hash", "seq", "severity", "ts"], row_keys

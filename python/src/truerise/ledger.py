@@ -152,7 +152,10 @@ class Ledger:
             return
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self.path.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(asdict(self.rows[-1]), ensure_ascii=False) + "\n")
+            # Review fix (P1): drop "legacy" - python-side state, never a
+            # wire field (Rust AuditEventV2 denies unknown fields).
+            wire_row = {k: v for k, v in asdict(self.rows[-1]).items() if k != "legacy"}
+            fh.write(json.dumps(wire_row, ensure_ascii=False) + "\n")
 
     # -- load --------------------------------------------------------------
     @classmethod
