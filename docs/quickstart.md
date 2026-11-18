@@ -19,10 +19,10 @@ version, so a fresh clone builds without toolchain negotiation.
 ## 2. Verify the engine
 
 ```bash
-git clone <this repository> && cd truerise
-cargo test --workspace           # 240 passed, 0 failed, zero warnings
+git clone <this repository> && cd TrueRise
+cargo test --workspace           # all green, zero warnings
 python -m pip install -e python/
-python -m pytest python/tests -q # 40 passed
+python -m pytest python/tests -q # all green
 ```
 
 ## 3. First verdict (the 60-second walkthrough)
