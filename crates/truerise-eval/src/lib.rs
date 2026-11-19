@@ -1,6 +1,9 @@
 //! truerise-eval: the conformance JUDGING AUTHORITY, ratchet, fingerprints,
-//! and judge-agreement statistics (pure numbers, no authority).
+//! judge-agreement statistics (pure numbers, no authority), and the causal
+//! identification substrate (CA1-CA5: claim typology, assumption ledger,
+//! partial identification, experiment primitives, formal attribution).
 
+pub mod causal;
 pub mod derivable;
 pub mod fingerprint;
 pub mod interception;

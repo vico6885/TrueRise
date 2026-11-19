@@ -1,0 +1,4 @@
+{
+  "_note": "Assumption ledger (CA2): the causal mirror of the claim gate. Every causal-typed MET term in claim_terms.json requires a COMPLETE, DEFENDED row here - all four identification assumptions (sutva, consistency, exchangeability, positivity), a defense text, and evidence pointers (a named Rust test + a committed artifact) that must exist in the same commit. A causal claim whose row is missing or incomplete is NOT registry-broken: the tier semantics in truerise-eval::causal downgrade it to hypothesis tier, and the claim gate reports a violation until the wording matches. One row per claim term; tokens mirror truerise-eval/src/causal/ledger.rs word-for-word.",
+  "rows": []
+}

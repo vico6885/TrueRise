@@ -6,6 +6,87 @@ publications (the Rust core is the authoritative implementation).
 
 ## [0.2.0-dev.0] - unreleased
 
+### Fixed (two-line adversarial review of the causal substrate, 2026-11-20)
+
+Every finding below carries a named regression test (spec_map rows updated:
+268 identifiers, 0 weak anchors).
+
+- Cyclic attribution was DEAD: the intervened fixed-point enumeration
+  required the ORIGINAL equation to hold for intervened variables, so every
+  flipped intervention was unsatisfiable and no cyclic model could ever
+  report a cause. An intervention REPLACES the equation; a cyclic model
+  now attributes (regression: `cyclic_model_yields_real_causes`).
+- Acyclicity is decided by the DEPENDENCY GRAPH (Kahn) with topological
+  evaluation, not by declaration index - a DAG declared in reverse order
+  was mislabelled cyclic and refused (regression:
+  `reversed_index_dag_is_acyclic_and_attributable`).
+- The witness-cap boundary is stated honestly: a cause whose minimal
+  witness exceeds MAX_CONTINGENCY is reported as no-cause (documented
+  incompleteness, not a refusal; pinned by
+  `witness_cap_pins_the_documented_incompleteness`).
+- Randomization inference refuses overflowing AGGREGATES: finite inputs at
+  1e308 scale produced p = 0.0 lies built on inf comparisons
+  (`overflowing_aggregates_are_refused_not_reported_as_significant`).
+- ICP-lite refuses subsets whose RSS overflows - `f64::max(NaN, 0.0)` used
+  to read a NaN Chow statistic as PERFECT stability
+  (`overflowing_rss_refuses_the_subset_instead_of_praising_stability`);
+  misaligned predictor columns are a typed design refusal
+  (`LengthMismatch`), not a stream of fake "not invariant" verdicts.
+- Claim gate hardening: unhashable JSON values fail closed (exit 2) instead
+  of crashing; null/non-string claim_term and defense are refused (a null
+  defense used to grant the full causal tier); empty evidence fields align
+  with the Rust parser's fail-closed severity; citation checks key on real
+  `#[test]` fn names, not fn-shaped superstrings.
+- Cross-language alignment: the Rust ledger refuses non-string assumption
+  tokens (it silently dropped them while the gate refused - the runtime may
+  never be more lenient than the gate).
+- Shapley refuses infinite marginals; E-value keeps extreme ratios
+  representable (no intermediate overflow); OLS pivot threshold is relative
+  to matrix scale (uniformly tiny well-posed systems solve); placebo
+  reports the VALID permutation count (singular refits no longer silently
+  thin the null distribution); a 24-permutation census discriminates
+  Fisher-Yates bias that bucket counts cannot.
+
+### Added (CA1-CA5 causal identification substrate, 2026-11-20)
+
+- Claim typology (CA1): the six-value claim-type vocabulary
+  (correlational / causal_observational / causal_interventional /
+  predictive / measurement_validity / temporal_precedence) in
+  `truerise-eval::causal::typology`, with tier semantics: a causal-typed
+  claim without a complete assumption row is a HYPOTHESIS (the
+  INCONCLUSIVE downgrade, never a failure and never an upgrade), and
+  association-grade types may never use causal language in their meaning.
+- Assumption ledger (CA2): `assumption_ledger.json` + the parser in
+  `truerise-eval::causal::ledger` - the four identification assumptions
+  (sutva / consistency / exchangeability / positivity) as machine-checked
+  rows; "no assumption row, no causal claim".
+- Identification arithmetic (CA3): Manski no-assumption ATE bounds (an
+  INCONCLUSIVE verdict with a shape), the E-value (confounding fragility
+  price), ICP-lite (invariance screening across environments - the bridge
+  from drift analysis to causal candidates), and the refuter battery
+  (placebo permutation, bootstrap subset stability, confounder injection
+  with SHARED factor across treatment and outcome channels).
+- Experiment primitives (CA4): seeded SplitMix64 (byte-reproducible),
+  blocked / cluster / crossover assignment (the SUTVA repair for
+  interfering agent runs), exact + Monte-Carlo randomization inference
+  (add-one p-values, exact enumeration under the 200k-arrangement
+  contract), and exact + sampled interventional Shapley (efficiency /
+  dummy axioms asserted on the glove game).
+- Formal attribution (CA5): Halpern-Pearl actual causation over binary
+  bounded models with Chockler-Halpern responsibility; contingency
+  variables draw from ENDOGENOUS variables only (exogenous contingencies
+  fabricate witnesses), ambiguous or uncomputable counterfactuals refuse
+  the witness, and the canonical preemption example pins the semantics
+  (the first throw is the cause, the preempted one never is).
+- Claim gate extension (CA1/CA2 enforcement): `tools/check_claim_terms.py`
+  now checks claim types (unknown type = registry broken, exit 2),
+  association-grade wording, and complete defended ledger rows for met
+  causal terms; the ledger inherits the met-term evidence rule (named
+  Rust test + committed artifact must exist).
+- spec_map rows 因果识别 / 因果实验 / 因果归因 / 因果宣称: every behaviour
+  anchored on a named test or gate behaviour (259 identifiers, 0 weak
+  anchors in the strict audit).
+
 ### Added (P0-P3 construction waves, 2026-11-16)
 
 - Tool execution port (RFC 0002): `ActionPolicy` + `ToolProvider` in core,
