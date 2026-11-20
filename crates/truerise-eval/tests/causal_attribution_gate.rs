@@ -206,7 +206,7 @@ fn witness_cap_pins_the_documented_incompleteness() {
             v[usize::from(i)]
         }));
     }
-    let mut parents: Vec<usize> = (6..12).collect();
+    let parents: Vec<usize> = (6..12).collect();
     defs.push(var("SG", parents.clone(), move |v| {
         parents.iter().any(|&p| v[p])
     }));

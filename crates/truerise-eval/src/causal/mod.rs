@@ -33,18 +33,26 @@
 //! forces them to be declared, defends their arithmetic, and downgrades
 //! claims that skip the paperwork.
 
+pub mod adjust;
 pub mod attribution;
 pub mod bounds;
 pub mod design;
 pub mod evalue;
 pub mod icp;
 pub mod ledger;
+pub mod minimal_pair;
+pub mod pairwise;
 pub mod permutation;
+pub mod quasi;
 pub mod refute;
 pub mod rng;
 pub mod shapley;
+pub mod synthetic;
 pub mod typology;
 
+pub use adjust::{
+    AdjustDesign, AdjustError, IpwReport, ModificationReport, effect_modification, ipw_effect,
+};
 pub use attribution::{
     ACYCLIC_BUILD_CAP, AttributionError, BinaryScm, CAUSAL_SEARCH_CAP, CYCLIC_BUILD_CAP,
     CauseReport, MAX_CONTINGENCY, VarDef,
@@ -58,16 +66,23 @@ pub use icp::{
     Environment, IcpConfig, IcpError, IcpReport, MAX_ICP_PREDICTORS, SubsetVerdict, icp_lite,
 };
 pub use ledger::{Assumption, AssumptionLedger, AssumptionRow, LedgerError, RowStatus};
+pub use minimal_pair::{PairError, validate_minimal_pair};
+pub use pairwise::{Comparison, PairwiseError, Ratings, bradley_terry, win_probability};
 pub use permutation::{MAX_EXACT_ARRANGEMENTS, PermError, PermOutcome, paired_flip, two_sample};
+pub use quasi::{
+    DidResult, MIN_FIRST_STAGE, QuasiError, RddResult, WaldResult, did, sharp_rdd, wald_iv,
+};
 pub use refute::{
-    Design, InjectionReport, PlaceboReport, RefuteError, StabilityReport, confounder_injection,
-    estimate_effect, ols_fit, placebo_test, subset_stability,
+    Design, InjectionReport, NegativeControlReport, PlaceboReport, RefuteError, StabilityReport,
+    confounder_injection, estimate_effect, negative_control, ols_fit, placebo_test,
+    subset_stability,
 };
 pub use rng::SplitMix64;
 pub use shapley::{
     MAX_EXACT_PLAYERS, MAX_SAMPLED_PLAYERS, SampledShapley, ShapleyError, shapley_exact,
     shapley_sampled,
 };
+pub use synthetic::{SynthError, SynthResult, synthetic_control};
 pub use typology::{CAUSAL_WORDING_MARKERS, ClaimTier, ClaimType, tier_for, wording_violations};
 
 #[cfg(test)]

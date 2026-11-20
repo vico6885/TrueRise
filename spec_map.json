@@ -338,7 +338,11 @@
       "uniformly_tiny_well_posed_systems_solve",
       "extreme_ratios_stay_representable",
       "infinite_marginals_are_refused",
-      "shuffle_census_over_all_24_permutations_is_flat"
+      "shuffle_census_over_all_24_permutations_is_flat",
+      "negative_control_flags_leaked_confounding",
+      "clean_negative_control_stays_quiet",
+      "negative_control_misaligned_rows_are_refused",
+      "singular_refits_shrink_the_reported_valid_count"
     ],
     "因果实验": [
       "same_seed_reproduces_the_stream_exactly",
@@ -352,7 +356,11 @@
       "monte_carlo_branch_is_seeded_and_counts_the_observed",
       "shapley_exact_solves_the_glove_game",
       "shapley_is_efficient_and_dummy_players_get_zero",
-      "sampled_estimates_track_the_exact_solution_within_noise"
+      "sampled_estimates_track_the_exact_solution_within_noise",
+      "a_true_minimal_pair_validates",
+      "a_two_element_difference_is_confounded_and_refused",
+      "declaring_the_wrong_field_is_refused",
+      "missing_keys_are_key_set_violations_not_differences"
     ],
     "因果归因": [
       "suzy_billy_preemption_has_suzy_as_cause_not_billy",
@@ -384,6 +392,34 @@
       "unknown_claim_type_breaks_the_registry_fail_closed",
       "assumption_ledger_rows_cite_existing_evidence",
       "assumption_ledger_is_present_and_parsable"
+    ],
+    "准实验识别": [
+      "did_recovers_the_classic_two_by_two",
+      "did_reports_divergent_pre_trends_as_a_statistic",
+      "did_needs_two_pre_periods",
+      "sharp_rdd_recovers_an_exact_discontinuity",
+      "sharp_rdd_reports_no_jump_when_continuous",
+      "starved_sides_are_refused",
+      "wald_iv_recovers_the_complier_effect_under_partial_compliance",
+      "weak_instruments_and_non_binary_inputs_are_refused",
+      "ipw_removes_the_self_selection_bias_the_naive_difference_carries",
+      "positivity_violation_is_refused_not_clipped",
+      "separated_designs_refuse_the_propensity_fit",
+      "effect_modification_recovers_the_interaction_exactly",
+      "malformed_adjustment_designs_are_refused",
+      "exact_replica_donor_concentrates_the_weight",
+      "mixture_truth_is_recovered_and_the_post_gap_prices_the_effect",
+      "a_poor_donor_pool_admits_it_via_the_pre_fit_error",
+      "malformed_inputs_are_refused",
+      "overflowing_scale_refuses_instead_of_returning_inf_weights"
+    ],
+    "配对比较": [
+      "a_transitive_chain_orders_the_ratings_strictly",
+      "a_cyclic_settles_to_a_near_tie",
+      "ties_are_reported_but_not_modelled",
+      "structural_conditions_are_refused_by_name",
+      "zero_strength_pairs_return_none_not_nan",
+      "subset_dominance_surfaces_the_unsettled_fit"
     ]
   }
 }

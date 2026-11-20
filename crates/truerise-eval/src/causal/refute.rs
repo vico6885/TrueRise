@@ -256,6 +256,11 @@ pub fn placebo_test(
     seed: u64,
 ) -> Result<PlaceboReport, RefuteError> {
     design.validate()?;
+    if permutations < 2 {
+        return Err(RefuteError::BadDrawCount {
+            count: permutations,
+        });
+    }
     let observed = estimate_effect(design)?;
     let mut rng = super::rng::SplitMix64::new(seed ^ 0x9147_0B3D);
     let mut permuted_treatment = design.treatment.clone();
@@ -423,174 +428,90 @@ pub fn confounder_injection(
     })
 }
 
-#[cfg(test)]
-mod tests {
-    #![allow(clippy::unwrap_used, clippy::expect_used)]
-    use super::*;
+/// The negative-control-outcome refuter's report.
+#[derive(Debug, Clone, PartialEq)]
+pub struct NegativeControlReport {
+    /// The observed effect of the treatment on the NEGATIVE-CONTROL
+    /// outcome (should be ~0 in a clean design).
+    pub control_effect: f64,
+    /// Assignment-space p-value of that effect within its own placebo
+    /// distribution: small = the treatment "moves" an outcome it must not
+    /// move.
+    pub control_p: f64,
+    /// True when the primary effect estimate must NOT be trusted as
+    /// confounding-free: the treatment leaked into an outcome it is known
+    /// not to affect. Fires at `control_p < 0.05` (declared; review P2-11).
+    pub flags_residual_confounding: bool,
+}
 
-    /// Deterministic study: t alternates 0/1, y = 2t + seeded noise.
-    fn noisy_design(n: usize, noise_seed: u64, effect: f64) -> Design {
-        let mut rng = super::super::rng::SplitMix64::new(noise_seed);
-        let treatment: Vec<f64> = (0..n).map(|i| (i % 2) as f64).collect();
-        let outcome: Vec<f64> = treatment
-            .iter()
-            .map(|&t| effect * t + (rng.next_f64() - 0.5) * 0.2)
-            .collect();
-        Design {
-            treatment,
-            covariates: Vec::new(),
-            outcome,
+/// Negative-control refuter (review family B): if the treatment is truly
+/// confounded, the confounding also leaks into a NEGATIVE-CONTROL outcome
+/// N that treatment cannot causally affect. A significant treatment
+/// association with N therefore FLAGS the primary estimate.
+///
+/// The flag fires at `control_p < 0.05` (review P2-11: the cutoff is a
+/// declared constant of the report, not an implicit default). Zero-draw
+/// calls are refused: a "clean" verdict from zero evidence is the exact
+/// fail-open lie this battery exists to prevent (review P1-1).
+///
+/// Semantics: this refuter can only FLAG, never clear - passing it means
+/// "no leak found in this outcome", which is evidence for the ledger's
+/// exchangeability defense, not proof of no confounding.
+pub fn negative_control(
+    design: &Design,
+    nc_outcome: &[f64],
+    permutations: u64,
+    seed: u64,
+) -> Result<NegativeControlReport, RefuteError> {
+    design.validate()?;
+    if permutations < 2 {
+        return Err(RefuteError::BadDrawCount {
+            count: permutations,
+        });
+    }
+    if nc_outcome.len() != design.outcome.len() {
+        return Err(RefuteError::LengthMismatch {
+            field: "negative-control outcome",
+            rows: nc_outcome.len(),
+            outcome_rows: design.outcome.len(),
+        });
+    }
+    for (i, v) in nc_outcome.iter().enumerate() {
+        if !v.is_finite() {
+            return Err(RefuteError::NotFinite {
+                field: "negative-control outcome",
+                index: i,
+            });
         }
     }
-
-    #[test]
-    fn exact_linear_relation_is_recovered_bit_tight() {
-        let design = noisy_design(40, 1, 2.0);
-        // Overwrite with the exact relation: y = 2t, zero noise.
-        let outcome: Vec<f64> = design.treatment.iter().map(|&t| 2.0 * t).collect();
-        let design = Design { outcome, ..design };
-        let effect = estimate_effect(&design).unwrap();
-        assert!((effect - 2.0).abs() < 1e-9, "was {effect}");
-    }
-
-    #[test]
-    fn placebo_challenge_passes_a_real_effect_and_flags_noise() {
-        // Real effect: permuted labels must NOT reach the observed contrast.
-        let real = noisy_design(60, 3, 2.0);
-        let report = placebo_test(&real, 500, 7).unwrap();
-        assert!(
-            report.placebo_p < 0.05,
-            "real effect looked placebo-like: {}",
-            report.placebo_p
-        );
-        // Pure noise: the observed coefficient is just another placebo draw
-        // - its percentile within the placebo distribution is unremarkable.
-        // (A noise coefficient sits mid-distribution by construction; the
-        // deterministic seed pins this at ~0.17, comfortably un-special.)
-        let noise = noisy_design(60, 3, 0.0);
-        let report = placebo_test(&noise, 500, 7).unwrap();
-        assert!(
-            report.placebo_p > 0.1,
-            "noise looked special: {}",
-            report.placebo_p
-        );
-        assert!(
-            report.placebo_p < 0.6,
-            "noise should not look IMPOSSIBLE either: {}",
-            report.placebo_p
-        );
-    }
-
-    #[test]
-    fn stability_interval_covers_the_true_effect() {
-        let design = noisy_design(80, 5, 2.0);
-        let report = subset_stability(&design, 400, 9).unwrap();
-        assert!(
-            report.ci_lo <= 2.0 && 2.0 <= report.ci_hi,
-            "interval [{}, {}] missed the truth",
-            report.ci_lo,
-            report.ci_hi
-        );
-        assert!(report.ci_hi > report.ci_lo, "noise must open the interval");
-    }
-
-    #[test]
-    fn zero_loading_injection_is_the_identity() {
-        let design = noisy_design(50, 11, 2.0);
-        let report = confounder_injection(&design, 0.0, 0.0, 20, 13).unwrap();
-        assert!((report.shifted_min - report.base).abs() < 1e-12);
-        assert!((report.shifted_max - report.base).abs() < 1e-12);
-    }
-
-    #[test]
-    fn strong_injection_loadings_move_the_estimate_far() {
-        // Noiseless design (y = 2t exactly) and balanced factor draws make
-        // the shift analytic: with loadings (0.4, -4) the re-estimate is
-        // 2*0.25/0.41 - 4*(cov(u,t) + 0.4)/0.41, which sits near -2.7 with
-        // every draw. Anything under base - 1.0 proves the refuter reacts
-        // to loadings in the direction the outcome channel implies.
-        let design = noisy_design(200, 17, 2.0);
-        let outcome: Vec<f64> = design.treatment.iter().map(|&t| 2.0 * t).collect();
-        let clean = Design { outcome, ..design };
-        let report = confounder_injection(&clean, 0.4, -4.0, 50, 19).unwrap();
-        assert!(
-            report.shifted_max < report.base - 1.0,
-            "base {}, max shifted {} - injection did not bite",
-            report.base,
-            report.shifted_max
-        );
-        assert!(report.shifted_min <= report.shifted_max);
-    }
-
-    #[test]
-    fn singular_and_malformed_designs_are_refused() {
-        // Duplicated column -> singular.
-        let design = Design {
-            treatment: vec![0.0, 1.0, 0.0, 1.0, 1.0],
-            covariates: vec![vec![0.0, 1.0, 0.0, 1.0, 1.0]],
-            outcome: vec![1.0, 2.0, 1.0, 2.0, 2.0],
+    let control_design = Design {
+        treatment: design.treatment.clone(),
+        covariates: design.covariates.clone(),
+        outcome: nc_outcome.to_vec(),
+    };
+    let observed = estimate_effect(&control_design)?;
+    let mut rng = super::rng::SplitMix64::new(seed ^ 0x9E6A_71CE);
+    let mut permuted_treatment = design.treatment.clone();
+    let mut hits: u64 = 0;
+    let mut valid: u64 = 0;
+    for _ in 0..permutations {
+        rng.shuffle(&mut permuted_treatment);
+        let shuffled = Design {
+            treatment: permuted_treatment.clone(),
+            covariates: design.covariates.clone(),
+            outcome: nc_outcome.to_vec(),
         };
-        assert!(matches!(
-            estimate_effect(&design),
-            Err(RefuteError::SingularDesign)
-        ));
-        // Row misalignment.
-        let design = Design {
-            treatment: vec![0.0, 1.0],
-            covariates: Vec::new(),
-            outcome: vec![1.0, 2.0, 3.0],
-        };
-        assert!(matches!(
-            estimate_effect(&design),
-            Err(RefuteError::LengthMismatch { .. })
-        ));
-        // NaN.
-        let design = Design {
-            treatment: vec![0.0, 1.0, f64::NAN, 1.0, 0.0],
-            covariates: Vec::new(),
-            outcome: vec![1.0, 2.0, 3.0, 4.0, 5.0],
-        };
-        assert!(matches!(
-            estimate_effect(&design),
-            Err(RefuteError::NotFinite { .. })
-        ));
-        // Underdetermined: 3 rows, treatment + 2 covariates = 3 columns.
-        let design = Design {
-            treatment: vec![0.0, 1.0, 0.0],
-            covariates: vec![vec![1.0, 0.0, 1.0], vec![0.0, 1.0, 1.0]],
-            outcome: vec![1.0, 2.0, 3.0],
-        };
-        assert!(matches!(
-            estimate_effect(&design),
-            Err(RefuteError::TooFewRows { .. })
-        ));
+        if let Ok(effect) = estimate_effect(&shuffled) {
+            valid += 1;
+            if effect.abs() >= observed.abs() {
+                hits += 1;
+            }
+        }
     }
-
-    #[test]
-    fn ols_fit_solves_a_known_two_column_system() {
-        // y = 1 + 3x exactly at three points.
-        let ones = [1.0, 1.0, 1.0];
-        let x = [0.0, 1.0, 2.0];
-        let y = [1.0, 4.0, 7.0];
-        let beta = ols_fit(&[&ones, &x], &y).unwrap();
-        assert!((beta[0] - 1.0).abs() < 1e-9);
-        assert!((beta[1] - 3.0).abs() < 1e-9);
-        // Rank-deficient: two identical columns.
-        let beta = ols_fit(&[&x, &x], &y);
-        assert!(beta.is_none());
-    }
-
-    /// Review P2-5 regression: the pivot threshold is RELATIVE to the
-    /// matrix scale - a uniformly tiny but perfectly conditioned system
-    /// (all columns at 1e-8) must solve, not be refused as singular.
-    #[test]
-    fn uniformly_tiny_well_posed_systems_solve() {
-        let x = [1e-8, 2e-8, 3e-8];
-        let y = [2e-8, 4e-8, 6e-8]; // y = 2x exactly
-        let beta = ols_fit(&[&x], &y).unwrap();
-        assert!((beta[0] - 2.0).abs() < 1e-9, "was {}", beta[0]);
-        // The all-zero normal matrix stays singular.
-        let zero = [0.0, 0.0, 0.0];
-        assert!(ols_fit(&[&zero], &y).is_none());
-    }
+    let control_p = (1.0 + hits as f64) / (1.0 + valid as f64);
+    Ok(NegativeControlReport {
+        control_effect: observed,
+        control_p,
+        flags_residual_confounding: control_p < 0.05,
+    })
 }

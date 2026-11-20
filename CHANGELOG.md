@@ -6,6 +6,89 @@ publications (the Rust core is the authoritative implementation).
 
 ## [0.2.0-dev.0] - unreleased
 
+### Fixed (two-line adversarial review of family B, 2026-11-20)
+
+20 findings across the two review lines (0 P0, 3 P1, 17 P2), all fixed with
+named regression tests (spec_map: 300 identifiers, 0 weak anchors).
+
+- The "Horvitz-Thompson" field was NOT the canonical HT estimator: it
+  divided by arm counts instead of the total row count, smuggling an
+  n/n_arm scale factor that drowned the weight-instability signal the
+  field exists to surface (review A2-P1-1; canonical HT now asserted).
+- The negative-control refuter failed OPEN at zero permutations (a "clean"
+  verdict from zero evidence); it and placebo_test now refuse draw counts
+  below the battery's own BadDrawCount contract (review B2-P1-1).
+- Frank-Wolfe at overflow scale: `inf <= inf` broke the loop early and
+  `inf > inf` passed the acceptance check - non-finite certificates are
+  now refused before either guard (A2-P2-1); the duality-gap certificate
+  is surfaced on the result and a loose gap at the iteration cap is an
+  honest refusal (B2-P2-6).
+- IRLS overflow no longer masquerades as convergence (f64::max swallows
+  NaN - beta/delta/scores are finiteness-checked) (A2-P2-2).
+- Pairwise ratings: subset dominance (a group that never loses cross-wise)
+  diverges slowly at the boundary - the report now carries `converged`,
+  and the winless-player boundary (strength 0, certainty 0, the attainable
+  mirror of the refused undefeated case) is documented (A2-P2-3/P2-4);
+  0/0 win probabilities return None, never NaN (B2-P2-9).
+- Taxonomy precision across the battery: BadFloor (a nonsense floor is not
+  a positivity violation), BadBandwidth (a finite non-positive bandwidth is
+  a bad argument), EmptyArm (an empty instrument arm is not a period count),
+  Underdetermined (the interaction design's rank failure involves no
+  propensity), PostCountMismatch (no usize::MAX sentinels), DuplicateKey
+  (malformed input is not a key-set difference) (B2-P2-4/5/8, A2-P2-5/6).
+- Registry hygiene: negative-control tests moved to the refuter row; the
+  refuters test-file header claims only the regressions it actually
+  contains; the crate-level family map lists the five new modules
+  (B2-P2-1/2/3/10).
+
+### Added (quasi-experimental identification + pairwise ratings, 2026-11-20)
+
+The families left open by the CA1-CA5 substrate review, completed where the
+substrate could carry them (everything here is domain-neutral math with no
+run-path dependency; the deferred remainder is listed at the bottom).
+
+- Difference-in-differences (`causal::quasi::did`): 2x2 ATT plus the
+  parallel-trends statistic as LEDGER EVIDENCE (a divergent pre-trend is
+  reported numerically, never passed silently).
+- Sharp regression discontinuity (`causal::quasi::sharp_rdd`): local linear
+  fits on both sides of a routing/score cutoff with a FIXED, declared
+  bandwidth (data-driven bandwidth selection is deliberately absent - an
+  undeclared assumption); starved sides are refused.
+- Wald instrumental variables (`causal::quasi::wald_iv`): binary
+  instrument, CACE target, weak-instrument refusal at a 1e-3 first-stage
+  contract, non-binary inputs refused.
+- Propensity adjustment (`causal::adjust`): logistic IRLS on the crate's
+  own OLS solver; Hajek + Horvitz-Thompson estimates with positivity
+  diagnostics; positivity violations FAIL CLOSED (refused, never clipped);
+  separation refuses the propensity fit.
+- Effect modification (`causal::adjust::effect_modification`): the
+  interaction design answers "works for WHICH runs" with the subgroup
+  declared up front (subgroup mining is the forking path the intent
+  contract voids).
+- Synthetic control (`causal::synthetic`): Frank-Wolfe over the simplex
+  with exact line search and a duality-gap convergence certificate; the
+  pre-fit RMSE is the honesty dial - donors that never could reconstruct
+  the unit admit it numerically.
+- Negative-control refuter (`causal::refute::negative_control`): treatment
+  leaking into an outcome it cannot causally move FLAGS the primary
+  estimate; the refuter can flag, never clear.
+- Bradley-Terry pairwise ratings (`causal::pairwise`): Hunter's MM with
+  monotone convergence; ties reported not modelled; disconnected
+  comparison graphs and undefeated players REFUSED (both make ratings
+  arbitrary or divergent).
+- Minimal pairs (`causal::minimal_pair`): input-side interventions - two
+  variants differing in EXACTLY one declared element, validated
+  structurally before any measurement; the delta pricing rides the
+  sign-flip machinery.
+
+Deferred remainder (with reasons, unchanged from the review): counterfactual
+replay and runtime do() primitives (G9 trajectory signing is the
+prerequisite; provider/hat placement per the neutrality ruling); structure
+discovery (P3 - conditional-independence testing machinery not yet built);
+white-box activation interventions (provider layer); contamination-as-
+treatment estimation (the canary decoy ruling stays deferred); Balke-Pearl
+sharp bounds (no independent oracle available to verify closed forms).
+
 ### Fixed (two-line adversarial review of the causal substrate, 2026-11-20)
 
 Every finding below carries a named regression test (spec_map rows updated:
