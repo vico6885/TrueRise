@@ -17,3 +17,6 @@ Thumbs.db
 /.workbuddy/
 /.benchmarks/
 /dist.json
+
+# internal review ledger (audit working paper, not reader-facing docs)
+/OPEN_ITEMS.md

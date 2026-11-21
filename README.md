@@ -39,11 +39,26 @@ column opens when an external pipeline, paper, or CI cites these artifacts.
 | unverified conclusions leak into memory, skills, baselines | the write gate: no support reference, no persistent write — and the mark survives into later certificates |
 | "the process worked" is unevaluable | the trajectory is step-signed; a lucky pass is detected and NOT scored |
 
-**Who it is for**: evaluation engineers (run the bench against any solver),
-harness/agent authors (embed the SDK and make your own claims checkable),
-RSI researchers (the gen0→gen1 loop is a reference implementation of
-*governed* self-improvement — it never self-merges), and quantitative teams
-whose "improvement" claims need an evidence class, not an adjective.
+**Who it is for / at a glance**: evaluation engineers (run the bench against
+any solver), harness/agent authors (embed the SDK and make your own claims
+checkable), RSI researchers (the gen0→gen1 loop is a reference implementation
+of *governed* self-improvement — it never self-merges), and teams whose
+"improvement" claims need an evidence class, not an adjective.
+
+In search terms: this is an **agent evaluation integrity layer** — sealed
+thresholds, a corrected-denominator trial ledger, and offline-recomputable
+claim certificates. It resists benchmark contamination and reward hacking
+at the *claim* layer (mechanisms below, one command each); it does **not**
+run models itself, and it is **not** a leaderboard. For reproducibility,
+the tape replays byte-identically offline; no external model run yet.
+
+**Where it fits across the agent stack**: TrueRise audits the *claims* that
+come out of Agent RL training runs, evaluation harnesses, RSI generation
+chains, and pre-training / post-training reports — it is the integrity layer
+around those pipelines, not a trainer and not a runner. If a result from any
+of those domains is stated as "we improved X%", this is the layer that makes
+that statement recomputable by a stranger. No training loop or model execution
+lives here; the audit boundary is the claim, not the weights.
 
 ## 60 seconds
 
