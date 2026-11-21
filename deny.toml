@@ -31,6 +31,20 @@ wildcards = "deny"
 [advisories]
 version = 2
 yanked = "warn"
+# Single, narrowly scoped exception. chrono 0.4.x is flagged `unmaintained`
+# (RUSTSEC-2026-0543); upstream states no safe upgrade is available because all
+# published versions are affected. Our only incoming edge is the optional
+# `otel` tier via opentelemetry-stdout 0.27, whose every released version
+# hard-depends on chrono for span-timestamp formatting. The advisory is a
+# maintenance-status notice, not an exploitable vulnerability. Do NOT add
+# other ids here without an equivalent written rationale.
+# Revisit this exception when any of the following becomes true:
+#   1. opentelemetry-stdout ships a chrono-free release (pin it and drop this);
+#   2. the advisory is upgraded to a concrete, exploitable vulnerability;
+#   3. the otel tier switches to a different exporter with no chrono edge.
+ignore = [
+    { id = "RUSTSEC-2026-0543", reason = "chrono is unmaintained with no upstream fix; sole edge is optional otel via opentelemetry-stdout 0.27, which hard-depends on chrono in all published versions. Maintenance-status advisory, not an exploitable flaw. Re-evaluate on a chrono-free opentelemetry-stdout release, an exploitable advisory upgrade, or an exporter replacement." },
+]
 
 [sources]
 unknown-registry = "warn"
