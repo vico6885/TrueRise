@@ -1,6 +1,6 @@
 # Unpinned toolchain: CI and local builds track `stable` so external
 # contributors can `git clone && cargo test` without toolchain negotiation.
-# The MSRV floor is 1.85 (edition 2024), enforced by the dedicated `msrv` CI
+# The MSRV floor is 1.88, enforced by the dedicated `msrv` CI
 # job -- that job, not this file, is the compatibility contract.
 [toolchain]
 channel = "stable"

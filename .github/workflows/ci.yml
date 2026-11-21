@@ -36,7 +36,7 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
-      - run: python -m pip install -e python/
+      - run: python -m pip install -e "python[dev]"
       - run: python -m pytest python/tests -q
       - name: demo verdict + offline replay
         run: |
@@ -49,8 +49,8 @@ jobs:
     steps:
       - # actions/checkout v4.2.2, SHA-pinned (W18: third-party tags can be re-pointed)
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - run: rustup toolchain install 1.85 --profile minimal
-      - run: cargo +1.85 check --workspace --all-targets
+      - run: rustup toolchain install 1.88 --profile minimal
+      - run: cargo +1.88 check --workspace --all-targets
 
   # dual-implementation cross-certification: same fingerprint, same verdict,
   # Rust CLI and Python package must agree field-for-field or this job is red.
@@ -92,9 +92,13 @@ jobs:
         with:
           python-version: "3.12"
       - name: build the native wheel (maturin)
+        working-directory: python-native
         run: |
           python -m pip install maturin
-          maturin build --out dist -m python-native/pyproject.toml
+          # pyproject.toml declares [tool.maturin] manifest-path -> ../crates/truerise-py/Cargo.toml;
+          # maturin discovers it from the CWD. Passing pyproject via -m makes maturin
+          # treat it as a Cargo.toml and fail.
+          maturin build --out ../dist
       - name: smoke the wheel (parity with the pure-Python SDK)
         run: |
           python -m pip install --find-links dist truerise-native
@@ -184,7 +188,7 @@ jobs:
       # now persisted via actions/cache: a run SAVES its own `pr` baseline
       # and compares against the cached `main` baseline from previous runs.
       # actions/cache v4.2.0 (SHA-pinned per W18 policy)
-      - uses: actions/cache@0c9075692d92f72b52d1d86a89f9f4cc0ebc4ed4 # v4.2.0
+      - uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
         with:
           path: target/criterion
           key: criterion-${{ github.ref_name }}
