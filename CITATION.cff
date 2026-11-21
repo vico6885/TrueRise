@@ -9,7 +9,7 @@ type: software
 authors:
   - name: vico
     email: vico@users.noreply.github.com
-# repository-code: pending the org decision (RELEASING item A) - not invented
+repository-code: https://github.com/vico6885/TrueRise
 abstract: >-
   A task-pack bench where cheating is caught mechanically, a claim
   certificate a stranger can recompute offline, and a Rust runtime

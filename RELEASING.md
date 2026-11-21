@@ -22,7 +22,7 @@ they are listed instead of guessed:
 
 | # | Blocked item | Why it cannot be filled in locally |
 |---|---|---|
-| A | `repository` / `homepage` in `[workspace.package]` and each crate manifest | the GitHub org and repo slug are not decided yet — inventing a URL would make published crates point at a location nobody owns |
+| A | ✅ DONE 2026-11-22 — `repository`/`homepage` landed in `[workspace.package]`, CITATION.cff repository-code filled (vico6885/TrueRise) | resolved by the org decision |
 | B | CI badge URLs in `README.md` / `README.zh-CN.md` | same reason; snippet template below |
 | C | `.github/ISSUE_TEMPLATE/config.yml` contact links | `about` entries require absolute URLs |
 | D | `.github/CODEOWNERS` handle resolution | the handle is provisional; an unresolved file silently stops reviewer routing, so verify on the first real PR |

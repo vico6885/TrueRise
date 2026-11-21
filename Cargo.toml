@@ -17,6 +17,8 @@ members = [
 ]
 
 [workspace.package]
+repository = "https://github.com/vico6885/TrueRise"
+homepage = "https://github.com/vico6885/TrueRise"
 version = "0.2.0-dev.0"
 edition = "2024"
 rust-version = "1.85"

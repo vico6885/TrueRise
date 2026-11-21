@@ -1,7 +1,6 @@
 # CODEOWNERS - review routing.
 #
-# NOTE: the GitHub handle below is a placeholder until the remote and the
-# account decision land (tracked in CHANGELOG.md, "vico, no clock" item:
+# Review routing: the account decision landed (vico6885/TrueRise is public).
 # git identity email vico@users.noreply.github.com is likewise provisional).
 # Until then this file documents the routing INTENT; GitHub will not resolve
 # it, which is exactly the failure mode the release checklist catches
@@ -11,14 +10,14 @@
 # Single maintainer today. The two-approver rule in GOVERNANCE.md and
 # docs/rfc/README.md starts binding the moment a second maintainer exists;
 # it is deliberately not simulated by self-approval.
-*                          @vico
+*                          @vico6885
 
 # Governance-critical surfaces: RFC required before change (port traits,
 # wire schemas, licence and history controls).
-/crates/truerise-wire/     @vico
-/crates/truerise-platform/ @vico
-/schemas/                  @vico
-/deny.toml                 @vico
-/tools/lint_git_history.py @vico
-/tools/history_floor.json  @vico
-/tools/banned_words.hex    @vico
+/crates/truerise-wire/     @vico6885
+/crates/truerise-platform/ @vico6885
+/schemas/                  @vico6885
+/deny.toml                 @vico6885
+/tools/lint_git_history.py @vico6885
+/tools/history_floor.json  @vico6885
+/tools/banned_words.hex    @vico6885
