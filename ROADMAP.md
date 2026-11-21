@@ -1,7 +1,7 @@
 # Roadmap
 
 Status is EVIDENCE-BACKED, not aspirational: a milestone is "done" here only
-when its named tests are green (spec_map rows / 209 identifiers are
+when its named tests are green (spec_map rows / 324 identifiers are
 machine-checked; the claim gate `tools/check_claim_terms.py` holds the
 title to the same standard - 5/5 verifiable nouns currently met).
 

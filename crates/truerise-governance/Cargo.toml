@@ -23,7 +23,7 @@ truerise-wire = { version = "0.2.0-dev.0", path = "../truerise-wire" }
 
 [dev-dependencies]
 tempfile = "3.27.0"
-truerise-wire = { path = "../truerise-wire" }
+truerise-wire = { version = "0.2.0-dev.0", path = "../truerise-wire" }
 criterion = "0.7.0"
 
 [[bench]]

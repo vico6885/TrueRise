@@ -8,6 +8,7 @@ version = 2
 confidence-threshold = 0.93
 allow = [
     "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
     "MIT",
     "BSD-2-Clause",
     "BSD-3-Clause",
@@ -16,6 +17,7 @@ allow = [
     "Unicode-DFS-2016",
     "Zlib",
     "CC0-1.0",
+    "CDLA-Permissive-2.0",
 ]
 # Isolation assertion: the legacy Python-edition license BSL-1.1 is
 # deliberately NOT in the allow list above (and never may be), together with

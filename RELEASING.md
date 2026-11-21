@@ -6,7 +6,7 @@
 
 | # | Item | Command / evidence |
 |---|---|---|
-| 1 | All gates green locally | `make verify` (fmt, clippy `-D warnings`, check, test, 9 repo gates, pytest, cross-cert) |
+| 1 | All gates green locally | `make verify` (fmt, clippy `-D warnings`, check, test, 12 repo gates, pytest, cross-cert) |
 | 2 | Test counts match the docs | run `cargo test --workspace` and `python -m pytest python/tests -q`, then compare with README and `tests/README.md` — quoted counts drift, so re-verify before trusting them |
 | 3 | Documentation contract | `python tools/check_docs.py` (bilingual pairing, links, cited commands) |
 | 4 | Packaging dry-run | `cargo package --workspace --list --offline` |
