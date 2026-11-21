@@ -6,6 +6,17 @@ publications (the Rust core is the authoritative implementation).
 
 ## [0.2.0-dev.0] - unreleased
 
+### Added (G10 process-level lucky-pass grading, 2026-11-21)
+
+- `truerise-eval::process` (G10, unblocked by G9): process-level grading
+  over the signed trajectory - four detectors (retry loops, verification
+  gaps, missing criteria, stale criteria) with a declared step-kind
+  vocabulary; verdicts Solid / Lucky / Suspicious. THE contract: lucky
+  passes are NOT SCORED (they feed a public lucky-pass rate in per-mille
+  instead). Grading consumes ONLY verified steps (G9 evidence), so the
+  grade is reproducible from the trajectory by construction; an empty
+  trajectory can never grade Solid.
+
 ### Added (G29 persistent-state write gate + G9 trajectory stepwise signing, 2026-11-21)
 
 - G29 write gate (`truerise-governance::write_gate`): the shared door for

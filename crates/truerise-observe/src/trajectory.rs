@@ -205,6 +205,14 @@ impl Trajectory {
     pub fn steps(&self) -> &[StepRecord] {
         &self.steps
     }
+
+    /// The executor's public key bytes - the offline reconstruction path
+    /// (`from_steps`) needs them to verify the signatures, so they travel
+    /// with the steps.
+    #[must_use]
+    pub fn executor(&self) -> &[u8; 32] {
+        &self.executor
+    }
 }
 
 #[cfg(test)]

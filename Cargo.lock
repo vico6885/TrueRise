@@ -1701,10 +1701,12 @@ name = "truerise-eval"
 version = "0.2.0-dev.0"
 dependencies = [
  "criterion",
+ "ed25519-dalek",
  "serde_json",
  "sha2 0.11.1",
  "thiserror 2.0.21",
  "truerise-governance",
+ "truerise-observe",
  "truerise-sandbox",
  "truerise-wire",
 ]

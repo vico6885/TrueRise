@@ -439,6 +439,17 @@
       "a_signed_trajectory_fully_verifies_and_digests",
       "tampering_with_any_step_voids_it_and_the_prefix_after_it",
       "a_different_executor_produces_a_different_digest"
+    ],
+    "过程判卷": [
+      "lucky_pass_is_not_scored",
+      "lucky_pass_rate_is_reported",
+      "process_grade_reproducible_from_trajectory",
+      "a_clean_build_verify_criteria_declare_is_solid",
+      "criteria_missing_makes_the_pass_lucky",
+      "a_verification_gap_is_lucky_not_solid",
+      "retry_loops_make_the_run_suspicious",
+      "stale_criteria_flags_the_pass",
+      "an_empty_trajectory_cannot_be_solid"
     ]
   }
 }

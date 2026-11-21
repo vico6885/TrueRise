@@ -19,9 +19,11 @@ sha2 = "0.11.0"
 thiserror = "2.0.21"
 truerise-governance = { version = "0.2.0-dev.0", path = "../truerise-governance" }
 truerise-sandbox = { version = "0.2.0-dev.0", path = "../truerise-sandbox" }
+truerise-observe = { version = "0.2.0-dev.0", path = "../truerise-observe" }
 truerise-wire = { version = "0.2.0-dev.0", path = "../truerise-wire" }
 
 [dev-dependencies]
+ed25519-dalek = { version = "2.2.0", default-features = false, features = ["fast", "std"] }
 criterion = "0.7.0"
 
 [[bench]]

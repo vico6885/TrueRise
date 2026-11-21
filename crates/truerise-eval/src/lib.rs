@@ -8,6 +8,7 @@ pub mod derivable;
 pub mod fingerprint;
 pub mod interception;
 pub mod judge;
+pub mod process;
 pub mod ratchet;
 pub mod run_verdict;
 pub mod significance;
@@ -17,6 +18,9 @@ pub use derivable::{DerivableClaim, DerivableVerdict, check_all};
 pub use fingerprint::{CompareForbidden, Fingerprint, FingerprintRegistry};
 pub use interception::{Appeal, Interception, InterceptionLedger, Mode, Outcome, mode_for};
 pub use judge::{AgreementStats, Verdict, judge, judge_agreement, judge_and_record};
+pub use process::{
+    LuckyRate, ProcessGrade, ProcessReport, Score, Signal, Vocabulary, grade_trajectory,
+};
 pub use ratchet::{Ratchet, RatchetViolation};
 pub use run_verdict::{EvalError, RunFacts, RunVerdict, judge_run, judge_tasks};
 pub use significance::{ArmResult, CompareError, DISCORDANT_FLOOR, Significance, mcnemar_exact};
