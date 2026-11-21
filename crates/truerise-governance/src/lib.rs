@@ -9,12 +9,17 @@ pub mod approval;
 pub mod chain;
 pub mod policy;
 pub mod resource_policy;
+pub mod write_gate;
 
 pub use approval::{ApprovalQueue, RequestState};
 pub use chain::{ChainError, GENESIS, HashChain, Row};
 pub use policy::{Decision, PolicyState, PolicyTable};
 pub use resource_policy::{
     DeletionDecision, DeletionGate, DeletionTarget, ResourcePolicy, StrictPolicy,
+};
+pub use write_gate::{
+    SupportRef, UnverifiedAssumption, UnverifiedLedger, WriteDecision, WriteGate, WriteGateError,
+    WritePath,
 };
 
 // Governance errors re-exported from the core taxonomy (chain adds its own).

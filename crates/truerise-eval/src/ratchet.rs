@@ -35,6 +35,19 @@ pub enum RatchetViolation {
     },
 }
 
+/// The gated propose's two failure faces: the write gate refused the
+/// citation, or the ratchet refused the direction.
+#[derive(Debug, thiserror::Error)]
+pub enum GatedProposeError {
+    /// No support reference (or the chain sealed) - the write never
+    /// happened.
+    #[error("baseline update refused by the write gate: {0}")]
+    Gate(#[from] truerise_governance::WriteGateError),
+    /// The candidate loosened a threshold.
+    #[error("baseline update refused by the ratchet: {0}")]
+    Ratchet(#[from] RatchetViolation),
+}
+
 /// Validate that ``candidate`` only tightens relative to ``baseline``.
 ///
 /// # Errors
@@ -103,6 +116,40 @@ impl Ratchet {
         Ok(())
     }
 
+    /// G29: a baseline update THROUGH the persistent-state write gate.
+    ///
+    /// The GATED baseline path's policy is REFUSE: a persisted ratchet
+    /// move without a support reference is refused - the gated path never
+    /// admits an unverified number (acceptance:
+    /// `baseline_update_requires_recomputation_support`). The un-gated
+    /// `propose` remains for the Python SDK surface and the bench, whose
+    /// run-path gating is an explicitly declared deferral (review B3-P2-8).
+    ///
+    /// # Errors
+    /// [`GatedProposeError::Gate`] without a support reference; [`GatedProposeError::Ratchet`]
+    /// when the candidate loosens a threshold.
+    pub fn propose_gated(
+        &mut self,
+        candidate: &Baseline,
+        support: Option<&truerise_governance::SupportRef>,
+        ledger: &mut truerise_governance::UnverifiedLedger,
+        chain: Option<&truerise_governance::HashChain>,
+        generation: u64,
+    ) -> Result<(), GatedProposeError> {
+        let assertion = serde_json::to_string(candidate)
+            .unwrap_or_else(|_| "baseline:<unserializable>".to_string());
+        let gate = truerise_governance::WriteGate::new(generation);
+        gate.decide(
+            truerise_governance::WritePath::BaselineUpdate,
+            &assertion,
+            support,
+            ledger,
+            chain,
+        )
+        .map_err(GatedProposeError::Gate)?;
+        self.propose(candidate).map_err(GatedProposeError::Ratchet)
+    }
+
     /// Verify a run (exit-grade: callers map the error to a non-zero exit).
     ///
     /// # Errors
@@ -119,6 +166,43 @@ mod tests {
 
     fn base() -> Baseline {
         Baseline::from([("regression_rate".to_string(), 0.02_f64)])
+    }
+
+    /// G29 acceptance: a baseline update WITHOUT a g25 recomputation
+    /// reference is refused outright (the baseline never carries an
+    /// unverified number), and a cited update moves the ratchet.
+    #[test]
+    fn baseline_update_requires_recomputation_support() {
+        let mut ratchet = Ratchet::new(base());
+        let mut ledger = truerise_governance::UnverifiedLedger::new();
+        let tighter = Baseline::from([("regression_rate".to_string(), 0.01_f64)]);
+        // No support: refused, and the baseline did not move.
+        assert!(matches!(
+            ratchet.propose_gated(&tighter, None, &mut ledger, None, 0),
+            Err(GatedProposeError::Gate(
+                truerise_governance::WriteGateError::UnsupportedWrite {
+                    path: "baseline_update",
+                    ..
+                }
+            ))
+        ));
+        assert!((ratchet.baseline()["regression_rate"] - 0.02).abs() < 1e-12);
+        // With the g25 recomputation reference the update moves the
+        // ratchet.
+        ratchet
+            .propose_gated(
+                &tighter,
+                Some(&truerise_governance::SupportRef::Recomputation {
+                    claim: "scores recomputed offline".to_string(),
+                    digest: "digest".to_string(),
+                }),
+                &mut ledger,
+                None,
+                0,
+            )
+            .unwrap();
+        assert!((ratchet.baseline()["regression_rate"] - 0.01).abs() < 1e-12);
+        assert!(ledger.entries().is_empty(), "baseline path never marks");
     }
 
     #[test]

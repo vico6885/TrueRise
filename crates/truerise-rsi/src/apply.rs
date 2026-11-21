@@ -16,6 +16,9 @@ use std::path::Path;
 /// Apply/rollback errors. Every variant is a REFUSAL - nothing was written.
 #[derive(Debug, thiserror::Error)]
 pub enum ApplyError {
+    /// The G29 write gate could not reach its decision (chain sealed).
+    #[error("apply refused: write gate: {0}")]
+    Gate(String),
     /// No approval token was presented (there is NO default-apply path).
     #[error("apply refused: no human approval token")]
     ApprovalRequired,
@@ -71,7 +74,9 @@ pub fn content_hash(content: &str) -> String {
     hex
 }
 
-/// The single path from proposal to applied change (RFC 0003). Refuses -
+/// The approval-gated sequence from proposal to applied change (RFC 0003;
+/// the gated variant [`apply_proposal_gated`] adds the G29 mark on top of
+/// this sequence). Refuses -
 /// and writes NOTHING - unless every gate passes, in this order:
 /// 1. an approval token is present,
 /// 2. the token's hash == sha256(``child_content``) byte-exact,
@@ -84,6 +89,96 @@ pub fn content_hash(content: &str) -> String {
 /// # Errors
 /// [`ApplyError`] - every variant means NOTHING was written.
 pub fn apply_proposal(
+    skill_path: &Path,
+    child_content: &str,
+    approval_hash: Option<&str>,
+    observed_epoch: u64,
+    queue: &mut truerise_governance::ApprovalQueue,
+    chain: &truerise_governance::HashChain,
+    write: &dyn Fn(&str) -> Result<(), String>,
+) -> Result<AppliedGeneration, ApplyError> {
+    apply_proposal_inner(
+        skill_path,
+        child_content,
+        approval_hash,
+        observed_epoch,
+        queue,
+        chain,
+        write,
+    )
+}
+
+/// G29: apply a proposal THROUGH the persistent-state write gate.
+///
+/// The proposal-apply path's policy is MARK: without a support reference
+/// the apply proceeds (the human approval token is the override) but the
+/// asserted content is recorded as an `unverified_assumption` that
+/// survives into every later generation certificate (acceptance chain:
+/// `unverified_assumption_survives_all_later_generations`). The mark and
+/// the wash both land on the audit chain. The decision runs AFTER the
+/// approval/epoch gates: a refused apply leaves no mark (review A3-P1-1).
+///
+/// # Errors
+/// [`ApplyError`] from the underlying apply, or the gate's mark failure
+/// (chain sealed) as [`ApplyError::Gate`] - the latter surfaces only after
+/// a successful write, i.e. "persisted but unmarked", never "marked but
+/// not persisted".
+pub fn apply_proposal_gated(
+    skill_path: &Path,
+    child_content: &str,
+    approval_hash: Option<&str>,
+    observed_epoch: u64,
+    queue: &mut truerise_governance::ApprovalQueue,
+    write: &dyn Fn(&str) -> Result<(), String>,
+    gate_ctx: &mut GateContext<'_>,
+) -> Result<AppliedGeneration, ApplyError> {
+    // Review A3-P1-1/B3-P1-2: the gate decision runs AFTER the inner
+    // refusal gates - a REFUSED apply must leave no mark and no chain row
+    // asserting content was admitted (phantom transparency rows are the
+    // exact lie this gate exists to prevent). A chain-sealed mark after a
+    // successful write surfaces as Err(Gate): the caller sees that the
+    // content persisted WITHOUT a mark (fail-closed, never silent).
+    let applied = apply_proposal_inner(
+        skill_path,
+        child_content,
+        approval_hash,
+        observed_epoch,
+        queue,
+        gate_ctx.chain,
+        write,
+    )?;
+    let gate = truerise_governance::WriteGate::new(gate_ctx.generation);
+    gate.decide(
+        truerise_governance::WritePath::ProposalApply,
+        child_content,
+        gate_ctx.support,
+        gate_ctx.ledger,
+        Some(gate_ctx.chain),
+    )
+    .map_err(|e| ApplyError::Gate(e.to_string()))?;
+    Ok(applied)
+}
+
+/// The G29 gate context for one apply: everything the write gate needs,
+/// bundled so the apply signature stays lean (a 10-argument function is
+/// how bugs smuggle themselves past review).
+pub struct GateContext<'a> {
+    /// The audit chain the gate decision lands on.
+    pub chain: &'a truerise_governance::HashChain,
+    /// The support reference, if the proposal carries one.
+    pub support: Option<&'a truerise_governance::SupportRef>,
+    /// The unverified-assumption ledger (marks survive across generations).
+    pub ledger: &'a mut truerise_governance::UnverifiedLedger,
+    /// The generation applying this proposal.
+    pub generation: u64,
+}
+
+/// Apply one proposal through the full gate sequence: approval token
+/// binding, live-queue check, epoch fence, then the fenced write.
+///
+/// # Errors
+/// [`ApplyError`] - every variant is a refusal.
+fn apply_proposal_inner(
     skill_path: &Path,
     child_content: &str,
     approval_hash: Option<&str>,
@@ -240,6 +335,53 @@ mod tests {
 
     const GEN0: &str = r#"{"schema_version":"truerise.answers.v1","answers":{"task-1":"a"}}"#;
     const GEN1: &str = r#"{"schema_version":"truerise.answers.v1","answers":{"task-1":"b"}}"#;
+
+    /// G29: an apply WITHOUT a support reference proceeds (human token is
+    /// the override) but marks the asserted content; the mark survives
+    /// into later generation certificate rows.
+    #[test]
+    fn proposal_apply_marks_unverified_without_support() {
+        let dir = temp_dir("gated_mark");
+        let mut queue = truerise_governance::ApprovalQueue::new();
+        let c = chain(&dir);
+        let mut ledger = truerise_governance::UnverifiedLedger::new();
+        // The queue is keyed by the approval hash = the proposal's content
+        // hash (gate 3 looks the token up by THAT id).
+        let proposal_hash = content_hash(GEN1);
+        queue.request(&proposal_hash).unwrap();
+        queue.approve(&proposal_hash).unwrap();
+        let out = apply_proposal_gated(
+            &dir.join("skill.json"),
+            GEN1,
+            Some(&proposal_hash), // the token binds to THESE bytes
+            queue.current_epoch(),
+            &mut queue,
+            &fs_write(dir.join("skill.json")),
+            &mut GateContext {
+                chain: &c,
+                support: None, // no support reference
+                ledger: &mut ledger,
+                generation: 0,
+            },
+        );
+        assert!(out.is_ok(), "gated apply failed: {out:?}");
+        // The mark exists and SURVIVES the certificate rows of later
+        // generations.
+        assert_eq!(ledger.entries().len(), 1);
+        for later in 1..=2u64 {
+            let rows = ledger.certificate_rows();
+            assert!(
+                rows.iter().any(|r| r.contains("gen0")),
+                "gen {later} lost the gen-0 mark: {rows:?}"
+            );
+        }
+        // And the mark event landed on the audit chain.
+        assert!(
+            c.governing_rows()
+                .iter()
+                .any(|r| r.event.kind == "write_gate.marked_unverified")
+        );
+    }
 
     #[test]
     fn apply_without_human_approval_token_is_refused() {

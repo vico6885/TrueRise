@@ -420,6 +420,25 @@
       "structural_conditions_are_refused_by_name",
       "zero_strength_pairs_return_none_not_nan",
       "subset_dominance_surfaces_the_unsettled_fit"
+    ],
+    "写闸": [
+      "memory_write_requires_support_reference",
+      "gated_memory_put_requires_support_reference",
+      "skill_load_rejects_unverified_precondition",
+      "gated_skill_load_rejects_unverified_precondition",
+      "unverified_assumption_survives_all_later_generations",
+      "washing_lands_on_chain_and_requires_a_support_kind",
+      "unknown_marks_cannot_be_washed",
+      "chain_sealed_refuses_the_gate",
+      "proposal_apply_marks_unverified_without_support",
+      "baseline_update_requires_recomputation_support"
+    ],
+    "轨迹签名": [
+      "unsigned_step_contributes_no_evidence",
+      "trajectory_digest_pinned_in_fingerprint",
+      "a_signed_trajectory_fully_verifies_and_digests",
+      "tampering_with_any_step_voids_it_and_the_prefix_after_it",
+      "a_different_executor_produces_a_different_digest"
     ]
   }
 }

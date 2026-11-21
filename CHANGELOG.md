@@ -6,6 +6,42 @@ publications (the Rust core is the authoritative implementation).
 
 ## [0.2.0-dev.0] - unreleased
 
+### Added (G29 persistent-state write gate + G9 trajectory stepwise signing, 2026-11-21)
+
+- G29 write gate (`truerise-governance::write_gate`): the shared door for
+  the four persistent-state write paths (memory write / skill load /
+  proposal apply / baseline update). Any assertion needs a support
+  reference (g25 recomputation / g26 action evidence / g1 external truth);
+  memory, skill and baseline paths REFUSE un-cited writes, the human-
+  approved proposal-apply path admits them MARKED as
+  `unverified_assumption` - and the mark SURVIVES into later generations
+  BY MACHINERY: the ledger is reconstructed from the audit chain's mark
+  rows at generation start and the evolve certificate embeds the rows
+  (`unverified_assumptions` section), so the gen-0 mark is still visible
+  at gen n, washed or not. Washing requires one of the three support
+  kinds and lands on the chain; the chain event lands BEFORE any in-memory
+  mutation (a chain-sealed decision leaves no state); the gate decision
+  runs AFTER the approval/epoch gates (a refused apply leaves no phantom
+  mark). Wash-row payload verification against real artifacts belongs to
+  the G25/G26/G1 machinery (declared boundary).
+- G29 wiring: production paths gated at three of the four boundaries -
+  `apply_proposal_gated` in the evolve generation loop (with certificate
+  embedding), `load_hat_gated` on the governed run path, `gated_put` at
+  the memory boundary. EXPLICIT DEFERRAL: the Python SDK's
+  `ratchet_propose` still calls the un-gated `propose` (the Python
+  contract is frozen pre-release; the Rust core is the authoritative
+  implementation) - the py surface moves to `propose_gated` with the SDK
+  batch. Skill preconditions are TYPED into the hat schema (content-hash
+  visible; a typo'd key can no longer silently skip the gate) and match
+  per-line digests of marked assertions.
+- G9 trajectory stepwise signing (`truerise-observe::trajectory`): every
+  step carries the executor's ed25519 signature chained to the previous
+  verified step's hash; the evidence digest binds the executor public key
+  PLUS the verified step hashes; unsigned or tampered steps contribute NO
+  evidence (the acceptance: an injected unsigned step leaves the digest
+  byte-identical). The digest pins INTO the fingerprint
+  (`Fingerprint::pinned_with_trajectory`).
+
 ### Fixed (two-line adversarial review of family B, 2026-11-20)
 
 20 findings across the two review lines (0 P0, 3 P1, 17 P2), all fixed with

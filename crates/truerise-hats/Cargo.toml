@@ -21,3 +21,6 @@ toml = "1.2.1"
 sha2 = "0.11.0"
 truerise-wire = { version = "0.2.0-dev.0", path = "../truerise-wire" }
 truerise-governance = { version = "0.2.0-dev.0", path = "../truerise-governance" }
+
+[dev-dependencies]
+tempfile = "3.27.0"

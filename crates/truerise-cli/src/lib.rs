@@ -1,14 +1,12 @@
 //! truerise-cli: the single-binary entry (REPL / run / demo / onboarding).
 //
-// - `demo`: the integrity three-scenario walkthrough (Rust edition, mirror
-//   of the Python 0.1-series demo; verdicts derive from inputs, so
-//   `--honest` flips PASS).
+// - `demo`: the integrity three-scenario walkthrough (verdicts derive
+//   from inputs, so `--honest` flips PASS).
 // - `run --goal`: a governed minimal run (three books) over a scripted
-//   router; with no provider configured it explains the onboarding path.
+//   router; without a provider it explains the onboarding path.
 // - REPL: stdin loop with /demo /audit slash commands (IO adapter ONLY -
-//   the multi-turn semantics reuse the same loop path, no bare-face entry).
-// - onboarding: writes config.toml WITHOUT any secret (keys live in env or
-//   an OS keyring; the config stores nothing sensitive).
+//   multi-turn reuses the same loop path, no bare-face entry). Onboarding
+//   writes config.toml WITHOUT secrets (keys live in env).
 
 use std::path::{Path, PathBuf};
 
@@ -39,9 +37,8 @@ pub use interactive::{onboarding, repl, repl_turn};
 pub use provider_choice::{ProviderKind, ProviderSpec, build_provider_router};
 pub use router_assembly::{ChainSinkBridge, ScriptRouter};
 
-// truerise-cli library surface (the binary is a thin IO shell over this). the REPL is an IO adapter over
-// THESE functions only (spec §6.5 single-track ruling) - the golden test
-// proves the repl path and the direct loop path produce identical books.
+// truerise-cli library surface (the binary is a thin IO shell over this; the
+// REPL is an IO adapter over THESE functions only, spec §6.5 - repl == loop).
 
 /// Print the subcommand help text.
 pub fn print_help() {
@@ -240,14 +237,17 @@ pub fn run_books_in(
     // start; nothing is silently ignored).
     let hat_gate = match params.hat_toml {
         Some(hat_toml) => {
-            // Validate BEFORE registering: a refused hat leaves no chain row.
+            // Validate BEFORE registering (refused hat = no chain row), then
+            // the G29 skill-load gate: preconditions citing a marked-unwashed
+            // assumption are rejected (ledger rebuilds from chain rows).
             let hat = truerise_hats::parse_hat(hat_toml).map_err(|e| {
                 truerise_core::LoopError::Config(format!("hat refused at load: {e}"))
             })?;
             assembly::validate_hat_tools(&hat).map_err(truerise_core::LoopError::Config)?;
-            Some(truerise_hats::load_hat(hat_toml, &chain).map_err(|e| {
-                truerise_core::LoopError::Config(format!("hat refused at load: {e}"))
-            })?)
+            let ledger = truerise_governance::UnverifiedLedger::reconstruct_from_chain(&chain);
+            let hat = truerise_hats::load_hat_gated(hat_toml, &chain, &ledger)
+                .map_err(|e| truerise_core::LoopError::Config(format!("hat refused: {e}")))?;
+            Some(hat)
         }
         None => None,
     };

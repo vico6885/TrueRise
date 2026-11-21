@@ -1716,6 +1716,7 @@ dependencies = [
  "criterion",
  "serde_json",
  "sha2 0.11.1",
+ "tempfile",
  "thiserror 2.0.21",
  "truerise-core",
  "truerise-platform",
@@ -1729,6 +1730,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.11.1",
+ "tempfile",
  "thiserror 2.0.21",
  "toml",
  "truerise-governance",
@@ -1750,12 +1752,14 @@ version = "0.2.0-dev.0"
 dependencies = [
  "serde",
  "truerise-core",
+ "truerise-governance",
 ]
 
 [[package]]
 name = "truerise-observe"
 version = "0.2.0-dev.0"
 dependencies = [
+ "ed25519-dalek",
  "opentelemetry",
  "opentelemetry-stdout",
  "opentelemetry_sdk",

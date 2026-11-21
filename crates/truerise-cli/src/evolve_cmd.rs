@@ -15,7 +15,7 @@ use std::path::Path;
 
 use serde_json::json;
 use truerise_governance::{ApprovalQueue, HashChain};
-use truerise_rsi::{apply_proposal, content_hash, evolve_propose, rollback};
+use truerise_rsi::{apply_proposal_gated, content_hash, evolve_propose, rollback};
 use truerise_wire::Severity;
 
 use crate::RunParams;
@@ -160,6 +160,12 @@ fn diff_stat(parent: &str, child: &str) -> (u32, u32) {
 
 /// The generation certificate (integers only; BOTH contents embedded so
 /// replay is file-free and network-free).
+/// Certificate attachments: completion section + G29 unverified rows.
+struct CertAttachments<'a> {
+    completion: Option<&'a serde_json::Value>,
+    unverified_rows: &'a [String],
+}
+
 fn certificate(
     applied: Option<&truerise_rsi::AppliedGeneration>,
     parent_content: &str,
@@ -167,7 +173,7 @@ fn certificate(
     verdict: Option<&truerise_eval::RunVerdict>,
     rollback_reason: Option<&str>,
     significance_json: serde_json::Value,
-    completion: Option<&serde_json::Value>,
+    attachments: CertAttachments<'_>,
 ) -> serde_json::Value {
     let (added, removed) = diff_stat(parent_content, child_content);
     let mut cert = json!({
@@ -191,12 +197,14 @@ fn certificate(
         "replay": { "command": "truerise evolve --replay --cert gen1_certificate.json" },
         "contents": { "parent": parent_content, "child": child_content }
     });
-    // G35/G36: the completion section appears ONLY when an intent contract
-    // was bound. A contract-free certificate is fine; a contract-bound one
-    // without its ledger never ships (checked before issuance).
-    if let Some(section) = completion {
+    // G35/G36: the completion section appears ONLY when an intent
+    // contract was bound (bound without ledger never ships).
+    if let Some(section) = attachments.completion {
         cert["completion"] = section.clone();
     }
+    // G29: unverified rows ride in EVERY certificate (gen-0 mark visible
+    // at gen n, washed or not - acceptance: survives_all_later_generations).
+    cert["unverified_assumptions"] = serde_json::json!(attachments.unverified_rows);
     cert
 }
 
@@ -229,6 +237,9 @@ pub fn evolve_demo(
     };
     let mut queue = ApprovalQueue::new();
     let budget = truerise_rsi::RunBudget::new(Some(64));
+    // G29: marks survive by MACHINERY (ledger reconstructs from chain rows).
+    let mut unverified_ledger =
+        truerise_governance::UnverifiedLedger::reconstruct_from_chain(&chain);
 
     // gen0 evaluation (informational; sets the ratchet baseline).
     let gen0_raw = match std::fs::read_to_string(&skill_path) {
@@ -331,14 +342,19 @@ pub fn evolve_demo(
             .map(|_| ())
             .map_err(|e| e.to_string())
     };
-    let applied = apply_proposal(
+    let applied = apply_proposal_gated(
         &skill_path,
         child_content,
         approve,
         queue.current_epoch(),
         &mut queue,
-        &chain,
         &write,
+        &mut truerise_rsi::GateContext {
+            chain: &chain,
+            support: None, // the evolve flow cites recompute evidence post-apply
+            ledger: &mut unverified_ledger,
+            generation: 0,
+        },
     );
     let applied = match applied {
         Ok(a) => a,
@@ -449,8 +465,7 @@ pub fn evolve_demo(
         }
         None => None,
     };
-    // The generation certificate (chain row carries hashes; the FILE embeds
-    // the contents so replay is offline).
+    // The certificate: chain row carries hashes; the FILE embeds contents.
     let cert = certificate(
         Some(&applied),
         &applied.snapshot,
@@ -458,12 +473,13 @@ pub fn evolve_demo(
         Some(&verdict),
         rollback_reason.as_deref(),
         significance_json,
-        completion_json.as_ref(),
+        CertAttachments {
+            completion: completion_json.as_ref(),
+            unverified_rows: &unverified_ledger.certificate_rows(),
+        },
     );
     let cert_path = run_dir.join("gen1_certificate.json");
-    // W10: sign the certificate when the issuer key is in the environment
-    // (a keyless run produces an UNSIGNED cert - verify reports
-    // unverified_issuer, never silent trust).
+    // W10: sign when the issuer key is in the environment (keyless = unsigned).
     let mut cert_out = cert.clone();
     if let Some(key) = crate::identity::load_signing_key() {
         crate::identity::sign_certificate(&mut cert_out, &key);

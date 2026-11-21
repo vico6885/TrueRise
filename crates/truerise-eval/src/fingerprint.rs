@@ -19,6 +19,45 @@ pub struct Fingerprint {
 }
 
 impl Fingerprint {
+    /// G9: pin a trajectory evidence digest INTO the fingerprint. The
+    /// trajectory pins into the evaluator dimension (the judging context
+    /// includes the signed trajectory it judged): two fingerprints with
+    /// different trajectories are different fingerprints (acceptance:
+    /// `trajectory_digest_pinned_in_fingerprint`).
+    ///
+    /// The digest MUST come from
+    /// `truerise_observe::trajectory::Trajectory::evidence_digest` - an
+    /// unsigned or tampered trajectory has none to pin (review B3-P2-9:
+    /// the previous wording named a crate outside this dependency graph).
+    /// Pinning is IDEMPOTENT: an already-pinned evaluator is re-pinned
+    /// from its base (review A3-P2-6 - a double pin produced two stacked
+    /// markers). The pinned digest is recoverable via
+    /// [`Self::trajectory_digest`], the last-marker convention.
+    #[must_use]
+    pub fn pinned_with_trajectory(&self, trajectory_digest: &str) -> Fingerprint {
+        let mut pinned = self.clone();
+        pinned.evaluator = format!("{}|trajectory={}", self.base_evaluator(), trajectory_digest);
+        pinned
+    }
+
+    /// The pinned trajectory digest, if this fingerprint carries one
+    /// (the last `|trajectory=` marker wins).
+    #[must_use]
+    pub fn trajectory_digest(&self) -> Option<&str> {
+        self.evaluator
+            .rsplit("|trajectory=")
+            .next()
+            .filter(|rest| !rest.contains('|'))
+    }
+
+    /// The evaluator id with any trajectory pin stripped.
+    fn base_evaluator(&self) -> &str {
+        match self.evaluator.rsplit_once("|trajectory=") {
+            Some((base, _)) => base,
+            None => &self.evaluator,
+        }
+    }
+
     /// SHA-256 over the canonical ``k=v|k=v`` serialization.
     pub fn digest(&self) -> String {
         let mut hasher = Sha256::new();
@@ -105,6 +144,38 @@ mod tests {
         };
         assert_eq!(a.digest(), a.digest(), "stable");
         assert_ne!(a.digest(), b.digest(), "any part change -> new fingerprint");
+    }
+
+    /// G9 acceptance: the trajectory digest is pinned INTO the fingerprint.
+    /// Same four parts with a different trajectory digest produce a
+    /// different fingerprint digest, and the pinned digest stays
+    /// recoverable from the evaluator id.
+    #[test]
+    fn trajectory_digest_pinned_in_fingerprint() {
+        let base = Fingerprint {
+            model: "m".to_string(),
+            harness: "h".to_string(),
+            environment: "e".to_string(),
+            evaluator: "v".to_string(),
+        };
+        let pinned_a = base.pinned_with_trajectory("aaaaaaaa");
+        let pinned_b = base.pinned_with_trajectory("bbbbbbbb");
+        assert_ne!(
+            pinned_a.digest(),
+            pinned_b.digest(),
+            "trajectory must change the fingerprint"
+        );
+        assert_ne!(
+            pinned_a.digest(),
+            base.digest(),
+            "pinning must change the fingerprint"
+        );
+        // Recoverability: the pinned digest is part of the evaluator id.
+        assert!(pinned_a.evaluator.ends_with("|trajectory=aaaaaaaa"));
+        // Registry-compatible: the pinned fingerprint registers as itself.
+        let registry = FingerprintRegistry::new();
+        let digest = registry.register(&pinned_a);
+        assert_eq!(registry.get(&digest).unwrap().evaluator, pinned_a.evaluator);
     }
 
     #[test]

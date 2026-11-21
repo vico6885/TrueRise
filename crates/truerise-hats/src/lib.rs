@@ -18,6 +18,13 @@ pub enum HatError {
     /// Chain (audit alignment) error.
     #[error("hat: chain: {0}")]
     Chain(String),
+    /// G29: the skill declares a precondition that is a MARKED, UNWASHED
+    /// unverified assumption - skills may not stand on unverified ground.
+    #[error("hat: unverified precondition {text:?} - wash the assumption or drop the precondition")]
+    UnverifiedPrecondition {
+        /// The offending precondition text.
+        text: String,
+    },
 }
 
 /// The hat schema (v1): name / system_prompt / tool_subset / model_route /
@@ -37,6 +44,12 @@ pub struct Hat {
     /// Discipline hints (free-form lines).
     #[serde(default)]
     pub discipline: Vec<String>,
+    /// G29: assertions this skill assumes true. Each one must NOT match a
+    /// marked, unwashed unverified assumption at load time. Typed so the
+    /// preconditions participate in the content hash (a typo'd key can no
+    /// longer silently skip the gate - review B3-P2-7).
+    #[serde(default)]
+    pub preconditions: Vec<String>,
 }
 
 impl Hat {
@@ -58,11 +71,6 @@ impl Hat {
     }
 }
 
-/// Load a hat from raw TOML + align its content hash into the audit chain.
-///
-/// # Errors
-/// [`HatError::Malformed`] / [`HatError::UnsupportedSchema`] on bad input;
-/// [`HatError::Chain`] when the chain refuses the alignment event.
 /// Parse + validate a hat WITHOUT touching the chain (the boundary may
 /// validate further - e.g. the tool registry - BEFORE registering).
 ///
@@ -79,6 +87,51 @@ pub fn parse_hat(toml_text: &str) -> Result<Hat, HatError> {
         ));
     }
     Ok(hat)
+}
+
+/// The typed preconditions of a parsed hat (no raw TOML scan: the field
+/// participates in the content hash, review B3-P2-7).
+fn declared_preconditions(hat: &Hat) -> Vec<String> {
+    hat.preconditions.clone()
+}
+
+/// G29: load a hat with the persistent-state write gate applied to its
+/// preconditions. A skill declaring a precondition that is a MARKED,
+/// UNWASHED unverified assumption is REJECTED - skills may not stand on
+/// unverified ground (acceptance: `skill_load_rejects_unverified_precondition`).
+///
+/// # Errors
+/// As [`load_hat`], plus [`HatError::UnverifiedPrecondition`].
+pub fn load_hat_gated(
+    toml_text: &str,
+    chain: &truerise_governance::HashChain,
+    ledger: &truerise_governance::UnverifiedLedger,
+) -> Result<Hat, HatError> {
+    // Parse FIRST (a malformed hat is a malformed hat, regardless of
+    // preconditions), then match each declared precondition against the
+    // unwashed marks - WHOLE-CONTENT digests AND per-line digests (review
+    // A3-P2-3: whole-text matching alone made this gate degenerate, since
+    // marks are keyed on entire proposals), then delegate to the plain
+    // loader so the chain alignment stays identical.
+    let hat = parse_hat(toml_text)?;
+    for text in declared_preconditions(&hat) {
+        let mut hasher = sha2::Sha256::new();
+        hasher.update(text.as_bytes());
+        let digest: String = hasher
+            .finalize()
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect();
+        let marked_unwashed = ledger.entries().iter().any(|e| {
+            e.path == truerise_governance::WritePath::ProposalApply
+                && e.washed.is_none()
+                && (e.assertion_digest == digest || e.line_digests.contains(&digest))
+        });
+        if marked_unwashed {
+            return Err(HatError::UnverifiedPrecondition { text });
+        }
+    }
+    load_hat(toml_text, chain)
 }
 
 /// Load a hat from raw TOML + align its content hash into the audit chain.
@@ -143,6 +196,65 @@ tool_subset = ["read_file", "repo_grep", "list_dir"]
 model_route = "default"
 discipline = ["no unverifiable claims", "cite rows"]
 "#;
+
+    /// G29 acceptance: a skill declaring a precondition that is a marked,
+    /// unwashed unverified assumption is REJECTED; washing the assumption
+    /// (with a legitimate support kind) unblocks the load.
+    #[test]
+    fn gated_skill_load_rejects_unverified_precondition() {
+        let dir = tempfile::tempdir().unwrap();
+        let chain = truerise_governance::HashChain::open(&dir.path().join("c.jsonl")).unwrap();
+        let mut ledger = truerise_governance::UnverifiedLedger::new();
+        let gate = truerise_governance::WriteGate::new(0);
+        let assertion = "the patched harness passes the full bench";
+        // The assumption enters persistent state via the proposal-apply
+        // path without support: marked, not washed.
+        gate.decide(
+            truerise_governance::WritePath::ProposalApply,
+            assertion,
+            None,
+            &mut ledger,
+            Some(&chain),
+        )
+        .unwrap();
+        let hat_toml = format!(
+            r#"schema_version = "truerise.hat.v1"
+name = "patched-evaluator"
+system_prompt = "judge the run"
+tool_subset = ["read"]
+model_route = "main"
+preconditions = ["{assertion}"]
+"#
+        );
+        assert!(matches!(
+            load_hat_gated(&hat_toml, &chain, &ledger),
+            Err(HatError::UnverifiedPrecondition { text })
+            if text == assertion
+        ));
+        // A hat with no preconditions loads regardless.
+        let plain = r#"schema_version = "truerise.hat.v1"
+name = "plain"
+system_prompt = "work"
+tool_subset = ["read"]
+model_route = "main"
+"#;
+        assert!(load_hat_gated(plain, &chain, &ledger).is_ok());
+        // Washing with a legitimate support kind unblocks the load - and
+        // the wash action itself lands on the chain.
+        let id = ledger.entries()[0].id.clone();
+        ledger
+            .wash(
+                &id,
+                &truerise_governance::SupportRef::Recomputation {
+                    claim: "gen1 replay".to_string(),
+                    digest: "abc".to_string(),
+                },
+                1,
+                Some(&chain),
+            )
+            .unwrap();
+        assert!(load_hat_gated(&hat_toml, &chain, &ledger).is_ok());
+    }
 
     #[test]
     fn toml_hat_loads_and_aligns_to_chain() {

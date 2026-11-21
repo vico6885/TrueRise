@@ -376,3 +376,88 @@ mod tests {
         assert_eq!(b.all().unwrap()[0].text, "v2");
     }
 }
+
+/// G29: the memory write path goes through the persistent-state write gate.
+///
+/// A record without a support reference is REFUSED (the memory path's
+/// policy is refusal, not marking): unverified assertions must not enter
+/// the recall corpus and quietly become the next generation's premises
+/// (acceptance: `memory_write_requires_support_reference`).
+///
+/// # Errors
+/// The gate refusal (string-typed at the port boundary) or the backend's
+/// own write error.
+pub fn gated_put(
+    backend: &dyn MemoryBackend,
+    record: &Record,
+    support: Option<&truerise_governance::SupportRef>,
+    gate: &truerise_governance::WriteGate,
+    ledger: &mut truerise_governance::UnverifiedLedger,
+    chain: Option<&truerise_governance::HashChain>,
+) -> Result<(), String> {
+    gate.decide(
+        truerise_governance::WritePath::MemoryWrite,
+        &record.text,
+        support,
+        ledger,
+        chain,
+    )
+    .map_err(|e| e.to_string())?;
+    backend.put(record)
+}
+
+#[cfg(test)]
+mod gated_tests {
+    #![allow(clippy::unwrap_used, clippy::expect_used)]
+    use super::*;
+    use truerise_governance::{SupportRef, UnverifiedLedger, WriteGate};
+
+    fn record(text: &str) -> Record {
+        Record {
+            id: text.to_string(),
+            text: text.to_string(),
+            importance: 0.5,
+            recency: 1.0,
+        }
+    }
+
+    /// G29 acceptance: a memory write without a support reference is
+    /// REFUSED (the memory path never marks), and the refused text never
+    /// enters the recall corpus.
+    #[test]
+    fn gated_memory_put_requires_support_reference() {
+        let backend = InMemoryBackend::new();
+        let gate = WriteGate::new(0);
+        let mut ledger = UnverifiedLedger::new();
+        let out = gated_put(
+            &backend,
+            &record("unverified claim"),
+            None,
+            &gate,
+            &mut ledger,
+            None,
+        );
+        assert!(
+            out.is_err(),
+            "un-cited memory writes must refuse, got {out:?}"
+        );
+        assert!(backend.all().unwrap().is_empty(), "refused text leaked in");
+        // With a g25 recomputation reference the same write admits and
+        // lands in the backend.
+        gated_put(
+            &backend,
+            &record("recomputed claim"),
+            Some(&SupportRef::Recomputation {
+                claim: "r".to_string(),
+                digest: "d".to_string(),
+            }),
+            &gate,
+            &mut ledger,
+            None,
+        )
+        .unwrap();
+        assert_eq!(backend.all().unwrap().len(), 1);
+        // And the refusal left no mark behind (memory never marks).
+        assert!(ledger.entries().is_empty());
+    }
+}

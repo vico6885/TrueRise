@@ -11,6 +11,10 @@ use std::path::Path;
 /// Sensitive key fragments (redacted on export; case-insensitive contains).
 const SENSITIVE_FRAGMENTS: [&str; 4] = ["password", "token", "secret", "api_key"];
 
+pub mod trajectory;
+
+pub use trajectory::{StepRecord, Trajectory, TrajectoryBuilder};
+
 /// Redact sensitive values in a JSON tree (values under sensitive keys become
 /// "<redacted>"; structure preserved).
 #[must_use]
