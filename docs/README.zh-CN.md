@@ -18,6 +18,8 @@
 |---|---|
 | [`arch.md`](arch.md) | 六边形端口-适配器架构、crate 地图、三账一致 |
 | [`governance.md`](governance.md) | 审计哈希链作为唯一权威、三态策略、审批、删除三关 |
+| [`causal.md`](causal.md) | 因果完整性引擎：声明分型、假设账本、Manski 区间、反驳器电池、形式化归因 |
+| [`limits.md`](limits.md) | 承诺分级（A 可强制 / B 可测量 / C 只能降低）与本框架拒绝承诺的事项 |
 | [`timesafety.md`](timesafety.md) | 四个泄漏向量与各自的具名强制测试 |
 | [`topology.md`](topology.md) | 仓库形态、依赖方向、许可隔离规则 |
 | [`determinism.md`](determinism.md) | 三层有边界的确定性声明与诚实边界（模型步钉定+录制、浮点规则） |

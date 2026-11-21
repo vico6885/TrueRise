@@ -5,7 +5,10 @@ when its named tests are green (spec_map rows / 324 identifiers are
 machine-checked; the claim gate `tools/check_claim_terms.py` holds the
 title to the same standard - 5/5 verifiable nouns currently met).
 
-## Shipped (P0-P3, 2026-11-14 -> 2026-11-16)
+## Shipped
+
+- 2026-11-21 — G29 persistent-state write gate (four paths, one door) + marks riding certificates; G9 trajectory stepwise signing (`write_gate.rs`, `trajectory.rs`)
+- 2026-11-20 — CA1-CA5 causal identification substrate + quasi-experimental extensions + G10 process-level lucky-pass grading (`causal/*`, `process.rs`) (P0-P3, 2026-11-14 -> 2026-11-16)
 
 - **P0 - the harness works**: tool execution through the sandbox port
   (RFC 0002), budget enforcement that STOPS runs (exit-grade), run verdicts

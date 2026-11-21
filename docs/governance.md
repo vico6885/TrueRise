@@ -23,3 +23,18 @@ require an `authorization` field pointing at the external governance log
 self-authorizable.
 历史地板：blob 计数只增不减；下降即证据销毁=红。提地板须 authorization 字段外链
 治理日志（评审者仓外核对）——仓内提地板不可自授权。
+
+## The persistent-state write gate (G29)
+
+Four persistent-state write paths share one door: memory writes, skill/hat
+loads, generation proposal applies, and baseline (ratchet) updates
+(`crates/truerise-governance/src/write_gate.rs`). Every write must carry a
+support reference — one of three kinds (recomputation result, signed
+action, external artifact field — spec G25/G26/G1). No reference, no write.
+
+Marks survive: an unverified assumption written through the gate is
+recorded on the chain and rides later generation certificates
+(`unverified_assumptions`) until it is verified — and the wash (a later
+verification) is itself recorded. Wired today: `apply` (proposal path),
+`load_hat_gated` (hat load), `gated_put` (memory boundary). The Python
+SDK's `ratchet_propose` is an explicit deferral (see python/README.md).

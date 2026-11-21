@@ -11,7 +11,7 @@ exit code carries the verdict.
 
 ```bash
 python -m pip install -e python/          # from the repository root
-python -m pytest python/tests -q          # 40 tests
+python -m pytest python/tests -q          # 42 tests
 ```
 
 ## `truerise demo` — three cheating scenarios, each caught
@@ -75,6 +75,11 @@ passes, signed = run_external_trials(["python", "my_solver.py"], pack, work_dir)
 Protocol reference implementation: `truerise/evals/external_solver.py`.
 
 ## Library surface
+
+> G29 deferral (honest disclosure): the SDK's `ratchet_propose` still calls
+> the un-gated `propose` — the Python contract is frozen pre-release; the
+> Rust core is the authoritative implementation. The py surface moves to
+> `propose_gated` with the SDK batch (see CHANGELOG "G29 write gate").
 
 ```python
 from truerise.sdk import (                                # the governed harness, pure Python

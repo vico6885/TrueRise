@@ -30,15 +30,16 @@ Crate map (crate 地图):
 | truerise-platform | 平台边界：单调时钟/文件锁/进程面 | (none) |
 | truerise-wire | 版本化 wire 契约（v1/v2 双版显式） | serde |
 | truerise-core | 错误树/四态/typestate 状态机/时间片/loop/compaction | thiserror |
-| truerise-governance | 审计哈希链/policy 三态/审批 fenced/删除三关口 | core, wire, platform, sha2 |
+| truerise-governance | 审计哈希链/policy 三态/审批 fenced/删除三关口/持久状态写闸 G29（四路一门） | core, wire, platform, sha2 |
 | truerise-sandbox | SandboxProvider port/capability/conformance self-check + RFC 0002 工具执行器 | core, thiserror |
 | truerise-memory | BM25+recency+importance 三路融合/Backend port | serde |
-| truerise-eval | conformance 判定权威/棘轮/指纹/一致性统计 | governance, sandbox, wire |
+| truerise-eval | conformance 判定权威/棘轮/指纹/一致性统计/反作弊判卷/因果完整性基底 CA1-CA5/过程判级 G10 | governance, sandbox, wire |
 | truerise-rsi | 预算单例/skill schema/evolve 永不合并 | core |
 | truerise-hats | 帽 schema+TOML 加载+content_hash 入链 | governance, wire |
 | truerise-mcp | JSON-RPC 2.0 帧/零暴露 server/写拒 client | serde |
-| truerise-observe | jsonl span 导出/脱敏/单向禁回灌 | governance, sha2 |
+| truerise-observe | jsonl span 导出/脱敏/单向禁回灌/G9 轨迹逐步签名 | governance, sha2 |
 | truerise-cli | 单二进制：demo/run/repl/onboarding + RFC 0002 装配层 | core, governance, wire, sandbox |
+| truerise-py | PyO3 绑定壳：SDK 的可选原生加速器（同一契约、同一批门） | governance, eval, wire |
 
 Three books (三账): every governed run populates the transcript, the audit
 chain and the state-transition log simultaneously; the golden test asserts

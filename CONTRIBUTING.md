@@ -27,7 +27,7 @@ contributions), you assert all three:
 
 ## Engineering rules
 
-- safe Rust only; `unsafe` is forbidden workspace-wide.
+- safe Rust by default; `unsafe` is allowed ONLY in `crates/truerise-platform` (file locking; every block carries a SAFETY comment and is audited) — see `docs/arch.md`.
 - no `unwrap()` / `expect()` in production code (tests may).
 - every public item is documented (`missing_docs` is denied).
 - single file <= 600 lines; workspace lints deny violations.

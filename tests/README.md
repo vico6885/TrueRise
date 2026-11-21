@@ -4,7 +4,7 @@
 
 Two suites, both run in CI, neither skippable.
 
-## Rust — 241 test fns (240 run by default; 1 behind the otel feature) (`cargo test --workspace`)
+## Rust — 373 test fns (372 run by default; 1 behind the otel feature) (`cargo test --workspace`)
 
 | Surface | What it pins |
 |---|---|
@@ -16,7 +16,7 @@ Two suites, both run in CI, neither skippable.
 | unit tests in each crate | policy three states, approval never times into consent, deletion gates, ratchet only tightens, cross-environment comparison refused, budget singleton reconciliation, evolve never merges, hats content hash, MCP zero exposure and write-class denial, observe redaction, memory fusion determinism, compaction monotonicity, backoff classes |
 
 Per-behaviour mapping is machine-checked: `spec_map.json` binds 54 behaviour
-rows to 209 named test identifiers, and `python tools/lint_spec_map.py` fails
+rows to 324 named test identifiers, and `python tools/lint_spec_map.py` fails
 when a row loses its mapping or an identifier stops existing.
 
 ## Python — 42 tests (`python -m pytest python/tests -q`)

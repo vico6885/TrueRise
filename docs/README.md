@@ -19,7 +19,9 @@ the document is a defect — open an issue.
 | Read | Covers |
 |---|---|
 | [`arch.md`](arch.md) | hexagonal ports-and-adapters, crate map, the three books |
-| [`governance.md`](governance.md) | audit hash chain as the single authority, three-state policy, approvals, deletion gates |
+| [`governance.md`](governance.md) | audit hash chain as the single authority, three-state policy, approvals, deletion gates, the persistent-state write gate |
+| [`causal.md`](causal.md) | the causal-integrity engine: claim typology, the assumption ledger, Manski bounds, the refuter battery, formal attribution |
+| [`limits.md`](limits.md) | the promise grades (A enforceable / B measurable / C reducible-only) and what this framework refuses to promise |
 | [`timesafety.md`](timesafety.md) | the four leak vectors and the tests that enforce each |
 | [`topology.md`](topology.md) | repository topology, dependency direction, license isolation rules |
 | [`determinism.md`](determinism.md) | the three scoped determinism claims + the honest boundary (pinned + taped model steps, the float rule) |

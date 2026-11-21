@@ -10,7 +10,7 @@ provider/plugin projects that consume the port traits.
 
 - Port traits (ModelRouter / SandboxProvider / MemoryBackend — the tool side
   is carried by hat `tool_subset`, the three-state policy and `truerise-mcp`;
-  the spec's fourth name, `ToolProvider`, is a registered divergence, see
+  the spec's fourth name, `ToolProvider`, landed via RFC 0002 (see
   `docs/arch.md` and `providers/README.md`)
   change only through RFCs (`docs/rfc/`): motivation, alternatives, wire
   compatibility, migration. Two maintainer approvals required.

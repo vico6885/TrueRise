@@ -87,3 +87,14 @@ gap and required an RFC for the change — this is that RFC.
 - `injected_regression_rolls_back_and_chains_the_reason`
 - `generation_certificate_recomputes_identically_offline`
 - `stale_or_revoked_epoch_write_rejected` (fence + revoked approval)
+
+## Amendment (2026-11-21): the write-gate marks ride the certificate
+
+G29 (the persistent-state write gate) embeds its marks into the generation
+certificate: every unverified assumption written to persistent state — and
+any later verification that washes it — survives as an
+`unverified_assumptions` row in later certificates. The schema block above
+predates this field; the committed reference certificate and
+`crates/truerise-governance/tests/write_gate.rs`
+(`unverified_assumption_survives_all_later_generations`) are the authoritative
+shape. Unchanged: the apply path, the approval binding, and the ratchet.

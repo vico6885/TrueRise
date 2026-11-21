@@ -9,7 +9,7 @@ TrueRise 的 Python 侧：60 秒诚信走查（`truerise.demo`）、Anti-Cheat B
 
 ```bash
 python -m pip install -e python/          # 在仓库根目录执行
-python -m pytest python/tests -q          # 40 个测试
+python -m pytest python/tests -q          # 42 个测试
 ```
 
 ## `truerise demo` —— 三个作弊场景，各自被抓

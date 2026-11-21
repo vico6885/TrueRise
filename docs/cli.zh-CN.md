@@ -77,7 +77,7 @@ provider 密钥同理（`TRUERISE_API_KEY`）。
 | `demo`（作弊输入） | `1` | `1` |
 | `demo --honest` | `0` | `0` |
 | 未知命令 | `2` | `2`（argparse 用法错误） |
-| run 判词 INCONCLUSIVE（未完成；构造上不可晋升） | `3` | 暂未产生（Rust 侧先行 G7） |
+| run 判词 INCONCLUSIVE（未完成；构造上不可晋升） | `3` | Rust 侧已落地（exit 3）；Python 侧待补 |
 
 两侧都把判词 FAIL 映射为 `1`，且互证闸门现在把退出码与证书字段一起比 ——
 还额外校验每一侧的退出码是否与**它自己的**判词一致，所以"两边一致地返回一个

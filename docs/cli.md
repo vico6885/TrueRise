@@ -81,7 +81,7 @@ Keys for the signing/verify pair live in the environment ONLY
 | `demo` (cheating inputs) | `1` | `1` |
 | `demo --honest` | `0` | `0` |
 | unknown command | `2` | `2` (argparse usage error) |
-| run verdict INCONCLUSIVE (unfinished; non-promotable by construction) | `3` | not yet emitted (Rust-side G7 first) |
+| run verdict INCONCLUSIVE (unfinished; non-promotable by construction) | `3` | Rust-side landed (exit 3); the Python side is pending |
 
 Both sides map verdict FAIL to `1`, and the cross-certification gate now
 compares the exit code alongside the certificate fields — including a check
