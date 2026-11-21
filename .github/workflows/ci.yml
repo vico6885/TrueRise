@@ -40,7 +40,10 @@ jobs:
       - run: python -m pytest python/tests -q
       - name: demo verdict + offline replay
         run: |
-          python -m truerise demo
+          # bare `demo` deliberately prints a FAIL verdict and exits 1 (it audits
+          # a bad claim); that is the demo's point, not a CI failure. The two
+          # deterministic variants are the ones that must exit 0.
+          python -m truerise demo || test $? -eq 1
           python -m truerise demo --replay
           python -m truerise demo --honest
 
@@ -103,7 +106,7 @@ jobs:
         run: |
           python -m pip install --find-links dist truerise-native
           python -c "import truerise_native; print(truerise_native.chain_append is not None)"
-          python -m pip install -e python/
+          python -m pip install -e "python[dev]"
           python -m pytest python/tests/test_sdk.py -q -k native
 
   deny:
@@ -193,7 +196,10 @@ jobs:
           path: target/criterion
           key: criterion-${{ github.ref_name }}
           restore-keys: criterion-main
-      - run: cargo bench --workspace -- --save-baseline pr
+      # Pass criterion flags only to the real Criterion targets. `cargo bench
+      # --workspace` also runs each crate's implicit libtest harness, which
+      # rejects --save-baseline (see criterion.rs FAQ on unrecognized options).
+      - run: cargo bench -p truerise-eval --bench eval_baseline -p truerise-governance --bench chain_baseline -- --save-baseline pr
       - name: baseline-backed regression check
         run: |
           cargo install critcmp --locked

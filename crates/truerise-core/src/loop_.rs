@@ -379,10 +379,10 @@ impl<'a> Loop<'a> {
             // RFC 0002: an act payload carrying the tool envelope goes
             // through the enforcement chain; its outcome is the observation.
             let mut observation = act_payload.clone();
-            if let Some(hooks) = &self.tools {
-                if let Some(request) = parse_tool_call(&act_payload) {
-                    observation = self.execute_tool(hooks, &request)?;
-                }
+            if let Some(hooks) = &self.tools
+                && let Some(request) = parse_tool_call(&act_payload)
+            {
+                observation = self.execute_tool(hooks, &request)?;
             }
             let obs_payload = self.call("observe", &observation)?;
             self.record(State::Acting, Event::Observe, State::Observing)?;

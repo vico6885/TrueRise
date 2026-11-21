@@ -167,13 +167,13 @@ pub fn validate_binding(binding: &CompletionBinding) -> Result<serde_json::Value
         let Some(entry) = report.entries.iter().find(|e| e.item_id == item.id) else {
             continue; // closure already refused missing entries
         };
-        if let truerise_wire::CompletionStatus::Done { .. } = entry.status {
-            if !accepted_human.iter().any(|acc| acc == &item.id) {
-                return Err(format!(
-                    "human-judged item {} is marked done WITHOUT a user token - a human item is done+token or not_verified, never silently done",
-                    item.id
-                ));
-            }
+        if let truerise_wire::CompletionStatus::Done { .. } = entry.status
+            && !accepted_human.iter().any(|acc| acc == &item.id)
+        {
+            return Err(format!(
+                "human-judged item {} is marked done WITHOUT a user token - a human item is done+token or not_verified, never silently done",
+                item.id
+            ));
         }
     }
     let items: Vec<serde_json::Value> = contract

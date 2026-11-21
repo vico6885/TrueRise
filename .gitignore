@@ -20,3 +20,4 @@ Thumbs.db
 
 # internal review ledger (audit working paper, not reader-facing docs)
 /OPEN_ITEMS.md
+/CI_FIX_NOTES.md

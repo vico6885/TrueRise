@@ -254,18 +254,18 @@ impl HashChain {
         let legacy = kind.starts_with("legacy:");
 
         // Idempotent replay against governing rows (in-lock, post-reload).
-        if let Some(key) = replay_key {
-            if state.rows.iter().any(|r| {
+        if let Some(key) = replay_key
+            && state.rows.iter().any(|r| {
                 r.event.governs() && r.event.detail.get("key").and_then(|k| k.as_str()) == Some(key)
-            }) {
-                if let Some(existing) = state.rows.last().cloned() {
-                    return Ok(existing);
-                }
-                return Err(ChainError::Tampered {
-                    rows: vec![],
-                    reason: "dedup hit but chain empty".into(),
-                });
+            })
+        {
+            if let Some(existing) = state.rows.last().cloned() {
+                return Ok(existing);
             }
+            return Err(ChainError::Tampered {
+                rows: vec![],
+                reason: "dedup hit but chain empty".into(),
+            });
         }
 
         let mut row = Row::new(seq, kind, severity, detail, &prev_hash, legacy);

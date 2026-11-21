@@ -125,10 +125,10 @@ impl ResourcePolicy for StrictPolicy {
     }
 
     fn review_approval(&self, token: &str) -> Result<(), String> {
-        if let Some(who) = token.strip_prefix("approved-by:") {
-            if !who.trim().is_empty() {
-                return Ok(());
-            }
+        if let Some(who) = token.strip_prefix("approved-by:")
+            && !who.trim().is_empty()
+        {
+            return Ok(());
         }
         Err("approval token must be 'approved-by:<reviewer>' (human, recorded)".into())
     }

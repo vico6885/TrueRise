@@ -222,11 +222,11 @@ pub fn evolve_demo(
 ) -> i32 {
     let _ = std::fs::create_dir_all(run_dir.join("skills"));
     let skill_path = run_dir.join("skills").join("skill.json");
-    if !skill_path.exists() {
-        if let Err(e) = std::fs::write(&skill_path, GEN0_ANSWERS) {
-            eprintln!("evolve: could not seed gen0 skill: {e}");
-            return 1;
-        }
+    if !skill_path.exists()
+        && let Err(e) = std::fs::write(&skill_path, GEN0_ANSWERS)
+    {
+        eprintln!("evolve: could not seed gen0 skill: {e}");
+        return 1;
     }
     let chain = match HashChain::open(&run_dir.join("run.jsonl")) {
         Ok(c) => c,
@@ -578,11 +578,11 @@ pub fn evolve_replay(cert_path: &Path) -> i32 {
     ok &= (!rolled_back) || !recomputed.is_pass();
     // 4. G35/G36: an embedded completion section must recompute offline -
     // hash-consistent and closed against the embedded item list.
-    if cert["completion"].is_object() {
-        if let Err(reason) = crate::completion_cert::replay_completion(&cert["completion"]) {
-            eprintln!("replay: completion ledger does not recompute: {reason}");
-            ok = false;
-        }
+    if cert["completion"].is_object()
+        && let Err(reason) = crate::completion_cert::replay_completion(&cert["completion"])
+    {
+        eprintln!("replay: completion ledger does not recompute: {reason}");
+        ok = false;
     }
     let _ = std::fs::remove_dir_all(&throwaway);
     if ok {

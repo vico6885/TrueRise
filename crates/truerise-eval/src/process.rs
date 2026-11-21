@@ -180,13 +180,13 @@ pub fn grade_trajectory(trajectory: &Trajectory, vocab: &Vocabulary) -> ProcessR
         }
         // Detector 4: the criteria ran before the last content change -
         // they judged a state that no longer exists.
-        if let (Some(lc), Some(lb)) = (last_criteria, last_build) {
-            if lc < lb {
-                signals.push(Signal::StaleCriteria {
-                    last_criteria: lc,
-                    last_build: lb,
-                });
-            }
+        if let (Some(lc), Some(lb)) = (last_criteria, last_build)
+            && lc < lb
+        {
+            signals.push(Signal::StaleCriteria {
+                last_criteria: lc,
+                last_build: lb,
+            });
         }
     }
     // An EMPTY verified trajectory proves nothing: there is no process to

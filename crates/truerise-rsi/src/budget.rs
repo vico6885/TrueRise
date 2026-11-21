@@ -55,14 +55,14 @@ impl BudgetLedger {
     pub fn consume(&self, hat: &str, quota: Option<u64>) -> Result<u64, BudgetError> {
         let mut st = state().lock().unwrap_or_else(|p| p.into_inner());
         let used = st.per_hat.get(hat).copied().unwrap_or(0);
-        if let Some(q) = quota {
-            if used >= q {
-                return Err(BudgetError::QuotaExceeded {
-                    hat: hat.to_string(),
-                    quota: q,
-                    used,
-                });
-            }
+        if let Some(q) = quota
+            && used >= q
+        {
+            return Err(BudgetError::QuotaExceeded {
+                hat: hat.to_string(),
+                quota: q,
+                used,
+            });
         }
         let new_used = used + 1;
         st.per_hat.insert(hat.to_string(), new_used);

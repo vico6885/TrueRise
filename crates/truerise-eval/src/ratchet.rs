@@ -54,14 +54,14 @@ pub enum GatedProposeError {
 /// [`RatchetViolation::Loosened`] per loosened metric.
 pub fn tighten_only(baseline: &Baseline, candidate: &Baseline) -> Result<(), RatchetViolation> {
     for (metric, new_val) in candidate {
-        if let Some(old_val) = baseline.get(metric) {
-            if new_val > old_val {
-                return Err(RatchetViolation::Loosened {
-                    metric: metric.clone(),
-                    old: *old_val,
-                    new: *new_val,
-                });
-            }
+        if let Some(old_val) = baseline.get(metric)
+            && new_val > old_val
+        {
+            return Err(RatchetViolation::Loosened {
+                metric: metric.clone(),
+                old: *old_val,
+                new: *new_val,
+            });
         }
     }
     Ok(())
@@ -73,14 +73,14 @@ pub fn tighten_only(baseline: &Baseline, candidate: &Baseline) -> Result<(), Rat
 /// [`RatchetViolation::Regression`] per regressed metric.
 pub fn verify_scores(baseline: &Baseline, scores: &Baseline) -> Result<(), RatchetViolation> {
     for (metric, allowed) in baseline {
-        if let Some(value) = scores.get(metric) {
-            if value > allowed {
-                return Err(RatchetViolation::Regression {
-                    metric: metric.clone(),
-                    value: *value,
-                    allowed: *allowed,
-                });
-            }
+        if let Some(value) = scores.get(metric)
+            && value > allowed
+        {
+            return Err(RatchetViolation::Regression {
+                metric: metric.clone(),
+                value: *value,
+                allowed: *allowed,
+            });
         }
     }
     Ok(())

@@ -59,7 +59,7 @@ pub fn assign_blocked(n: usize, block: usize, seed: u64) -> Result<Vec<Arm>, Des
     if n < 2 {
         return Err(DesignError::TooFewUnits(n));
     }
-    if block < 2 || block % 2 != 0 || n % block != 0 {
+    if block < 2 || !block.is_multiple_of(2) || !n.is_multiple_of(block) {
         return Err(DesignError::BadBlock { block, units: n });
     }
     let mut rng = super::rng::SplitMix64::new(seed);
@@ -108,7 +108,7 @@ pub fn assign_clusters(cluster_ids: &[u64], seed: u64) -> Result<Vec<Arm>, Desig
     if distinct.len() < 2 {
         return Err(DesignError::TooFewClusters(distinct.len()));
     }
-    if distinct.len() % 2 != 0 {
+    if !distinct.len().is_multiple_of(2) {
         return Err(DesignError::OddUnits(distinct.len()));
     }
     let mut rng = super::rng::SplitMix64::new(seed);
@@ -156,7 +156,7 @@ pub fn plan_crossover(subjects: usize, seed: u64) -> Result<CrossoverPlan, Desig
     if subjects < 2 {
         return Err(DesignError::TooFewUnits(subjects));
     }
-    if subjects % 2 != 0 {
+    if !subjects.is_multiple_of(2) {
         return Err(DesignError::OddUnits(subjects));
     }
     let mut rng = super::rng::SplitMix64::new(seed ^ 0xCAFE_BABE);

@@ -250,13 +250,13 @@ pub fn intent_guarded_run(args: &[String], run: &dyn Fn(&str) -> i32) -> Result<
     let dir = run_chain_dir();
     record_intent_on_chain(&dir, &seal).map_err(|e| format!("run aborted before start: {e}"))?;
     let code = run(&seal.goal);
-    if code == 0 {
-        if let Err(reason) = verify_intent_unchanged(&seal.path, &seal.sealed_hash) {
-            // Best-effort record; the invalidation itself must still surface.
-            let _ = record_intent_changed(&dir, &seal, &reason);
-            eprintln!("run: {reason}");
-            return Ok(1);
-        }
+    if code == 0
+        && let Err(reason) = verify_intent_unchanged(&seal.path, &seal.sealed_hash)
+    {
+        // Best-effort record; the invalidation itself must still surface.
+        let _ = record_intent_changed(&dir, &seal, &reason);
+        eprintln!("run: {reason}");
+        return Ok(1);
     }
     Ok(code)
 }
