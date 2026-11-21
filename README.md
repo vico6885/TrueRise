@@ -1,202 +1,234 @@
-# TrueRise — catch agent benchmark cheating, mechanically.
+# TrueRise: Harness Governance for Verifiable Recursive Self-Improvement
+
+*Every RSI step, a true rise.* — and a step only counts as a rise when a
+stranger can recompute it.
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-[![License: Apache-2.0 | MIT](https://img.shields.io/badge/license-Apache--2.0%20%7C%20MIT-blue)](#status)
-[![DCO](https://img.shields.io/badge/DCO-signed-all%20commits-green)](CONTRIBUTING.md)
-[![status](https://img.shields.io/badge/status-pre--release-orange)](#status)
-<!-- CI / crates.io badges are ready to add on publish (RELEASING.md items A & F) -->
+**TrueRise is the integrity-evaluation layer for agentic claims.** Any
+"our agent improved X%" statement should carry a certificate a third party
+can recompute offline. This repository ships four things:
 
-"Our agent improved accuracy from 60% → 90%."
+- an **anti-cheat bench** where the usual ways of faking an improvement —
+  best-of-N with a hidden denominator, thresholds edited after the run,
+  self-reported evidence — fail *mechanically*, not by reviewer vigilance;
+- a **claim certificate** recomputable **offline** by anyone (model steps
+  pinned and taped, byte-deterministic over the same inputs and code — see
+  `docs/determinism.md`, tampering fails closed);
+- a **causal-integrity engine** that grades WHAT KIND of claim the evidence
+  can carry — correlational, causal-observational, causal-interventional —
+  with an assumption ledger ("no assumption row, no causal claim"), a
+  refuter battery, and lucky-pass detection;
+- a **governed Rust runtime** where one RSI generation runs end to end:
+  propose → hash-bound human approval → apply → re-evaluate → ratchet →
+  rollback on regression.
 
-Cool. Which model? Which task pack? Was the pass threshold picked *before*
-seeing the results — or after? Did the agent run the eval 20 times while
-only the best attempt made it into the slide?
+Every verifiable noun in the title is held to the evidence by a CI gate
+(`tools/check_claim_terms.py`): one command, one named test, one committed
+artifact each — 5/5 currently met. **No external adoption yet**: everything
+below is mechanism evidence from this repository's own runs; the adoption
+column opens when an external pipeline, paper, or CI cites these artifacts.
 
-TrueRise turns an eval claim into a certificate a stranger can recompute
-offline — and the five classic cheats are caught by machinery, not by
-reviewers:
+## Why
 
-```text
-$ python -m truerise evals run --cheat --trials 20 --strategy majority
-CLAIM     : defect detection accuracy 100% on 120 tasks (trials=20)
-VERDICT   : FAIL
-            2) trials=20 -> corrected significance 2.5e-03, claim p=0.05 does not clear the corrected bar
-```
+| Without TrueRise | With TrueRise |
+| --- | --- |
+| "our agent improved X%" is unverifiable | the claim ships a certificate strangers recompute offline |
+| cheating passes the benchmark, if nobody looks closely | each cheat family fails mechanically — one command per failure, table below |
+| scores drift between implementations and environments | cross-certification gate + four-part fingerprint; cross-environment comparison is refused |
+| unverified conclusions leak into memory, skills, baselines | the write gate: no support reference, no persistent write — and the mark survives into later certificates |
+| "the process worked" is unevaluable | the trajectory is step-signed; a lucky pass is detected and NOT scored |
 
-*Excerpt (FINGERPRINT, ACCURACY, CERTIFICATE lines omitted). The bar is
-mechanical: 0.05 / 20 trials = 2.5e-03 — a best-of-20 report cannot clear
-it, even at 100% accuracy.*
+**Who it is for**: evaluation engineers (run the bench against any solver),
+harness/agent authors (embed the SDK and make your own claims checkable),
+RSI researchers (the gen0→gen1 loop is a reference implementation of
+*governed* self-improvement — it never self-merges), and quantitative teams
+whose "improvement" claims need an evidence class, not an adjective.
 
-Pre-release: install from a clone of this repository.
-
-```bash
-pip install -e python/
-truerise evals demo        # honest PASS, cheater FAIL, threshold-mutator FAIL
-```
-
-## Why this exists
-
-Agent benchmark numbers have become decision currency — model cards,
-leaderboards, procurement decks. But the harness that produces them is
-trusted, not audited: thresholds can move after the fact, retries can hide
-in a slide deck, and "our harness said so" is the whole proof. TrueRise is
-the missing audit layer: it wraps the evaluation, seals the judgment rules
-before the run, and turns the result into a certificate that recomputes
-offline — the same way a checksum works for a download, but for a claim
-about an agent.
-
-## Who needs it
-
-| If you are... | ...you have been burned by | The catch in one command |
-|---|---|---|
-| building an **agent harness / eval framework** | graders being gamed, "done" claims that are placeholders, PASS/FAIL theater | `python -m truerise evals demo` |
-| running an **RSI (self-improving) loop** | unverified assertions becoming the next generation's foundations, unaudited "impossible" give-ups | `evolve --replay` recomputes a generation offline ([quickstart §9](docs/quickstart.md)) |
-| doing **Agentic RL / training** | proxy metrics gamed after the fact, one lucky trial reported as an improvement | `python -m truerise evals run --cheat --trials 20 --strategy majority` (FAIL) |
-| evaluating **pretraining / post-training checkpoints** | scores that shift with the environment, silent regressions between checkpoints | `python -m truerise demo --drop-fingerprint` |
-
-## The five classic cheats, and the catch
-
-| Cheat | What catches it |
-|---|---|
-| hide the denominator (best-of-N reporting) | a monotonic trial ledger prints the corrected bar base/N, then enforces it |
-| pick thresholds after the results | thresholds sealed (SHA-256) before the run; post-hoc edits are named, key by key |
-| claim credit from model self-report | evidence ladder L0–L6: an unsigned self-report contributes NOTHING |
-| compare across environments | four-part fingerprints (model × harness × pack × environment) refuse it |
-| edit the evaluator itself | conformance judging authority + sandbox must-fail probes; the ledger locates tampering to the row |
-
-Every row above is a named test, not a paragraph of adjectives. The full protocol lives in
-[`docs/anti_cheat_bench.md`](docs/anti_cheat_bench.md).
-
-## How it fits the tools you already use
-
-TrueRise is not a replacement for your eval framework — it is the audit
-layer around one:
-
-| You already use | It gives you | TrueRise adds |
-|---|---|---|
-| `inspect_ai` / `lm-eval-harness` / OpenAI Evals | eval runs and scores | sealed judgment rules, corrected denominators, exact paired stats, and a recomputable certificate for the result |
-| `promptfoo` / LangSmith | prompt iteration and traces | a hash-chained audit trail where tampering fails closed with row location |
-| LangGraph / OpenAI Agents SDK / your own loop | the agent | governed tool execution, budget enforcement, and per-run completion certificates (`truerise.sdk.Session`) |
-
-Integration is a contract, not a shim: any harness feeds the bench through
-a one-file solver protocol (`TRUERISE_PUBLIC_DIR` in, `submission.jsonl`
-out) — [docs/integrations.md](docs/integrations.md). We deliberately ship
-no per-framework adapters.
-
-## What a stranger can verify — and what the harness refuses
-
-- **Completion you can check.** `run --intent` binds a run to a sealed
-  contract: acceptance items listed up front, confirmed per item (a blanket
-  "I read it" token is structurally impossible), and the completion claim
-  must map every item to evidence, `not_done` (with a reason), or
-  `not_verified` (with the cost of checking it). On your side,
-  `verify --bundle` re-checks the machine items on your machine — no
-  repository, keys, or network.
-- **Honesty at both extremes.** A run that proves nothing gets
-  `INCONCLUSIVE` (exit code 3 — never readable as PASS or FAIL). A give-up
-  is audited like a claim: it needs a search-surface ledger and a sealed
-  budget bound, or it is refused. "Impossible" may only mean "not found
-  within the declared budget".
-- **Reproducibility as a format.** Model steps are pinned and taped; the
-  same tape replays to identical digests offline; committed readings in
-  [`readings/`](readings/v0.2/gen1_certificate.json) recompute from the
-  ledger alone.
-- **An RSI generation, certified.** propose → hash-bound approval → apply →
-  re-evaluate → ratchet → certificate, with rollback on regression — and a
-  contract change mid-run voids the verdict, on the chain.
-- **The README you are reading is inside its own enforcement surface**: the
-  long-form name's verifiable nouns are machine-checked against evidence
-  (`tools/check_claim_terms.py`: every "met" row = command + named test +
-  committed artifact), promise wording is graded (an outcome the machinery
-  can only reduce is refused in wording that claims it never happens), and
-  stubs as well as test strength are scanned.
-
-## Install and run (pre-release)
+## 60 seconds
 
 ```bash
-git clone <this repository> && cd TrueRise   # repository URL pending the org decision
-pip install -e python/                       # pure Python, zero runtime deps
-python -m truerise evals demo                # the three-verdict walkthrough
-python -m truerise demo                      # the 60-second walkthrough: three cheats, one verdict
-python -m truerise demo --replay             # recompute a verdict offline
-cargo test --workspace                       # the full Rust suite
+cargo test --workspace                  # 372 Rust tests
+python -m pip install -e python/
+python -m pytest python/tests -q        # 42 tests
+python -m truerise evals demo           # honest PASS, cheater FAIL, mutator FAIL
+python -m truerise demo --replay        # a verdict recomputed offline, verdict-identical
+cargo run -p truerise-cli -- demo       # the same walkthrough in Rust
+python tools/check_dual_impl.py         # Rust and Python verdicts agree field-for-field, or red
+cargo run -p truerise-cli -- evolve --replay --cert readings/v0.2/gen1_certificate.json
+                                        # one governed RSI generation, recomputed OFFLINE
 ```
 
-PyPI / crates.io names are pending (`RELEASING.md` item F); until then this
-is a source install.
+## What it catches — one command per failure
 
-## Under the hood
+| Evaluation failure | What catches it | Verify in one command |
+| --- | --- | --- |
+| best-of-N reporting with a hidden denominator | runner-counted monotonic trial ledger; the corrected bar = base/N is printed, then enforced | `python -m truerise evals run --cheat --trials 20 --strategy majority` (FAIL: `corrected significance 2.5e-03`) |
+| thresholds picked after the results | thresholds sealed (SHA-256) before the run; the claim map is diffed against the seal, offending keys named | `python -m truerise evals run --mutate` (FAIL: `prereg diff ... keys: min_accuracy, claim_p`) |
+| model self-report as evidence | evidence ladder L0–L6; records without an executor signature contribute NOTHING | `python -m truerise demo` (reason 4: `0 executor-signed records`) |
+| cross-environment score comparison | four-part fingerprint; comparing across registries is REFUSED, self-vs-self included | `python -m truerise demo --drop-fingerprint` (integrity line appears) |
+| verdicts that cannot be re-checked | hash-chained ledger; `--replay` recomputes offline, tamper fails closed with row location | `python -m truerise demo --replay` |
+| score regression merged silently | ratchet only tightens; regression → non-zero exit | `cargo test -p truerise-eval` |
+| a verdict that cannot be recorded | unrecorded verdicts are ERRORS, not warnings | `cargo test -p truerise-eval` (`judge_and_record`) |
+| reward hacking: the evaluated party edits the evaluator | conformance judging authority + sandbox must-fail probes (escape / oversell / residue) | `cargo test -p truerise-sandbox` |
+| dual implementations drifting apart | cross-certification gate: same fingerprint, same verdict, field-for-field | `python tools/check_dual_impl.py` |
+| an unverified assertion written into memory, skills, or baselines | G29 write gate: four persistent-state paths, one shared door — no support reference, no write; marks survive into later certificates (wired: evolve apply + hat load; SDK baseline declared deferral) | `cargo test -p truerise-governance` |
+| an unsigned trajectory step claiming process evidence | G9 stepwise signing: unsigned or tampered steps contribute NO evidence; tampering voids the prefix | `cargo test -p truerise-observe` |
+| a lucky pass inflating the score | G10 process grading: lucky passes are detected and NOT scored — they feed a public lucky-pass rate instead | `cargo test -p truerise-eval process` |
 
-<details>
-<summary><b>The seven feature groups, in detail</b></summary>
+## The causal-integrity engine
 
-1. **Anti-cheat bench.** Task packs with canaries and decoys; the public
-   surface provably carries no sealed answers; thresholds sealed before the
-   run; a monotonic trial ledger with a corrected denominator; exact paired
-   significance (McNemar) with an equal-budget hard gate; an evidence ladder
-   L0–L6 where unsigned self-reports contribute nothing.
-2. **Verifiable completion.** The intent contract (`schemas/intent_contract.v1.schema.json`)
-   with per-item adjudication, the three-way completion ledger
-   (done / not_done / not_verified), a stub scanner, a reverse-mutation test
-   gate, and a self-service verification bundle.
-3. **Certified RSI generation.** The closed loop of RFC 0003 with a signed,
-   offline-recomputable certificate and a memory-contamination gate
-   (recall-enabled runs are excluded from baselines).
-4. **Honesty at both extremes.** The `INCONCLUSIVE` verdict and the bounded
-   give-up audit (three-valued outcome; a search-surface ledger; a retry
-   plan disjoint from the tried set).
-5. **Reproducibility as a format.** Tape record/replay, the float rule on
-   chain rows, canonical JSON byte-stable across the Rust and Python
-   implementations (tested byte-for-byte), four-part fingerprints.
-6. **Audited runtime foundation.** Three-state policy, sandboxed tool
-   execution (RFC 0002), an unshardable budget denominator, a tamper-
-   locating hash chain, a zero-exposure MCP server, one-way OpenTelemetry
-   export.
-7. **The self-auditing gate set.** 15 gate scripts behind 15 CI jobs; a
-   promise-grade registry (A enforceable / B measurable / C reducible-only)
-   with the gate refusing grade-C outcomes written as grade-A promises; a
-   stub gate; a test-strength gate; 54 spec rows binding 209 named
-   identifiers.
+Most agent claims stop at "correlation". TrueRise makes the evidence class
+a first-class, machine-checked object:
 
-</details>
+- **Claim typology.** Every causal-flavored claim is typed — correlational,
+  causal-observational, causal-interventional, predictive,
+  measurement-validity, temporal-precedence — and the gate enforces the
+  wording: a temporal-precedence or correlational claim may never use
+  causal language ("preceded by" is evidence; "caused by" is not).
+- **The assumption ledger.** "No assumption row, no causal claim": a
+  causal-typed claim must declare SUTVA / consistency / exchangeability /
+  positivity with a defense and named evidence, or it DOWNGRADES to
+  hypothesis tier — the `INCONCLUSIVE` verdict of the claim layer. Marks
+  survive across generations by machinery (the write gate reconstructs
+  them from the audit chain, and every generation certificate embeds them).
+- **The identification chest.** Manski no-assumption bounds (an
+  INCONCLUSIVE verdict with a shape), E-values (the price of unmeasured
+  confounding), invariance screening across environments, a refuter battery
+  (placebo permutation, bootstrap subset stability, confounder injection,
+  negative-control outcomes), difference-in-differences, regression
+  discontinuity at routing cutoffs, Wald IV with weak-instrument refusal,
+  propensity weighting with fail-closed positivity, synthetic control,
+  effect modification, minimal pairs, exact + Monte-Carlo permutation
+  tests, and interventional Shapley for component credit.
+- **Formal failure attribution.** Halpern-Pearl actual causation with
+  Chockler-Halpern responsibility over binary bounded models — "which
+  component actually caused the failure" becomes a computable question on
+  the signed trajectory, with the canonical preemption result pinned by
+  test (the first throw is the cause; the preempted one never is).
+- **The honest boundary.** The engine PRICES evidence and REFUSES designs;
+  it does not PROVE causality. Identification assumptions remain
+  judgements — the machinery forces them to be declared, defends their
+  arithmetic, and downgrades claims that skip the paperwork.
 
-<details>
-<summary><b>Limitations (read before citing)</b></summary>
+`cargo test -p truerise-eval` runs the whole chest: bounds, E-value,
+permutation, Shapley, refuters, invariance screening, attribution — plus
+the governance gates (`cargo test -p truerise-governance`).
 
-- **No external model run yet.** Every reading comes from our own reference
-  solvers; the external-solver protocol has landed, the operational step is
-  pending (`ROADMAP.md` item 1). Treat the bench as a harness demo, not a
-  leaderboard.
-- **The internal production deployment is not in this repository** (license
-  isolation, by design).
-- **Solo project**, one DCO-signed author. **No RL training results** — the
-  runtime exposes interfaces a training loop can consume; we claim no
-  training-loop outcome.
+## What is in the box
 
-</details>
+| Piece | Scope | License |
+| --- | --- | --- |
+| `truerise` (Python) | the 60-second demo + `truerise.evals` Anti-Cheat Bench + zero-dependency SDK + long-horizon closed-loop packs + external-solver protocol | Apache-2.0 / MIT |
+| `truerise` (Rust, 13 crates) | contracts and judging authority: hash-chain audit, three-state policy, sandbox + tool-execution ports (RFC 0002), conformance judge, ratchet, the RSI closed loop (RFC 0003), the write gate, trajectory signing, the causal identification substrate, MCP (zero exposure), observe, PyO3 shell | Apache-2.0 / MIT |
+| `truerise-native` (PyO3 wheel) | OPTIONAL accelerator over the same crates; the pure-Python SDK is the complete fallback | Apache-2.0 / MIT |
+| task packs (data) | generated fixtures + sealed answers | CC-BY-4.0 (`LICENSE-DATA.md`) |
 
-## Next steps
+## One governed RSI generation
 
-- Run `python -m truerise demo` above — it needs no API key and no network.
-- Read the bench protocol: [`docs/anti_cheat_bench.md`](docs/anti_cheat_bench.md) ·
-  the tutorial: [`docs/quickstart.md`](docs/quickstart.md) ·
-  the command reference: [`docs/cli.md`](docs/cli.md) ·
-  what we refuse to promise: [`docs/limits.md`](docs/limits.md).
-- Contribute a task pack (data, CC-BY-4.0): the guide is
-  [`docs/task_pack_guide.md`](docs/task_pack_guide.md) — packs are the
-  easiest first contribution and go through the same gates.
-- Review an RFC: [`docs/rfc/README.md`](docs/rfc/README.md) is where
+```mermaid
+flowchart LR
+    G0[gen0 baseline] --> P[Propose<br>never self-merges]
+    P --> A{Hash-bound<br>human approval}
+    A -- approve --> AP[Apply<br>through the write gate]
+    AP --> E[Re-evaluate<br>on the sealed bench]
+    E --> R{Ratchet:<br>verified not worse?}
+    R -- regression --> RB[Rollback<br>reason on the audit chain]
+    R -- hold --> C[Generation certificate<br>byte-deterministic]
+    RB --> G1[gen1]
+    C --> G1
+```
+
+The full contract — the only apply path, the approval token as content hash,
+rollback semantics — is [RFC 0003](docs/rfc/0003-generation-certificate-and-apply.md).
+
+## Where it fits production
+
+The deployment story is integrations, not a platform lock-in — each row is
+a contract shipped and tested in this repository:
+
+| Production surface | What you deploy | The contract |
+| --- | --- | --- |
+| CI quality gates | the claim-gate pattern against YOUR release notes: every verifiable noun = command + named test + artifact, or the word leaves the title | `tools/check_claim_terms.py` |
+| agent releases | run the bench against your solver through the one-file external-solver protocol; ship the recomputable certificate with the release | `docs/integrations.md` |
+| compliance / audit | byte-deterministic certificates + a tamper-locating audit chain: a third party recomputes offline, tampering fails closed with row location | `python -m truerise demo --replay` |
+| agent SDKs | embed the zero-dependency Python SDK: governed tool execution, budget enforcement, per-run completion certificates | `docs/integrations.md` |
+| tool access control | MCP server with zero exposure by default; a hat loads a tool subset, unknown tools refuse the run | `docs/integrations.md` |
+| RSI programs | the gen0→gen1 loop as the reference for governed self-improvement — approval-gated, never self-merging | RFC 0003 |
+
+One honest boundary: the same contracts run in an internal production
+system that is deliberately outside this repository (license isolation).
+What this repository claims is the machinery, not the deployment count.
+
+## Reference readings (committed, offline-recomputable)
+
+| Run | Verdict | Artifact |
+| --- | --- | --- |
+| honest solver, 1 trial | PASS, accuracy 100% (120/120) | [`readings/v0.1/honest_verdict.json`](readings/v0.1/honest_verdict.json) |
+| cheater, 20 trials, majority | FAIL — hidden denominator caught | [`readings/v0.1/cheater_verdict.json`](readings/v0.1/cheater_verdict.json) |
+| mutator | FAIL — threshold mutation caught | [`readings/v0.1/mutator_verdict.json`](readings/v0.1/mutator_verdict.json) |
+| gen0 → gen1 closed loop | lineage certificate, byte-recomputable | [`readings/v0.2/gen1_certificate.json`](readings/v0.2/gen1_certificate.json) |
+
+Technical report: [`docs/report/anti_cheat_bench_v0.1.md`](docs/report/anti_cheat_bench_v0.1.md).
+
+## Documentation
+
+| Read | What you get |
+| --- | --- |
+| [`docs/quickstart.md`](docs/quickstart.md) | install, first run, first verdict, first tamper drill |
+| [`docs/cli.md`](docs/cli.md) | the authoritative subcommand/flag list with the exit-code contract |
+| [`docs/anti_cheat_bench.md`](docs/anti_cheat_bench.md) | the bench protocol: pack format, sealed taxonomy, isolation, certificate schema |
+| [`docs/arch.md`](docs/arch.md) | hexagonal ports-and-adapters, crate map, the three books |
+| [`docs/determinism.md`](docs/determinism.md) | the three scoped determinism claims + the honest boundary |
+| [`docs/integrations.md`](docs/integrations.md) | MCP, the Python SDK, the external-solver protocol |
+| [`docs/README.md`](docs/README.md) | the full index (all user-facing docs ship as EN/zh-CN pairs) |
+
+## Limitations (read before citing)
+
+- **No external model run yet.** Every reading above comes from our own
+  reference solvers. The external-solver protocol has landed; the missing
+  step is operational — one public model behind a solver honouring the
+  contract ([`ROADMAP.md`](ROADMAP.md) item 1). Until then, treat the bench
+  as a harness demo, not a leaderboard.
+- **The internal production deployment is not in this repository.** The same
+  contracts run in a separate source-available system; license isolation
+  keeps it out by design. We say so plainly rather than implying an adoption
+  this repository cannot show.
+- **Solo project.** One author, DCO-signed; the RFC process is where
   external review starts.
+- **No RL training results.** The runtime exposes interfaces a training
+  loop can consume safely; we claim no training-loop outcome.
+- **The causal engine prices evidence; it does not prove causation.**
+  Identification assumptions remain judgements — the machinery demands
+  they be declared and defended, and downgrades what is not.
 
 ## Status
 
 Pre-release (`0.2.0-dev.0`). 13 Rust crates + a zero-dependency Python SDK
 (+ an optional PyO3 accelerator), 15 gate scripts behind 15 CI jobs, every
-commit DCO-signed. The long-form name this repository earns once the
-evidence gates stay green: **Harness Governance for Verifiable Recursive
-Self-Improvement** — every verifiable noun in that name is CI-checked
-(`tools/check_claim_terms.py`) — (中文：**智能体声明的评测诚信层**). Wave-by-wave evidence in
-`CHANGELOG.md`; forward plan in `ROADMAP.md`; security policy in
-`SECURITY.md`; license: Apache-2.0 / MIT for code, CC-BY-4.0 for task-pack
-data (`LICENSE-DATA.md`).
+commit DCO-signed. 372 Rust tests + 42 Python tests green; 63 behaviour
+rows spec-mapped to 324 named identifiers (machine-checked); claim gate
+5/5 met. Wave-by-wave evidence in [`CHANGELOG.md`](CHANGELOG.md); forward
+plan in [`ROADMAP.md`](ROADMAP.md).
+
+## Contributing
+
+DCO sign-off + IP-clean declarations ([`CONTRIBUTING.md`](CONTRIBUTING.md)).
+The main funnel is one task pack = one PR
+([`docs/task_pack_guide.md`](docs/task_pack_guide.md)). Port-trait and
+wire-schema changes go through RFCs ([`docs/rfc/README.md`](docs/rfc/README.md)).
+
+## Security
+
+See [`SECURITY.md`](SECURITY.md). Every executed action flows through the
+sandbox port and lands on the audit chain with the executor's capability
+level; secrets never enter the repository, argv, or logs.
+
+## License
+
+Code dual-licensed **Apache-2.0 / MIT** (`LICENSE-APACHE`, `LICENSE-MIT`);
+task packs CC-BY-4.0 (`LICENSE-DATA.md`).
+
+## Citation
+
+See [`CITATION.cff`](CITATION.cff).
